@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Profile",
+      "description": "User profile and role data.",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["super_admin", "admin", "client"] },
+        "displayName": { "type": "string" },
+        "avatarUrl": { "type": ["string", "null"] },
+        "isOnline": { "type": "boolean" },
+        "lastSeen": { "type": "string", "format": "date-time" },
+        "pushEndpoint": { "type": ["string", "null"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["role", "displayName", "isOnline", "lastSeen", "createdAt"]
+    },
+    "Location": {
+      "title": "Location",
+      "description": "User device location broadcast.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "accuracy": { "type": ["number", "null"] },
+        "speed": { "type": ["number", "null"] },
+        "recordedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "lat", "lng", "recordedAt"]
+    },
+    "Drop": {
+      "title": "Drop",
+      "description": "A field drop coordinate and metadata.",
+      "type": "object",
+      "properties": {
+        "createdBy": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "title": { "type": "string" },
+        "notesEncrypted": { "type": ["string", "null"] },
+        "photoUrl": { "type": ["string", "null"] },
+        "videoUrl": { "type": ["string", "null"] },
+        "qrToken": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "claimed", "expired"] },
+        "pickupOrder": { "type": "number" },
+        "expiresAt": { "type": ["string", "null", "date-time"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["createdBy", "assignedTo", "lat", "lng", "title", "qrToken", "status", "pickupOrder", "createdAt", "updatedAt"]
+    },
+    "Pickup": {
+      "title": "Pickup",
+      "description": "Record of a successfully claimed drop.",
+      "type": "object",
+      "properties": {
+        "dropId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "confirmedAt": { "type": "string", "format": "date-time" },
+        "method": { "type": "string", "enum": ["qr_scan", "manual"] },
+        "scanLat": { "type": ["number", "null"] },
+        "scanLng": { "type": ["number", "null"] }
+      },
+      "required": ["dropId", "clientId", "confirmedAt", "method"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A chat message.",
+      "type": "object",
+      "properties": {
+        "roomId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "body": { "type": "string" },
+        "readAt": { "type": ["string", "null", "date-time"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["roomId", "senderId", "body", "createdAt"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "System audit log for actions.",
+      "type": "object",
+      "properties": {
+        "actorId": { "type": ["string", "null"] },
+        "action": { "type": "string" },
+        "entityType": { "type": "string" },
+        "entityId": { "type": ["string", "null"] },
+        "ts": { "type": "string", "format": "date-time" }
+      },
+      "required": ["action", "entityType", "ts"]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": { "$ref": "#/entities/Profile" },
+      "description": "User roles and metadata."
+    },
+    "/locations/{locationId}": {
+      "schema": { "$ref": "#/entities/Location" },
+      "description": "Append-only location broadcasts."
+    },
+    "/drops/{dropId}": {
+      "schema": { "$ref": "#/entities/Drop" },
+      "description": "Active and historical drops."
+    },
+    "/pickups/{pickupId}": {
+      "schema": { "$ref": "#/entities/Pickup" },
+      "description": "Pickup confirmations."
+    },
+    "/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/Message" },
+      "description": "Chat messages."
+    },
+    "/activity_log/{logId}": {
+      "schema": { "$ref": "#/entities/ActivityLog" },
+      "description": "Audit trails."
+    }
+  }
+}
+

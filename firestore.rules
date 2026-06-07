@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // -------------------------------------------------------------------------
+    // 1. GLOBAL SAFETY NET (DEFAULT DENY)
+    // -------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // 2. HELPER FUNCTIONS
+    // -------------------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // Role lookups (Read the master profile record to ascertain permissions)
+    function getUserRole(uid) {
+      // NOTE: get() bypasses security rules, enabling role checking
+      return get(/databases/$(database)/documents/profiles/$(uid)).data.role;
+    }
+    
+    function isSuperAdmin() {
+      return isSignedIn() && getUserRole(request.auth.uid) == 'super_admin';
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getUserRole(request.auth.uid) == 'admin';
+    }
+
+    function isClient() {
+      return isSignedIn() && getUserRole(request.auth.uid) == 'client';
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. VALIDATION Helpers (Anti-Update-Gap)
+    // -------------------------------------------------------------------------
+    
+    function isValidProfile(data) {
+      // Profile data must strictly align. Note: users cannot elevate their own roles unless super_admin
+      return data.keys().hasAll(['role', 'displayName', 'isOnline', 'lastSeen', 'createdAt'])
+        && data.role in ['super_admin', 'admin', 'client']
+        && data.displayName is string && data.displayName.size() <= 100
+        && data.isOnline is bool;
+    }
+
+    function isValidDrop(data) {
+      return data.keys().hasAll(['createdBy', 'assignedTo', 'lat', 'lng', 'title', 'qrToken', 'status', 'pickupOrder', 'createdAt', 'updatedAt'])
+        && data.createdBy is string && data.createdBy.size() <= 128
+        && data.assignedTo is string && data.assignedTo.size() <= 128
+        && data.lat is number && data.lng is number
+        && data.title is string && data.title.size() <= 200
+        && data.qrToken is string && data.qrToken.size() <= 256
+        && data.status in ['active', 'claimed', 'expired']
+        && data.pickupOrder is number;
+    }
+
+    function isValidLocation(data) {
+      return data.keys().hasAll(['userId', 'lat', 'lng', 'recordedAt'])
+        && data.userId is string && data.userId.size() <= 128
+        && data.lat is number && data.lng is number;
+    }
+
+    function isValidPickup(data) {
+      return data.keys().hasAll(['dropId', 'clientId', 'confirmedAt', 'method'])
+        && data.dropId is string && data.dropId.size() <= 128
+        && data.clientId is string && data.clientId.size() <= 128
+        && data.method in ['qr_scan', 'manual'];
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['roomId', 'senderId', 'body', 'createdAt'])
+        && data.roomId is string && data.roomId.size() <= 256
+        && data.senderId is string && data.senderId.size() <= 128
+        && data.body is string && data.body.size() <= 2000;
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. COLLECTION RULES
+    // -------------------------------------------------------------------------
+
+    match /profiles/{userId} {
+      // Allows user to read their own profile, or admins/super_admins to read profiles.
+      allow get: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isSuperAdmin() || isAdmin());
+      // Explicit list filter to prevent scraping.
+      allow list: if isSignedIn() && (isSuperAdmin() || isAdmin() || request.auth.uid == userId);
+      
+      // Profiles are created on sign-up; a cloud function handles role escalation.
+      // A user can create their initial profile as a 'client'.
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidProfile(incoming()) && incoming().role == 'client';
+      
+      // A user can update their status, but cannot elevate their role. SuperAdmins can do anything.
+      allow update: if isSignedIn() && isValidId(userId) && isValidProfile(incoming()) && (
+        isSuperAdmin() || 
+        (request.auth.uid == userId && incoming().role == existing().role && incoming().diff(existing()).affectedKeys().hasOnly(['isOnline', 'lastSeen', 'displayName', 'avatarUrl', 'pushEndpoint']))
+      );
+    }
+
+    match /locations/{locationId} {
+      allow get: if isSignedIn() && isValidId(locationId) && (isSuperAdmin() || existing().userId == request.auth.uid);
+      allow list: if isSignedIn() && (isSuperAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && isValidLocation(incoming()) && incoming().userId == request.auth.uid;
+      allow update: if false; // Append-only structure
+      allow delete: if request.auth.uid == existing().userId || isSuperAdmin();
+    }
+
+    match /drops/{dropId} {
+      allow get: if isSignedIn() && isValidId(dropId) && (isSuperAdmin() || existing().createdBy == request.auth.uid || existing().assignedTo == request.auth.uid);
+      allow list: if isSignedIn() && (isSuperAdmin() || resource.data.createdBy == request.auth.uid || resource.data.assignedTo == request.auth.uid);
+      
+      // Only admins and super_admins can create drops
+      allow create: if isSignedIn() && isValidDrop(incoming()) && (isSuperAdmin() || (isAdmin() && incoming().createdBy == request.auth.uid));
+
+      // Updates are constrained by 'terminal state locking' - a claimed/expired drop is locked (unless super admin).
+      allow update: if isSignedIn() && isValidId(dropId) && isValidDrop(incoming()) && (
+        isSuperAdmin() ||
+        (
+          isAdmin() && existing().createdBy == request.auth.uid && existing().status == 'active' &&
+          incoming().createdBy == existing().createdBy && incoming().createdAt == existing().createdAt
+        ) ||
+        (
+          isClient() && existing().assignedTo == request.auth.uid && existing().status == 'active' &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && incoming().status == 'claimed'
+        )
+      );
+
+      allow delete: if isSuperAdmin() || (isAdmin() && existing().createdBy == request.auth.uid);
+    }
+
+    match /pickups/{pickupId} {
+      allow get: if isSignedIn() && isValidId(pickupId) && (isSuperAdmin() || existing().clientId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (isSuperAdmin() || resource.data.clientId == request.auth.uid || isAdmin());
+      
+      // Typically created by edge function, but client fallback is allowed if payload is valid
+      allow create: if isSignedIn() && isValidPickup(incoming()) && incoming().clientId == request.auth.uid;
+      allow update: if false; // Immutable ledger
+    }
+
+    match /messages/{messageId} {
+      // Room ID convention: sorted uid_a + "_" + uid_b. A user can read if their uid is in the room.
+      allow get: if isSignedIn() && isValidId(messageId) && (isSuperAdmin() || request.auth.uid in existing().roomId.split('_'));
+      allow list: if isSignedIn() && (isSuperAdmin() || request.auth.uid in resource.data.roomId.split('_'));
+      
+      allow create: if isSignedIn() && isValidMessage(incoming()) && incoming().senderId == request.auth.uid && (request.auth.uid in incoming().roomId.split('_'));
+      allow update: if isSignedIn() && isValidId(messageId) && isValidMessage(incoming()) && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['readAt']) && 
+                    existing().senderId != request.auth.uid; // Only recipient can set readAt
+    }
+
+    match /activity_log/{logId} {
+      allow get, list: if isSuperAdmin();
+      allow create: if isSignedIn() && incoming().keys().hasAll(['action', 'entityType', 'ts']) && incoming().actorId == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}
+
