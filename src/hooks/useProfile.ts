@@ -8,11 +8,18 @@
  */
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores';
 import type { Profile } from '@/types/domain';
 
 export function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Helper to check if the current active session in useAuthStore is mock
+  const isMockSession = useCallback(() => {
+    const currentSession = useAuthStore.getState().session as any;
+    return currentSession?.access_token === 'mock';
+  }, []);
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
@@ -25,27 +32,43 @@ export function useProfile() {
       if (error) {
         console.error('[useProfile] Failed to fetch profile:', error.message);
         setProfile(null);
+        useAuthStore.getState().setProfile(null);
       } else {
-        setProfile(data as Profile);
+        const prof = data as Profile;
+        setProfile(prof);
+        useAuthStore.getState().setProfile(prof);
       }
     } catch (err) {
       console.error('[useProfile] Unexpected error:', err);
       setProfile(null);
+      useAuthStore.getState().setProfile(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    // If it's a mock session, we bypass real Supabase state fetches completely
+    if (isMockSession()) {
+      const mockProfile = useAuthStore.getState().profile;
+      setProfile(mockProfile);
+      setLoading(false);
+      return;
+    }
+
     // FIX C-4: Subscribe to auth state changes so the profile is always fresh.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (isMockSession()) return; // lock out mock changes
+
+        useAuthStore.getState().setSession(session);
         if (session?.user) {
           setLoading(true);
           await fetchProfile(session.user.id);
         } else {
           // Signed out or no session
           setProfile(null);
+          useAuthStore.getState().setProfile(null);
           setLoading(false);
         }
       }
@@ -53,6 +76,9 @@ export function useProfile() {
 
     // Also attempt an immediate fetch for the initial render.
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (isMockSession()) return; // lock out mock changes
+      
+      useAuthStore.getState().setSession(session);
       if (session?.user) {
         fetchProfile(session.user.id);
       } else {
@@ -63,7 +89,7 @@ export function useProfile() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, [fetchProfile, isMockSession]);
 
   return {
     profile,

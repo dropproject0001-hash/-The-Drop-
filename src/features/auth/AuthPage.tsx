@@ -97,7 +97,7 @@ export function AuthPage() {
       if (!authData.user) throw new Error('No user returned from sign up');
 
       // 2. Create the profile row with the selected role (super_admin / admin)
-      const { error: profileError } = await supabase.from('profiles').insert({
+      const { error: profileError } = await (supabase as any).from('profiles').insert({
         id: authData.user.id,
         role: registerRole,
         display_name: displayName,

@@ -17,7 +17,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
@@ -162,7 +162,7 @@ export interface Database {
           scan_lat?: number | null;
           scan_lng?: number | null;
         };
-        Update: Record<string, never>; // pickups are immutable
+        Update: never; // pickups are immutable
       };
       messages: {
         Row: {
@@ -228,16 +228,15 @@ export interface Database {
           meta?: Json;
           ts?: string;
         };
-        Update: Record<string, never>; // activity_log is immutable
+        Update: never; // activity_log is immutable
       };
     };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Views: Record<never, never>;
+    Functions: Record<never, never>;
     Enums: {
       user_role: 'super_admin' | 'admin' | 'client';
       drop_status: 'active' | 'claimed' | 'expired';
       pickup_method: 'qr_scan' | 'manual';
     };
-    CompositeTypes: Record<string, never>;
   };
 }

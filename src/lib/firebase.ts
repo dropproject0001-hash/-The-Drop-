@@ -11,16 +11,16 @@ import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { env } from './env';
-import firebaseConfig from '../../firebase-applet-config.json';
 
 function buildFirebaseConfig() {
-  const apiKey = env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey;
-  const projectId = env.VITE_FIREBASE_PROJECT_ID || firebaseConfig.projectId;
-  const appId = env.VITE_FIREBASE_APP_ID || firebaseConfig.appId;
+  const apiKey = env.VITE_FIREBASE_API_KEY;
+  const projectId = env.VITE_FIREBASE_PROJECT_ID;
+  const appId = env.VITE_FIREBASE_APP_ID;
 
   if (!apiKey || !projectId || !appId) {
     console.warn(
-      '[Firebase] Missing Firebase config — Firebase features will be disabled. '
+      '[Firebase] Missing VITE_FIREBASE_* env vars — Firebase features will be disabled. ' +
+      'Set VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, and VITE_FIREBASE_APP_ID.'
     );
     return null;
   }
@@ -29,10 +29,10 @@ function buildFirebaseConfig() {
     apiKey,
     projectId,
     appId,
-    authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfig.authDomain || `${projectId}.firebaseapp.com`,
-    storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfig.storageBucket || `${projectId}.firebasestorage.app`,
-    messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfig.messagingSenderId || '',
-    firestoreDatabaseId: env.VITE_FIREBASE_FIRESTORE_DB || firebaseConfig.firestoreDatabaseId || '(default)',
+    authDomain: env.VITE_FIREBASE_AUTH_DOMAIN ?? `${projectId}.firebaseapp.com`,
+    storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET ?? `${projectId}.firebasestorage.app`,
+    messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? '',
+    firestoreDatabaseId: env.VITE_FIREBASE_FIRESTORE_DB ?? '(default)',
   };
 }
 

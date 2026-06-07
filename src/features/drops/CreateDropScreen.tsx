@@ -1,14 +1,15 @@
 /**
  * @file src/features/drops/CreateDropScreen.tsx
  *
- * Modified to support zero-latency local fallback creation when the app
- * runs in mock/test preview modes, ensuring full end-to-end interactive trials.
+ * FIX H-5: lat/lng now default to the user's geolocation (or fall back to
+ *           Mamburao centre) rather than 0,0 (Gulf of Guinea).
+ * FIX M-8: Added a basic assignee field so drops are not silently self-assigned.
+ *           Replace the text input with a proper user-picker once the profiles
+ *           query is wired up.
  */
 import { useState, useEffect } from 'react';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { supabase } from '@/lib/supabase';
-import { useAuthStore, useDropStore } from '@/stores';
-import type { Drop } from '@/types/domain';
 
 // Fallback centre for Mamburao, Occidental Mindoro
 const MAMBURAO_LAT = 13.226;
@@ -19,13 +20,13 @@ export function CreateDropScreen() {
     title: '',
     lat: MAMBURAO_LAT,
     lng: MAMBURAO_LNG,
-    assignedTo: '',  // assignee field
+    assignedTo: '',  // FIX M-8: assignee field
   });
 
   const [locStatus, setLocStatus] = useState<'resolving' | 'resolved' | 'fallback'>('resolving');
   const { validateDrop, loading, error } = useEdgeFunctions();
 
-  // Resolve user's geolocation on mount
+  // FIX H-5: Resolve user's geolocation on mount
   useEffect(() => {
     if (!navigator.geolocation) {
       setLocStatus('fallback');
@@ -41,6 +42,7 @@ export function CreateDropScreen() {
         setLocStatus('resolved');
       },
       () => {
+        // Fall back to Mamburao centre
         setLocStatus('fallback');
       },
       { enableHighAccuracy: true, timeout: 5_000 }
@@ -54,43 +56,13 @@ export function CreateDropScreen() {
     }
 
     try {
-      const state = useAuthStore.getState();
-      const currentUserId = state.profile?.id || 'mock-id';
-      
-      const envMeta = (import.meta as any).env || {};
-      const isMock = (supabase as any).supabaseUrl?.includes('mock') || envMeta.VITE_SUPABASE_URL?.includes('mock');
-
-      if (isMock) {
-        // Direct local state creation to keep the simulation seamless
-        const newMockDrop: Drop = {
-          id: 'drop-' + Math.random().toString(36).substring(2, 9),
-          title: form.title.trim(),
-          lat: form.lat,
-          lng: form.lng,
-          created_by: currentUserId,
-          assigned_to: form.assignedTo.trim() || currentUserId,
-          status: 'active',
-          pickup_order: 0,
-          qr_token: 'qr-' + Math.random().toString(36).substring(2, 11),
-          notes_encrypted: null,
-          photo_url: null,
-          video_url: null,
-          expires_at: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-
-        // Add to Zustand store
-        useDropStore.getState().addDrop(newMockDrop);
-        alert('Deploy Successful! Your dynamic drop has been local-simulated at coordinates ' + form.lat + ', ' + form.lng);
-        setForm((prev) => ({ ...prev, title: '', assignedTo: '' }));
-        return;
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
       // Step 1: Validate via Edge Function
       const validation = await validateDrop<{ valid: boolean; errors: string[] }>({
         ...form,
-        created_by: currentUserId,
+        created_by: user.id,
       });
 
       if (!validation.valid) {
@@ -103,11 +75,12 @@ export function CreateDropScreen() {
         title: form.title.trim(),
         lat: form.lat,
         lng: form.lng,
-        created_by: currentUserId,
-        assigned_to: form.assignedTo.trim() || currentUserId,
+        created_by: user.id,
+        // FIX M-8: use provided assignee or fall back to self (explicitly)
+        assigned_to: form.assignedTo.trim() || user.id,
         status: 'active',
         pickup_order: 0,
-        qr_token: '', // Server will populate
+        qr_token: '', // Server/DB will populate via DEFAULT
       });
 
       if (insertError) throw insertError;
@@ -120,50 +93,40 @@ export function CreateDropScreen() {
   };
 
   return (
-    <div className="p-4 bg-emerald-950/20 backdrop-blur-xl rounded-2xl border border-emerald-900/30">
-      <h2 className="text-lg font-bold mb-3 text-white font-display">Target Launch Wizard</h2>
+    <div className="p-4 bg-card rounded-2xl shadow-sm border border-slate-800">
+      <h2 className="text-xl font-bold mb-4 text-white">Create New Drop</h2>
 
-      <div className="space-y-3">
-        <div>
-          <label className="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Drop Name / Description</label>
-          <input
-            placeholder="e.g., Beach Front supply point B"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full text-xs p-3 bg-black/40 border border-emerald-900/30 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-          />
-        </div>
+      <input
+        placeholder="Drop Title"
+        value={form.title}
+        onChange={(e) => setForm({ ...form, title: e.target.value })}
+        className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl mb-3 text-white placeholder-slate-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+      />
 
-        <div>
-          <label className="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Assignee Operator ID (optional)</label>
-          <input
-            placeholder="Recipient User ID (blank = self-assign)"
-            value={form.assignedTo}
-            onChange={(e) => setForm({ ...form, assignedTo: e.target.value })}
-            className="w-full text-xs p-3 bg-black/40 border border-emerald-900/30 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
-          />
-        </div>
+      {/* FIX M-8: Assignee input */}
+      <input
+        placeholder="Assignee User ID (leave blank to assign to self)"
+        value={form.assignedTo}
+        onChange={(e) => setForm({ ...form, assignedTo: e.target.value })}
+        className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl mb-3 text-white placeholder-slate-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm"
+      />
 
-        {/* Resolved coordinates */}
-        <div className="px-3 py-2.5 bg-black/40 border border-emerald-900/20 rounded-xl text-[11px] text-[#22C55E] flex justify-between items-center font-mono font-medium">
-          <span>COORDS STATUS:</span>
-          <span>
-            {locStatus === 'resolving' && '🛰️ SEARCHING FOR SATELLITE...'}
-            {locStatus === 'resolved' && `🛰️ FIXED: ${form.lat}, ${form.lng}`}
-            {locStatus === 'fallback' && `🛰️ DEFAULT: ${form.lat}, ${form.lng}`}
-          </span>
-        </div>
-
-        <button
-          onClick={handleCreateDrop}
-          disabled={loading || locStatus === 'resolving'}
-          className="w-full bg-gradient-to-r from-green-700 to-emerald-500 hover:opacity-90 active:scale-95 text-white py-3 rounded-xl text-xs tracking-wider uppercase font-extrabold transition-all border border-emerald-400/20 disabled:opacity-50 cursor-pointer flex items-center justify-center"
-        >
-          {loading ? 'DEPLOYING VIA EDGE...' : 'LAUNCH TRANSMISSION PIN'}
-        </button>
-
-        {error && <p className="text-red-400 text-xs mt-1 font-mono">{error}</p>}
+      {/* FIX H-5: Show resolved coordinates */}
+      <div className="mb-3 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-400">
+        {locStatus === 'resolving' && '📍 Resolving your location…'}
+        {locStatus === 'resolved' && `📍 Your location: ${form.lat}, ${form.lng}`}
+        {locStatus === 'fallback' && `📍 Using Mamburao centre: ${form.lat}, ${form.lng}`}
       </div>
+
+      <button
+        onClick={handleCreateDrop}
+        disabled={loading || locStatus === 'resolving'}
+        className="w-full bg-primary hover:bg-primary/90 transition-colors text-white py-3 rounded-xl font-medium disabled:opacity-60"
+      >
+        {loading ? 'Validating…' : 'Create Drop'}
+      </button>
+
+      {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
     </div>
   );
 }
