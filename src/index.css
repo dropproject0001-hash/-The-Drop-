@@ -1,22 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme inline {
-  --color-primary: #0A66C2;
-  --color-emergency: #E63946;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-neutral: #64748B;
-
-  --color-danger: #EF4444;
-  --color-info: #3B82F6;
-  --color-muted: #94A3B8;
-
-  --color-card: #ffffff;
+  --color-primary: #0B6E2F;
+  --color-accent: #22C55E;
+  --color-card: #08150C;
+  --color-success: #16A34A;
+  --color-warning: #EAB308;
+  --color-danger: #DC2626;
+  --color-muted: #7A8A7E;
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
   --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-card: #1E2937;
-  }
+body {
+  background: radial-gradient(circle at top, #0b6e2f 0%, #031108 80%);
+  min-height: 100vh;
+  color: #f1f5f9;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Glassmorphism utility helpers */
+.glass-header {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+}
+
+.glass-card {
+  background: rgba(8, 21, 12, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(34, 197, 94, 0.1);
+}
+
+.glass-chip {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+}
+
+.glass-nav {
+  background: rgba(8, 21, 12, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Custom indicator pulses */
+@keyframes online-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.6; }
+}
+.online-indicator {
+  animation: online-pulse 2s infinite ease-in-out;
 }

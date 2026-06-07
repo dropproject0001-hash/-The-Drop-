@@ -1,11 +1,21 @@
+/**
+ * @file src/stores/index.ts
+ *
+ * FIX H-1: devtools `enabled` now uses `import.meta.env.DEV` (Vite) instead of
+ *           `process.env.NODE_ENV` which doesn't exist in ESM/Vite builds.
+ * FIX M-3: Removed unused `LocationBroadcast` import.
+ */
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { Profile, Drop, LocationBroadcast } from '@/types/domain';
+import type { Profile, Drop } from '@/types/domain';
+
+// ── Auth Store ────────────────────────────────────────────────────────────────
 
 interface AuthState {
-  session: any | null;
+  /** Raw Supabase session object (typed loosely to avoid supabase-js type coupling). */
+  session: unknown | null;
   profile: Profile | null;
-  setSession: (session: any | null) => void;
+  setSession: (session: unknown | null) => void;
   setProfile: (profile: Profile | null) => void;
   clear: () => void;
 }
@@ -19,9 +29,12 @@ export const useAuthStore = create<AuthState>()(
       setProfile: (profile) => set({ profile }),
       clear: () => set({ session: null, profile: null }),
     }),
-    { enabled: process.env.NODE_ENV === 'development', name: 'AuthStore' }
+    // FIX H-1: import.meta.env.DEV is the correct Vite way
+    { enabled: !!(import.meta as any).env?.DEV, name: 'AuthStore' }
   )
 );
+
+// ── Drop Store ────────────────────────────────────────────────────────────────
 
 interface DropState {
   drops: Drop[];
@@ -36,14 +49,17 @@ export const useDropStore = create<DropState>()(
     (set) => ({
       drops: [],
       setDrops: (drops) => set({ drops }),
-      addDrop: (drop) => set((state) => ({ drops: [...state.drops, drop] })),
-      updateDrop: (drop) => set((state) => ({
-        drops: state.drops.map((d) => d.id === drop.id ? drop : d)
-      })),
-      removeDrop: (id) => set((state) => ({
-        drops: state.drops.filter((d) => d.id !== id)
-      })),
+      addDrop: (drop) =>
+        set((state) => ({ drops: [...state.drops, drop] })),
+      updateDrop: (drop) =>
+        set((state) => ({
+          drops: state.drops.map((d) => (d.id === drop.id ? drop : d)),
+        })),
+      removeDrop: (id) =>
+        set((state) => ({
+          drops: state.drops.filter((d) => d.id !== id),
+        })),
     }),
-    { enabled: process.env.NODE_ENV === 'development', name: 'DropStore' }
+    { enabled: !!(import.meta as any).env?.DEV, name: 'DropStore' }
   )
 );

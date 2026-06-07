@@ -1,6 +1,9 @@
 {
-  "name": "",
-  "description": "",
-  "requestFramePermissions": [],
+  "name": "DropPin Ops",
+  "description": "DropPin Ops PWA - Premium mobile mapping, secure drop placements, QR pickups and offline tracking.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
