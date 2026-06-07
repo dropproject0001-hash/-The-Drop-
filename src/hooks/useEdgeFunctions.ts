@@ -25,16 +25,16 @@ export function useEdgeFunctions() {
   return {
     loading,
     error,
-    assignRole: (userId: string, newRole: string) => 
-      callFunction('assign-role', { userId, newRole }),
+    assignRole: <T = any>(userId: string, newRole: string) => 
+      callFunction<T>('assign-role', { userId, newRole }),
     
-    validateDrop: (dropData: any) => 
-      callFunction('validate-drop', { dropData }),
+    validateDrop: <T = Record<string, any>>(dropData: any) => 
+      callFunction<T>('validate-drop', { dropData }),
     
-    confirmQR: (dropId: string, qrCode: string) => 
-      callFunction('confirm-qr', { dropId, qrCode }),
+    confirmQR: <T = any>(dropId: string, qrCode: string) => 
+      callFunction<T>('confirm-qr', { dropId, qrCode }),
     
-    sendNotification: (userId: string, title: string, body: string) => 
-      callFunction('send-notification', { userId, title, body }),
+    sendNotification: <T = any>(userId: string, title: string, body: string) => 
+      callFunction<T>('send-notification', { userId, title, body }),
   };
 }

@@ -28,7 +28,7 @@ export function validateEnv() {
   const missing: string[] = [];
 
   for (const key of requiredEnvVars) {
-    const val = import.meta.env[key];
+    const val = (import.meta as any).env[key];
     if (!val) {
       missing.push(key);
     } else {
@@ -37,7 +37,7 @@ export function validateEnv() {
   }
 
   for (const key of optionalEnvVars) {
-    const val = import.meta.env[key];
+    const val = (import.meta as any).env[key];
     if (val) {
       env[key] = val;
     }
