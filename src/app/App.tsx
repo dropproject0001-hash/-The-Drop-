@@ -15,7 +15,7 @@ import { AuthPage } from '@/features/auth/AuthPage';
 import { SuperAdminPortal } from '@/features/portals/SuperAdminPortal';
 import { AdminPortal } from '@/features/portals/AdminPortal';
 import { ClientPortal } from '@/features/portals/ClientPortal';
-import { supabase } from '@/lib/supabase';
+import { supabase, isMock } from '@/lib/supabase';
 
 // ── ErrorBoundary ─────────────────────────────────────────────────────────────
 interface EBState { hasError: boolean; message: string }
@@ -104,9 +104,16 @@ function MainAppShell() {
   const [currentTab, setCurrentTab] = useState<'home' | 'map' | 'drops' | 'alerts' | 'profile'>('home');
   const [stats, setStats] = useState({ active: 0, claimed: 0, expired: 0 });
 
-  // Real-time stats counting directly synced with Supabase
+  // Real-time stats counting directly synced with Supabase or mock fallback
   useEffect(() => {
     if (!session || !profile) return;
+    
+    if (isMock) {
+      // Set realistic mock counts for mock environments
+      setStats({ active: 4, claimed: 12, expired: 2 });
+      return;
+    }
+
     const fetchStats = async () => {
       const { data } = await supabase.from('drops').select('status');
       if (data) {
@@ -136,8 +143,7 @@ function MainAppShell() {
   }, [session, profile]);
 
   const handleLogout = async () => {
-    const envMeta = (import.meta as any).env || {};
-    if ((supabase as any).supabaseUrl?.includes('mock') || envMeta.VITE_SUPABASE_URL?.includes('mock')) {
+    if (isMock) {
       useAuthStore.getState().clear();
     } else {
       await supabase.auth.signOut();

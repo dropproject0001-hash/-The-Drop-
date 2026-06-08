@@ -9,7 +9,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
-import { supabase } from '@/lib/supabase';
+import { supabase, isMock } from '@/lib/supabase';
 
 // Fallback centre for Mamburao, Occidental Mindoro
 const MAMBURAO_LAT = 13.226;
@@ -52,6 +52,12 @@ export function CreateDropScreen() {
   const handleCreateDrop = async () => {
     if (!form.title.trim()) {
       alert('Please enter a drop title.');
+      return;
+    }
+
+    if (isMock) {
+      alert('Drop created successfully (Mock mode)! It has been rendered locally.');
+      setForm((prev) => ({ ...prev, title: '', assignedTo: '' }));
       return;
     }
 

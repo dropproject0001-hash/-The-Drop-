@@ -12,3 +12,8 @@ const url = env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
 const key = env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
 export const supabase = createClient<Database>(url, key);
+
+export const isMock = !env.VITE_SUPABASE_URL || 
+                      url.includes('placeholder') || 
+                      url.includes('mock');
+

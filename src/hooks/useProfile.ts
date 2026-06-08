@@ -7,7 +7,7 @@
  * FIX M-6: Ambiguous comment removed; role check is now definitive.
  */
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, isMock } from '@/lib/supabase';
 import { useAuthStore } from '@/stores';
 import type { Profile } from '@/types/domain';
 
@@ -48,7 +48,14 @@ export function useProfile() {
   }, []);
 
   useEffect(() => {
-    // If it's a mock session, we bypass real Supabase state fetches completely
+    // If it's mock mode, we bypass real Supabase state fetches completely
+    if (isMock) {
+      const mockProfile = useAuthStore.getState().profile;
+      setProfile(mockProfile);
+      setLoading(false);
+      return;
+    }
+
     if (isMockSession()) {
       const mockProfile = useAuthStore.getState().profile;
       setProfile(mockProfile);
@@ -59,7 +66,7 @@ export function useProfile() {
     // FIX C-4: Subscribe to auth state changes so the profile is always fresh.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (isMockSession()) return; // lock out mock changes
+        if (isMockSession() || isMock) return; // lock out mock changes
 
         useAuthStore.getState().setSession(session);
         if (session?.user) {
@@ -76,7 +83,7 @@ export function useProfile() {
 
     // Also attempt an immediate fetch for the initial render.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (isMockSession()) return; // lock out mock changes
+      if (isMockSession() || isMock) return; // lock out mock changes
       
       useAuthStore.getState().setSession(session);
       if (session?.user) {

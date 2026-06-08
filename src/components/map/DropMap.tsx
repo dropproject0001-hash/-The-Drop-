@@ -21,7 +21,7 @@ import MarkerClusterGroup from 'react-leaflet-cluster';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { supabase } from '@/lib/supabase';
+import { supabase, isMock } from '@/lib/supabase';
 import { EpicModal } from '@/components/ui/EpicModal';
 import { useProfile } from '@/hooks/useProfile';
 import type { Drop, DropStatus } from '@/types/domain';
@@ -78,6 +78,64 @@ export function DropMap({ height = '650px' }: DropMapProps) {
 
   // ── Realtime drops ──────────────────────────────────────────────────────────
   useEffect(() => {
+    if (isMock) {
+      // Load interactive realistic mock drops in Mamburao, Occidental Mindoro
+      setDrops([
+        {
+          id: 'mock-drop-1',
+          created_by: 'mock-admin',
+          assigned_to: profile?.id || 'mock-client',
+          lat: 13.2245,
+          lng: 120.5945,
+          title: 'Operation Goldrush: Container #21 📍',
+          notes_encrypted: 'U0VESV9DT0RFX0FDVElWRQ==', // base64 mock
+          photo_url: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=600&q=80',
+          video_url: '',
+          qr_token: 'mock-qr-token-1',
+          status: 'active',
+          pickup_order: 1,
+          expires_at: new Date(Date.now() + 2 * 24 * 3600 * 1000).toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 'mock-drop-2',
+          created_by: 'mock-admin',
+          assigned_to: profile?.id || 'mock-client',
+          lat: 13.2272,
+          lng: 120.5982,
+          title: 'Secure Handoff: Port Area Cargo Box 📦',
+          notes_encrypted: 'U0VESV9DT0RFX0FDVElWRTI=',
+          photo_url: '',
+          video_url: '',
+          qr_token: 'mock-qr-token-2',
+          status: 'claimed',
+          pickup_order: 2,
+          expires_at: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+          created_at: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 'mock-drop-3',
+          created_by: 'mock-admin1',
+          assigned_to: 'some-other-client',
+          lat: 13.2221,
+          lng: 120.5921,
+          title: 'Hardware Deposit: Behind Hardware Shop 🛠️',
+          notes_encrypted: '',
+          photo_url: '',
+          video_url: '',
+          qr_token: 'mock-qr-token-3',
+          status: 'active',
+          pickup_order: 3,
+          expires_at: new Date(Date.now() + 6 * 3600 * 1000).toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ]);
+      return;
+    }
+
     const fetchDrops = async () => {
       const { data } = await supabase.from('drops').select('*');
       if (data) setDrops(data as Drop[]);
@@ -103,11 +161,47 @@ export function DropMap({ height = '650px' }: DropMapProps) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [profile]);
 
   // ── Super Admin: track other admins ────────────────────────────────────────
   useEffect(() => {
     if (!isSuperAdmin) return;
+
+    if (isMock) {
+      // Simulate two other active mobile admins wandering in Mamburao
+      const uids = ['mock-id-1', 'mock-id-2'];
+      const offset = { 'mock-id-1': { lat: 0.001, lng: -0.001 }, 'mock-id-2': { lat: -0.001, lng: 0.002 } };
+      
+      const simulateMovement = () => {
+        setAdminLocations((prev) => {
+          const next = { ...prev };
+          uids.forEach((uid) => {
+            const current = next[uid] || {
+              lat: MAMBURAO_CENTER[0] + offset[uid as keyof typeof offset].lat,
+              lng: MAMBURAO_CENTER[1] + offset[uid as keyof typeof offset].lng,
+              accuracy: 12,
+              updatedAt: new Date(),
+            };
+            // Slightly wander
+            const newLat = current.lat + (Math.random() - 0.5) * 0.0004;
+            const newLng = current.lng + (Math.random() - 0.5) * 0.0004;
+            next[uid] = {
+              lat: newLat,
+              lng: newLng,
+              accuracy: Math.floor(8 + Math.random() * 10),
+              updatedAt: new Date(),
+            };
+          });
+          return next;
+        });
+      };
+
+      // Set initial positions
+      simulateMovement();
+
+      const moveInterval = setInterval(simulateMovement, 5000);
+      return () => clearInterval(moveInterval);
+    }
 
     const locChannel = supabase
       .channel('locations-realtime')
@@ -237,12 +331,16 @@ export function DropMap({ height = '650px' }: DropMapProps) {
           now - lastBroadcastRef.current > BROADCAST_THROTTLE_MS
         ) {
           lastBroadcastRef.current = now;
-          await (supabase as any).from('locations').insert({
-            user_id: profile.id,
-            lat: latitude,
-            lng: longitude,
-            accuracy: acc,
-          });
+          if (isMock) {
+            console.log(`[Mock Broadcast] Location user_id=${profile.id} lat=${latitude} lng=${longitude}`);
+          } else {
+            await (supabase as any).from('locations').insert({
+              user_id: profile.id,
+              lat: latitude,
+              lng: longitude,
+              accuracy: acc,
+            });
+          }
         }
       },
       (err) => {

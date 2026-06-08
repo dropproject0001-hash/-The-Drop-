@@ -7,7 +7,7 @@
  *           single-call consumers, but resets correctly between invocations.
  */
 import { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, isMock } from '@/lib/supabase';
 
 export function useEdgeFunctions() {
   const [loading, setLoading] = useState(false);
@@ -19,6 +19,32 @@ export function useEdgeFunctions() {
   ): Promise<T> => {
     setLoading(true);
     setError(null); // Reset before each call
+
+    if (isMock) {
+      // Simulate edge function latency
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      setLoading(false);
+
+      if (functionName === 'assign-role') {
+        return { success: true } as unknown as T;
+      }
+      if (functionName === 'validate-drop') {
+        return { valid: true, errors: [] } as unknown as T;
+      }
+      if (functionName === 'confirm-qr') {
+        return { message: "QR confirmed! Package successfully claimed 📦" } as unknown as T;
+      }
+      if (functionName === 'send-notification') {
+        return { success: true } as unknown as T;
+      }
+      if (functionName === 'register-client') {
+        return { success: true } as unknown as T;
+      }
+      if (functionName === 'verify-otp') {
+        return { full_name: "Client Operator" } as unknown as T;
+      }
+      return {} as T;
+    }
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke(
@@ -36,6 +62,7 @@ export function useEdgeFunctions() {
       setLoading(false);
     }
   }, []);
+
 
   return {
     loading,

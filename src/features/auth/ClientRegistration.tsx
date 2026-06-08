@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, isMock } from '@/lib/supabase';
+import { useAuthStore } from '@/stores';
 
 export function ClientRegistration() {
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
@@ -14,6 +15,14 @@ export function ClientRegistration() {
 
     setLoading(true);
     setMessage('');
+
+    if (isMock) {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setMessage('OTP sent successfully! Enter 123456 as code.');
+      setStep('otp');
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase.functions.invoke('register-client', {
@@ -38,6 +47,32 @@ export function ClientRegistration() {
     setLoading(true);
     setMessage('');
 
+    if (isMock) {
+      await new Promise((resolve) => setTimeout(resolve, 850));
+      if (otp !== '123456') {
+        setMessage('Invalid OTP code. Try of 123456.');
+        setLoading(false);
+        return;
+      }
+      
+      const mockId = 'mock-client-' + Math.random().toString(36).substr(2, 9);
+      useAuthStore.getState().setSession({ user: { id: mockId }, access_token: 'mock', refresh_token: 'mock' });
+      useAuthStore.getState().setProfile({
+        id: mockId,
+        role: 'client',
+        display_name: `Client (${phoneNumber})`,
+        avatar_url: null,
+        is_online: true,
+        last_seen: new Date().toISOString(),
+        push_endpoint: null,
+        push_keys: null,
+        created_at: new Date().toISOString()
+      });
+      setMessage('Registration successful! Welcome!');
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke('verify-otp', {
         body: { phone_number: phoneNumber, otp_code: otp },
@@ -53,6 +88,7 @@ export function ClientRegistration() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="max-w-md mx-auto p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg text-slate-100">

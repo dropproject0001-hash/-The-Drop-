@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, isMock } from '@/lib/supabase';
 import { Transaction, TransactionDetailModal } from './TransactionDetailModal';
 
 export function TransactionHistoryList() {
@@ -9,6 +9,8 @@ export function TransactionHistoryList() {
 
   useEffect(() => {
     fetchTransactions();
+
+    if (isMock) return;
 
     // Subscribe to realtime updates for transactions
     const channel = supabase
@@ -33,6 +35,44 @@ export function TransactionHistoryList() {
 
   const fetchTransactions = async () => {
     setLoading(true);
+    
+    if (isMock) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setTransactions([
+        {
+          id: 't-1',
+          drop_id: 'mock-drop-1',
+          amount: 5000,
+          status: 'pending',
+          created_at: new Date().toISOString(),
+          gps_lat: 13.2245,
+          gps_lng: 120.5945,
+          photo_url: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=600&q=80'
+        },
+        {
+          id: 't-2',
+          drop_id: 'mock-drop-2',
+          amount: 15500,
+          status: 'granted',
+          created_at: new Date(Date.now() - 3600 * 1000).toISOString(),
+          gps_lat: 13.2272,
+          gps_lng: 120.5982,
+          photo_url: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=600&q=80'
+        },
+        {
+          id: 't-3',
+          drop_id: 'mock-drop-3',
+          amount: 8200,
+          status: 'declined',
+          created_at: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+          gps_lat: 13.2221,
+          gps_lng: 120.5921
+        }
+      ]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('transactions')
@@ -49,6 +89,12 @@ export function TransactionHistoryList() {
   };
 
   const handleGrant = async (id: string) => {
+    if (isMock) {
+      setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'granted' } : t));
+      setSelectedTransaction(current => current?.id === id ? { ...current, status: 'granted' } : current);
+      return;
+    }
+
     try {
       const { error } = await (supabase as any)
         .from('transactions')
@@ -62,6 +108,12 @@ export function TransactionHistoryList() {
   };
 
   const handleDecline = async (id: string) => {
+    if (isMock) {
+      setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'declined' } : t));
+      setSelectedTransaction(current => current?.id === id ? { ...current, status: 'declined' } : current);
+      return;
+    }
+
     try {
       const { error } = await (supabase as any)
         .from('transactions')
