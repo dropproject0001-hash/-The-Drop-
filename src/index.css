@@ -1,24 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
-@theme inline {
-  --color-primary: #0B6E2F;
-  --color-accent: #22C55E;
-  --color-card: #08150C;
-  --color-success: #16A34A;
-  --color-warning: #EAB308;
-  --color-danger: #DC2626;
-  --color-muted: #7A8A7E;
-  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
-  --font-display: "Space Grotesk", "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+@theme {
+  /* Emerald Cyber-Luxury Theme */
+  --bg-primary: #050505;
+  --bg-secondary: #0b0f0c;
+  --card-bg: rgba(10, 15, 10, 0.85);
+  --accent-primary: #22c55e;
+  --accent-glow: #4ade80;
+  --border-subtle: rgba(74, 222, 128, 0.15);
+  --text-primary: #f5f5f5;
+  --text-secondary: #a1a1aa;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
   --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 body {
-  background: radial-gradient(circle at top, #0b6e2f 0%, #031108 80%);
+  background-color: var(--bg-primary);
   min-height: 100vh;
-  color: #f1f5f9;
+  color: var(--text-primary);
   font-family: var(--font-sans);
   overflow-x: hidden;
 }
@@ -59,4 +60,19 @@ body {
 }
 .online-indicator {
   animation: online-pulse 2s infinite ease-in-out;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }

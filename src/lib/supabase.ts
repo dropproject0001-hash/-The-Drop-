@@ -1,19 +1,15 @@
-/**
- * @file src/lib/supabase.ts
- *
- * Supabase client initialization.
- * env.ts no longer throws on missing vars, so we guard here.
- */
 import { createClient } from '@supabase/supabase-js';
-import { env } from './env';
-import type { Database } from '@/types/database';
 
-const url = env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
-const key = env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+let url = (import.meta as any).env.VITE_SUPABASE_URL?.trim() || '';
+if (url && !url.startsWith('https://') && !url.startsWith('http://')) {
+    url = 'https://' + url;
+}
+const supabaseUrl = url;
+const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY?.trim() || '';
 
-export const supabase = createClient<Database>(url, key);
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('Supabase credentials missing. Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
+}
 
-export const isMock = !env.VITE_SUPABASE_URL || 
-                      url.includes('placeholder') || 
-                      url.includes('mock');
-
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const isMock = !supabaseUrl || !supabaseAnonKey;

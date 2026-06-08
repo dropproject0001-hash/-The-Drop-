@@ -30,7 +30,7 @@ export const useAuthStore = create<AuthState>()(
       clear: () => set({ session: null, profile: null }),
     }),
     // FIX H-1: import.meta.env.DEV is the correct Vite way
-    { enabled: (import.meta as any).env?.DEV, name: 'AuthStore' }
+    { enabled: !!(import.meta as any).env?.DEV, name: 'AuthStore' }
   )
 );
 
@@ -60,6 +60,6 @@ export const useDropStore = create<DropState>()(
           drops: state.drops.filter((d) => d.id !== id),
         })),
     }),
-    { enabled: (import.meta as any).env?.DEV, name: 'DropStore' }
+    { enabled: !!(import.meta as any).env?.DEV, name: 'DropStore' }
   )
 );

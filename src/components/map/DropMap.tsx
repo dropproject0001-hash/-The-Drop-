@@ -13,7 +13,7 @@
  *  M-5  : handleMarkerClick wrapped in useCallback.
  *  C-3  : DropStatus enum aligned to DB values ('active'|'claimed'|'expired').
  */
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, LayerGroup } from 'react-leaflet';
 import { Navigation, Download } from 'lucide-react';
 import L from 'leaflet';
@@ -21,13 +21,13 @@ import MarkerClusterGroup from 'react-leaflet-cluster';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { supabase, isMock } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { EpicModal } from '@/components/ui/EpicModal';
 import { useProfile } from '@/hooks/useProfile';
 import type { Drop, DropStatus } from '@/types/domain';
+import { useDrops } from '@/hooks/useDrops';
 
 // ── FIX H-3: Leaflet default icon fix for Vite ────────────────────────────────
-// Without this, the default marker uses broken URL references.
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -38,8 +38,8 @@ L.Icon.Default.mergeOptions({
 // ── FIX C-3: Status colours aligned to DB enum ────────────────────────────────
 const STATUS_COLORS: Record<DropStatus, string> = {
   active: '#10B981',
-  claimed: '#3B82F6',   // was 'completed'
-  expired: '#EF4444',   // was 'cancelled'
+  claimed: '#3B82F6',
+  expired: '#EF4444',
 };
 
 interface DropMapProps {
@@ -58,7 +58,7 @@ const BROADCAST_THROTTLE_MS = 5_000;
 const STALE_LOCATION_MS = 5 * 60 * 1_000;
 
 export function DropMap({ height = '650px' }: DropMapProps) {
-  const [drops, setDrops] = useState<Drop[]>([]);
+  const { drops } = useDrops();
   const [filteredStatus, setFilteredStatus] = useState<DropStatus | 'all'>('all');
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -76,132 +76,9 @@ export function DropMap({ height = '650px' }: DropMapProps) {
 
   const lastBroadcastRef = useRef<number>(0);
 
-  // ── Realtime drops ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (isMock) {
-      // Load interactive realistic mock drops in Mamburao, Occidental Mindoro
-      setDrops([
-        {
-          id: 'mock-drop-1',
-          created_by: 'mock-admin',
-          assigned_to: profile?.id || 'mock-client',
-          lat: 13.2245,
-          lng: 120.5945,
-          title: 'Operation Goldrush: Container #21 📍',
-          notes_encrypted: 'U0VESV9DT0RFX0FDVElWRQ==', // base64 mock
-          photo_url: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=600&q=80',
-          video_url: '',
-          qr_token: 'mock-qr-token-1',
-          status: 'active',
-          pickup_order: 1,
-          expires_at: new Date(Date.now() + 2 * 24 * 3600 * 1000).toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: 'mock-drop-2',
-          created_by: 'mock-admin',
-          assigned_to: profile?.id || 'mock-client',
-          lat: 13.2272,
-          lng: 120.5982,
-          title: 'Secure Handoff: Port Area Cargo Box 📦',
-          notes_encrypted: 'U0VESV9DT0RFX0FDVElWRTI=',
-          photo_url: '',
-          video_url: '',
-          qr_token: 'mock-qr-token-2',
-          status: 'claimed',
-          pickup_order: 2,
-          expires_at: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
-          created_at: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: 'mock-drop-3',
-          created_by: 'mock-admin1',
-          assigned_to: 'some-other-client',
-          lat: 13.2221,
-          lng: 120.5921,
-          title: 'Hardware Deposit: Behind Hardware Shop 🛠️',
-          notes_encrypted: '',
-          photo_url: '',
-          video_url: '',
-          qr_token: 'mock-qr-token-3',
-          status: 'active',
-          pickup_order: 3,
-          expires_at: new Date(Date.now() + 6 * 3600 * 1000).toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ]);
-      return;
-    }
-
-    const fetchDrops = async () => {
-      const { data } = await supabase.from('drops').select('*');
-      if (data) setDrops(data as Drop[]);
-    };
-    fetchDrops();
-
-    const channel = supabase
-      .channel('drops-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'drops' },
-        (payload) => {
-          if (payload.eventType === 'INSERT')
-            setDrops((prev) => [...prev, payload.new as Drop]);
-          if (payload.eventType === 'UPDATE')
-            setDrops((prev) =>
-              prev.map((d) => (d.id === payload.new.id ? (payload.new as Drop) : d))
-            );
-          if (payload.eventType === 'DELETE')
-            setDrops((prev) => prev.filter((d) => d.id !== (payload.old as Drop).id));
-        }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [profile]);
-
   // ── Super Admin: track other admins ────────────────────────────────────────
   useEffect(() => {
     if (!isSuperAdmin) return;
-
-    if (isMock) {
-      // Simulate two other active mobile admins wandering in Mamburao
-      const uids = ['mock-id-1', 'mock-id-2'];
-      const offset = { 'mock-id-1': { lat: 0.001, lng: -0.001 }, 'mock-id-2': { lat: -0.001, lng: 0.002 } };
-      
-      const simulateMovement = () => {
-        setAdminLocations((prev) => {
-          const next = { ...prev };
-          uids.forEach((uid) => {
-            const current = next[uid] || {
-              lat: MAMBURAO_CENTER[0] + offset[uid as keyof typeof offset].lat,
-              lng: MAMBURAO_CENTER[1] + offset[uid as keyof typeof offset].lng,
-              accuracy: 12,
-              updatedAt: new Date(),
-            };
-            // Slightly wander
-            const newLat = current.lat + (Math.random() - 0.5) * 0.0004;
-            const newLng = current.lng + (Math.random() - 0.5) * 0.0004;
-            next[uid] = {
-              lat: newLat,
-              lng: newLng,
-              accuracy: Math.floor(8 + Math.random() * 10),
-              updatedAt: new Date(),
-            };
-          });
-          return next;
-        });
-      };
-
-      // Set initial positions
-      simulateMovement();
-
-      const moveInterval = setInterval(simulateMovement, 5000);
-      return () => clearInterval(moveInterval);
-    }
 
     const locChannel = supabase
       .channel('locations-realtime')
@@ -331,16 +208,12 @@ export function DropMap({ height = '650px' }: DropMapProps) {
           now - lastBroadcastRef.current > BROADCAST_THROTTLE_MS
         ) {
           lastBroadcastRef.current = now;
-          if (isMock) {
-            console.log(`[Mock Broadcast] Location user_id=${profile.id} lat=${latitude} lng=${longitude}`);
-          } else {
-            await (supabase as any).from('locations').insert({
-              user_id: profile.id,
-              lat: latitude,
-              lng: longitude,
-              accuracy: acc,
-            });
-          }
+          await (supabase.from('locations') as any).insert({
+            user_id: profile.id,
+            lat: latitude,
+            lng: longitude,
+            accuracy: acc,
+          });
         }
       },
       (err) => {
@@ -400,27 +273,28 @@ export function DropMap({ height = '650px' }: DropMapProps) {
     : drops.filter((d) => d.status === filteredStatus);
 
   return (
-    <div className="relative">
+    <div className="relative h-full flex flex-col">
       {/* Status Filters */}
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
         <button
           onClick={() => setFilteredStatus('all')}
-          className={`px-4 py-1.5 rounded-full text-sm ${
-            filteredStatus === 'all' ? 'bg-primary text-white' : 'bg-slate-800 text-slate-300'
+          className={`px-3 py-1 rounded bg-black/80 backdrop-blur-md border text-xs font-mono tracking-widest uppercase transition-all ${
+            filteredStatus === 'all' ? 'border-[--accent-primary] text-[--accent-primary] shadow-[0_0_10px_rgba(34,197,94,0.3)]' : 'border-white/10 text-[--text-secondary] hover:border-white/30 hover:text-white'
           }`}
         >
-          All
+          ALL PINS
         </button>
         {/* FIX C-3: status values from DB enum */}
         {(Object.keys(STATUS_COLORS) as DropStatus[]).map((status) => (
           <button
             key={status}
             onClick={() => setFilteredStatus(status)}
-            className={`px-4 py-1.5 rounded-full text-sm capitalize ${
-              filteredStatus === status ? 'text-white' : 'bg-slate-800 text-slate-300'
+            className={`px-3 py-1 rounded bg-black/80 backdrop-blur-md border text-xs font-mono tracking-widest uppercase transition-all ${
+              filteredStatus === status ? 'text-white border-current' : 'border-white/10 text-[--text-secondary] hover:border-white/30 hover:text-white'
             }`}
             style={{
-              backgroundColor: filteredStatus === status ? STATUS_COLORS[status] : undefined,
+              borderColor: filteredStatus === status ? STATUS_COLORS[status] : undefined,
+              boxShadow: filteredStatus === status ? `0 0 10px ${STATUS_COLORS[status]}40` : undefined,
             }}
           >
             {status}
@@ -430,8 +304,8 @@ export function DropMap({ height = '650px' }: DropMapProps) {
 
       {/* Map Container */}
       <div
-        style={{ height, width: '100%' }}
-        className="rounded-2xl overflow-hidden border border-slate-700 relative z-0 shadow-lg"
+        style={{ height: height === '100%' ? '100%' : height, width: '100%' }}
+        className="flex-1 w-full overflow-hidden relative z-0"
       >
         <MapContainer center={MAMBURAO_CENTER} zoom={14} style={{ height: '100%', width: '100%' }}>
           <TileLayer

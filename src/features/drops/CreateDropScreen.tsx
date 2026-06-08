@@ -9,7 +9,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
-import { supabase, isMock } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 // Fallback centre for Mamburao, Occidental Mindoro
 const MAMBURAO_LAT = 13.226;
@@ -55,12 +55,6 @@ export function CreateDropScreen() {
       return;
     }
 
-    if (isMock) {
-      alert('Drop created successfully (Mock mode)! It has been rendered locally.');
-      setForm((prev) => ({ ...prev, title: '', assignedTo: '' }));
-      return;
-    }
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -77,7 +71,7 @@ export function CreateDropScreen() {
       }
 
       // Step 2: Insert (RLS enforced server-side)
-      const { error: insertError } = await (supabase as any).from('drops').insert({
+      const { error: insertError } = await (supabase.from('drops') as any).insert({
         title: form.title.trim(),
         lat: form.lat,
         lng: form.lng,
