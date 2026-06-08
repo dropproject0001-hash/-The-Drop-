@@ -149,8 +149,8 @@ export function AuthPage() {
         
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2">DropPin Ops</h1>
-          <p className="text-slate-400">Secure Location Tracking & Deployment</p>
+          <h1 className="text-4xl font-bold text-primary mb-2">The Drop 👽</h1>
+          <p className="text-slate-400">Transaction📩  Pin Location Drop📍 Anonymous 👽</p>
         </div>
 
         {/* Mode Toggle */}
@@ -161,7 +161,7 @@ export function AuthPage() {
               mode === 'client' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-300'
             }`}
           >
-            <User size={18} /> Client Area
+            <User size={18} /> Getto Logins💲
           </button>
           <button
             onClick={() => {
@@ -172,7 +172,7 @@ export function AuthPage() {
               mode === 'staff' ? 'bg-primary text-white shadow' : 'text-slate-400 hover:text-slate-300'
             }`}
           >
-            <Shield size={18} /> Staff Portal
+            <Shield size={18} /> Dropper/Boss Logins☢️
           </button>
         </div>
 
@@ -191,7 +191,7 @@ export function AuthPage() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Shield size={20} className="text-primary" /> 
-                {staffAction === 'login' ? 'Staff Login' : 'Staff Registration'}
+                {staffAction === 'login' ? 'Dopper and Boss Logins' : 'Staff Registration'}
               </h2>
               <button
                 onClick={() => {

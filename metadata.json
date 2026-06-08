@@ -1,6 +1,6 @@
 {
-  "name": "DropPin Ops",
-  "description": "DropPin Ops PWA - Premium mobile mapping, secure drop placements, QR pickups and offline tracking.",
+  "name": "The Drop 👽",
+  "description": "The Drop PWA - Premium mobile mapping, secure drop placements, QR pickups and offline tracking.",
   "requestFramePermissions": [
     "camera",
     "geolocation"

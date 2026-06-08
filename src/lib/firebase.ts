@@ -11,16 +11,28 @@ import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { env } from './env';
+import firebaseConfig from '../../firebase-applet-config.json';
 
 function buildFirebaseConfig() {
+  if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.projectId) {
+    return {
+      apiKey: firebaseConfig.apiKey,
+      projectId: firebaseConfig.projectId,
+      appId: firebaseConfig.appId,
+      authDomain: firebaseConfig.authDomain ?? `${firebaseConfig.projectId}.firebaseapp.com`,
+      storageBucket: firebaseConfig.storageBucket ?? `${firebaseConfig.projectId}.firebasestorage.app`,
+      messagingSenderId: firebaseConfig.messagingSenderId ?? '',
+      firestoreDatabaseId: firebaseConfig.firestoreDatabaseId ?? '(default)',
+    };
+  }
+
   const apiKey = env.VITE_FIREBASE_API_KEY;
   const projectId = env.VITE_FIREBASE_PROJECT_ID;
   const appId = env.VITE_FIREBASE_APP_ID;
 
   if (!apiKey || !projectId || !appId) {
     console.warn(
-      '[Firebase] Missing VITE_FIREBASE_* env vars — Firebase features will be disabled. ' +
-      'Set VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, and VITE_FIREBASE_APP_ID.'
+      '[Firebase] Missing firebase-applet-config.json and VITE_FIREBASE_* env vars — Firebase features will be disabled.'
     );
     return null;
   }
