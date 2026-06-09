@@ -46,7 +46,15 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // 1. Initial fetch
     fetchRole();
+
+    // 2. Listen for auth changes to update role state
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchRole();
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const value = {

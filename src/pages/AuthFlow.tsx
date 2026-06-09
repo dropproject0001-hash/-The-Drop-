@@ -165,7 +165,6 @@ export default function AuthFlow() {
           >
             {/* Ambient Background Video */}
             <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-              <div className="absolute inset-0 w-full h-full bg-cover bg-center" style={{ backgroundImage: "url('/Backgroundimage.png')" }} />
               <video
                 src="/grok_video_2026-06-10-00-44-15.mp4"
                 autoPlay

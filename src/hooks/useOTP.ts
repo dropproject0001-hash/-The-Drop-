@@ -21,12 +21,23 @@ export function useOTP() {
     }
 
     try {
-      // We invoke the send-otp edge function
-      const { data, error: fnError } = await supabase.functions.invoke('send-otp', {
-        body: { phone, purpose },
+      // Tactical workaround: Use fetch directly for better control
+      const baseUrl = (supabase as any).supabaseUrl;
+      const anonKey = (supabase as any).supabaseKey;
+
+      const response = await fetch(`${baseUrl}/functions/v1/send-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({ phone, purpose }),
       });
 
-      if (fnError) throw fnError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send OTP');
+      }
 
       // Start listening for SMS on Android (fails gracefully on standard browsers)
       await startListeningForOTP();
@@ -81,6 +92,7 @@ export function useOTP() {
     setLoading(true);
     setError(null);
 
+    // If Supabase is not configured, fallback to mock verification
     if (!isSupabaseConfigured) {
       await new Promise((resolve) => setTimeout(resolve, 800));
       if (code === '123456') {
@@ -92,29 +104,24 @@ export function useOTP() {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('otp_codes')
-        .select('*')
-        .eq('phone', phone)
-        .eq('code', code)
-        .eq('purpose', purpose)
-        .eq('used', false)
-        .gte('expires_at', new Date().toISOString())
-        .maybeSingle();
+      // Tactical workaround: Use fetch directly for better control
+      const baseUrl = (supabase as any).supabaseUrl;
+      const anonKey = (supabase as any).supabaseKey;
 
-      if (error) throw error;
-      if (!data) {
-        throw new Error('Invalid or expired OTP');
+      const response = await fetch(`${baseUrl}/functions/v1/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({ phone_number: phone, otp_code: code }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Verification failed');
       }
-
-      // Mark as used
-      const { error: updateError } = await supabase
-        .from('otp_codes')
-        .update({ used: true })
-        .eq('id', data.id);
-
-      if (updateError) throw updateError;
-
+      
       return { success: true };
     } catch (err: any) {
       setError(err.message || 'Verification failed');
