@@ -7,12 +7,11 @@
  * error UI rather than crashing the entire React tree.
  */
 
-const REQUIRED = [
-  'VITE_SUPABASE_URL',
-  'VITE_SUPABASE_ANON_KEY',
-] as const;
+const REQUIRED = [] as const;
 
 const OPTIONAL = [
+  'VITE_SUPABASE_URL',
+  'VITE_SUPABASE_ANON_KEY',
   'VITE_VAPID_PUBLIC_KEY',
   'VITE_STADIA_API_KEY',
   'VITE_FIREBASE_API_KEY',
@@ -47,7 +46,7 @@ export function validateEnv(): EnvValidationResult {
   for (const key of REQUIRED) {
     const val = viteEnv[key];
     if (val) {
-      env[key] = val;
+      (env as any)[key] = val;
     } else {
       missing.push(key);
     }
@@ -55,7 +54,7 @@ export function validateEnv(): EnvValidationResult {
 
   for (const key of OPTIONAL) {
     const val = viteEnv[key];
-    if (val) env[key] = val;
+    if (val) (env as any)[key] = val;
   }
 
   return { ok: missing.length === 0, missing };

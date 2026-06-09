@@ -1,5 +1,7 @@
-import { DropMap } from '@/components/map/DropMap';
+import { lazy, Suspense } from 'react';
 import { Activity, Radio, Shield, Users, PackageSearch, Terminal } from 'lucide-react';
+
+const DropMap = lazy(() => import('@/components/map/DropMap'));
 
 export function SuperAdminPanel() {
   return (
@@ -31,7 +33,14 @@ export function SuperAdminPanel() {
 
       {/* Map Area */}
       <div className="flex-1 relative min-h-[300px] z-10">
-        <DropMap height="100%" />
+        <Suspense fallback={
+          <div className="flex-1 h-full w-full bg-black/95 flex items-center justify-center font-mono text-xs uppercase text-[#106011]/80 tracking-widest animate-pulse min-h-[300px]">
+            <span className="w-2 h-2 rounded-full bg-[#106011] animate-ping mr-2"></span>
+            Loading Gods Eye Map telemetry...
+          </div>
+        }>
+          <DropMap height="100%" />
+        </Suspense>
         {/* Absolute HUD */}
         <div className="absolute top-4 left-4 z-[400] flex flex-col gap-2 pointer-events-none">
           <HUDItem bg="bg-black/85" border="border-[#106011]/40" text="text-[#106011] drop-shadow-[0_0_4px_rgba(16,96,17,0.5)]">

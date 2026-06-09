@@ -1,5 +1,7 @@
-import { DropMap } from '@/components/map/DropMap';
+import { lazy, Suspense } from 'react';
 import { Radio, Crosshair, Package, Upload } from 'lucide-react';
+
+const DropMap = lazy(() => import('@/components/map/DropMap'));
 
 export function DropperPanel() {
   return (
@@ -19,7 +21,14 @@ export function DropperPanel() {
 
       {/* Map Area */}
       <div className="flex-1 relative min-h-[300px]">
-        <DropMap height="100%" />
+        <Suspense fallback={
+          <div className="flex-1 h-full w-full bg-black/95 flex items-center justify-center font-mono text-xs uppercase text-blue-400 tracking-widest animate-pulse min-h-[300px]">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping mr-2"></span>
+            Loading Dropper Map telemetry...
+          </div>
+        }>
+          <DropMap height="100%" />
+        </Suspense>
         {/* Absolute HUD */}
         <div className="absolute top-4 left-4 z-[400] flex flex-col gap-2 pointer-events-none">
           <HUDItem bg="bg-blue-950/80" border="border-blue-500/30" text="text-blue-200">

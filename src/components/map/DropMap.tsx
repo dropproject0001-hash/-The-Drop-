@@ -482,3 +482,5 @@ export function DropMap({ height = '650px' }: DropMapProps) {
     </div>
   );
 }
+
+export default DropMap;
