@@ -1,17 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
-let url = (import.meta as any).env.VITE_SUPABASE_URL?.trim() || '';
-const rawAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY?.trim() || '';
-export const isMock = !url || !rawAnonKey;
+const rawUrl = ((import.meta as any).env.VITE_SUPABASE_URL || '').trim();
+const rawKey = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY || '').trim();
 
-if (url && !url.startsWith('https://') && !url.startsWith('http://')) {
-    url = 'https://' + url;
+const supabaseUrl = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
+const supabaseAnonKey = rawKey;
+
+const hasValidCredentials = supabaseUrl.includes('supabase.co') && supabaseAnonKey.length > 20;
+
+if (!hasValidCredentials) {
+  console.error(
+    '[Supabase] Missing or invalid VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY.\n' +
+    'Create a .env file from .env.example and restart the dev server.'
+  );
 }
-const supabaseUrl = url || 'https://mock-supabase-placeholder.co';
-const supabaseAnonKey = rawAnonKey || 'mock-anon-key';
 
-if (isMock) {
-  console.warn('Supabase credentials missing. App is running in MOCK mode.');
-}
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const isSupabaseConfigured = hasValidCredentials;

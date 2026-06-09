@@ -1,0 +1,75 @@
+// src/lib/validateEnv.ts
+// Dedicated environment validation module (Supabase-only)
+
+export interface EnvValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+export function validateEnv(): EnvValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  const supabaseUrl = ((import.meta as any).env.VITE_SUPABASE_URL || '').trim();
+  const supabaseKey = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY || '').trim();
+
+  // Critical checks
+  if (!supabaseUrl) {
+    errors.push('VITE_SUPABASE_URL is missing');
+  } else if (!supabaseUrl.includes('supabase.co')) {
+    errors.push('VITE_SUPABASE_URL does not look like a valid Supabase URL');
+  }
+
+  if (!supabaseKey) {
+    errors.push('VITE_SUPABASE_ANON_KEY is missing');
+  } else if (supabaseKey.length < 30) {
+    errors.push('VITE_SUPABASE_ANON_KEY appears too short');
+  }
+
+  // Optional but recommended
+  const geminiKey = ((import.meta as any).env.GEMINI_API_KEY || '').trim();
+  if (!geminiKey) {
+    warnings.push('GEMINI_API_KEY is not set (AI features may be limited)');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+/**
+ * Call this early in the app. Throws in development for visibility.
+ */
+export function validateEnvOnStartup(): void {
+  const result = validateEnv();
+
+  if (result.warnings.length > 0) {
+    console.warn('[ENV] Warnings:', result.warnings);
+  }
+
+  if (!result.isValid) {
+    const message = `Environment validation failed:\n${result.errors.map(e => `• ${e}`).join('\n')}`;
+    console.error(message);
+
+    if ((import.meta as any).env.DEV) {
+      // Show visible error in development
+      const root = document.getElementById('root');
+      if (root) {
+        root.innerHTML = `
+          <div style="padding: 2rem; font-family: system-ui; background: #1f2937; color: #f87171;">
+            <h2 style="margin-top:0;">❌ Environment Configuration Error</h2>
+            <pre style="white-space: pre-wrap; background: #111827; padding: 1rem; border-radius: 6px;">${message}</pre>
+            <p>Please check your <code>.env.local</code> file and restart the dev server.</p>
+          </div>
+        `;
+      }
+    }
+
+    throw new Error(message);
+  }
+
+  console.log('%c[ENV] ✓ Environment validated successfully (Supabase)', 'color: #4ade80');
+}

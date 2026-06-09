@@ -1,14 +1,20 @@
 {
-  "name": "react-example",
+  "name": "droppin-ops",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "DROPPIN OPS — Secure real-time GPS-based product drop tracking system (Supabase + React + Leaflet PWA)",
   "type": "module",
+  "license": "MIT",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit",
+    "lint:env": "grep -rni --include='*.ts' --include='*.tsx' 'firebase\\|FIREBASE\\|Firebase' src/ 2>/dev/null | grep -v node_modules && exit 1 || echo '✅ No Firebase references found in src/'",
+    "prebuild": "npm run lint:env",
+    "validate:env": "node --loader tsx --no-warnings ./src/lib/validateEnv.ts",
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -20,7 +26,6 @@
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
-    "express": "^4.21.2",
     "framer-motion": "^12.40.0",
     "html5-qrcode": "^2.3.8",
     "immer": "^11.1.8",
@@ -41,7 +46,6 @@
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
-    "@types/express": "^4.17.21",
     "@types/leaflet": "^1.9.21",
     "@types/leaflet.markercluster": "^1.5.6",
     "@types/node": "^22.14.0",
@@ -50,9 +54,16 @@
     "adm-zip": "^0.5.17",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.1",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "npm run lint:env"
+    ]
   }
 }

@@ -39,8 +39,12 @@ self.addEventListener('fetch', (event) => {
           return response;
         }
         return fetch(event.request).catch(() => {
-          // Fallback for offline mode if network fails for non-cached assets
-          return new Response('Offline Mode');
+          // Return a proper fallback response instead of undefined
+          return new Response('Offline - Resource unavailable', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain' },
+          });
         });
       })
   );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase, isMock } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useAuthStore } from '@/stores';
 
 export function ClientRegistration() {
@@ -16,7 +16,7 @@ export function ClientRegistration() {
     setLoading(true);
     setMessage('');
 
-    if (isMock) {
+    if (!isSupabaseConfigured) {
       await new Promise((resolve) => setTimeout(resolve, 800));
       setMessage('OTP sent successfully! Enter 123456 as code.');
       setStep('otp');
@@ -47,7 +47,7 @@ export function ClientRegistration() {
     setLoading(true);
     setMessage('');
 
-    if (isMock) {
+    if (!isSupabaseConfigured) {
       await new Promise((resolve) => setTimeout(resolve, 850));
       if (otp !== '123456') {
         setMessage('Invalid OTP code. Try of 123456.');

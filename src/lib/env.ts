@@ -1,61 +1,44 @@
-/**
- * @file src/lib/env.ts
- * @description Typed environment variable accessor with runtime validation.
- *
- * FIX C-1: validateEnv() no longer throws at module-import time.
- * Instead it returns { ok, missing } so callers can render a proper
- * error UI rather than crashing the entire React tree.
- */
+// src/lib/env.ts
+// Cleaned: Removed all legacy variables (project migrated to Supabase)
 
-const REQUIRED = [] as const;
+interface EnvConfig {
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
+  GEMINI_API_KEY?: string;
+  VAPID_PUBLIC_KEY?: string;
+  STADIA_API_KEY?: string;
+}
 
-const OPTIONAL = [
-  'VITE_SUPABASE_URL',
-  'VITE_SUPABASE_ANON_KEY',
-  'VITE_VAPID_PUBLIC_KEY',
-  'VITE_STADIA_API_KEY',
-  'VITE_FIREBASE_API_KEY',
-  'VITE_FIREBASE_PROJECT_ID',
-  'VITE_FIREBASE_APP_ID',
-  'VITE_FIREBASE_AUTH_DOMAIN',
-  'VITE_FIREBASE_STORAGE_BUCKET',
-  'VITE_FIREBASE_MESSAGING_SENDER_ID',
-  'VITE_FIREBASE_FIRESTORE_DB',
-] as const;
+function getEnvVar(key: string, required = true): string {
+  const value = ((import.meta as any).env[key] as string | undefined)?.trim();
 
-type RequiredKey = typeof REQUIRED[number];
-type OptionalKey = typeof OPTIONAL[number];
+  if (required && !value) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+  return value || '';
+}
 
-export type Env = Record<RequiredKey, string> & Partial<Record<OptionalKey, string>>;
+export const env: EnvConfig = {
+  SUPABASE_URL: getEnvVar('VITE_SUPABASE_URL'),
+  SUPABASE_ANON_KEY: getEnvVar('VITE_SUPABASE_ANON_KEY'),
+  GEMINI_API_KEY: getEnvVar('GEMINI_API_KEY', false),
+  VAPID_PUBLIC_KEY: getEnvVar('VITE_VAPID_PUBLIC_KEY', false),
+  STADIA_API_KEY: getEnvVar('VITE_STADIA_API_KEY', false),
+};
 
-export const env: Env = {} as Env;
-
+// Optional: Runtime validation helper
 export interface EnvValidationResult {
   ok: boolean;
   missing: string[];
 }
 
-/**
- * Validates env vars without throwing. Call once at app boot.
- * Returns { ok: false, missing } if required vars are absent.
- */
 export function validateEnv(): EnvValidationResult {
   const missing: string[] = [];
-  const viteEnv = (import.meta as any).env ?? {};
-
-  for (const key of REQUIRED) {
-    const val = viteEnv[key];
-    if (val) {
-      (env as any)[key] = val;
-    } else {
-      missing.push(key);
-    }
-  }
-
-  for (const key of OPTIONAL) {
-    const val = viteEnv[key];
-    if (val) (env as any)[key] = val;
-  }
-
-  return { ok: missing.length === 0, missing };
+  if (!env.SUPABASE_URL.includes('supabase.co')) missing.push('VITE_SUPABASE_URL');
+  if (env.SUPABASE_ANON_KEY.length < 20) missing.push('VITE_SUPABASE_ANON_KEY');
+  
+  return {
+    ok: missing.length === 0,
+    missing
+  };
 }

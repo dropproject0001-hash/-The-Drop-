@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase, isMock } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Transaction, TransactionDetailModal } from './TransactionDetailModal';
 
 export function TransactionHistoryList() {
@@ -10,7 +10,7 @@ export function TransactionHistoryList() {
   useEffect(() => {
     fetchTransactions();
 
-    if (isMock) return;
+    if (!isSupabaseConfigured) return;
 
     // Subscribe to realtime updates for transactions
     const channel = supabase
@@ -36,7 +36,7 @@ export function TransactionHistoryList() {
   const fetchTransactions = async () => {
     setLoading(true);
     
-    if (isMock) {
+    if (!isSupabaseConfigured) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       setTransactions([
         {
@@ -89,7 +89,7 @@ export function TransactionHistoryList() {
   };
 
   const handleGrant = async (id: string) => {
-    if (isMock) {
+    if (!isSupabaseConfigured) {
       setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'granted' } : t));
       setSelectedTransaction(current => current?.id === id ? { ...current, status: 'granted' } : current);
       return;
@@ -108,7 +108,7 @@ export function TransactionHistoryList() {
   };
 
   const handleDecline = async (id: string) => {
-    if (isMock) {
+    if (!isSupabaseConfigured) {
       setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'declined' } : t));
       setSelectedTransaction(current => current?.id === id ? { ...current, status: 'declined' } : current);
       return;
