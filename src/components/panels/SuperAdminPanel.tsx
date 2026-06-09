@@ -3,56 +3,68 @@ import { Activity, Radio, Shield, Users, PackageSearch, Terminal } from 'lucide-
 
 export function SuperAdminPanel() {
   return (
-    <div className="flex flex-col h-full bg-black/40 rounded-2xl border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)] overflow-hidden">
+    <div className="flex flex-col h-full bg-black/95 rounded-2xl border border-[#106011]/50 shadow-[0_0_20px_rgba(16,96,17,0.3)] overflow-hidden relative select-none">
+      {/* Tactical HUD Corner Brackets */}
+      <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-[#106011] rounded-tl-xl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.8)] z-30"></div>
+      <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-[#106011] rounded-tr-xl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.8)] z-30"></div>
+      <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-[#106011] rounded-bl-xl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.8)] z-30"></div>
+      <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-[#106011] rounded-br-xl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.8)] z-30"></div>
+
+      {/* Inner Nested Rectangle Tactical HUD lines */}
+      <div className="absolute inset-1 border border-dashed border-[#106011]/30 rounded-xl pointer-events-none z-20"></div>
+      <div className="absolute inset-2 border border-[#106011]/15 rounded-lg pointer-events-none z-20"></div>
+
       {/* Header */}
-      <div className="flex justify-between items-center px-4 py-3 bg-red-500/10 border-b border-red-500/20">
+      <div className="flex justify-between items-center px-6 py-4 bg-[#106011]/10 border-b border-[#106011]/50 relative z-20">
         <div className="flex items-center gap-2">
-          <Shield className="w-5 h-5 text-red-500" />
-          <h2 className="text-red-500 font-display font-bold tracking-widest uppercase text-sm">Super Admin / Owner</h2>
+          <Shield className="w-5 h-5 text-[#106011] drop-shadow-[0_0_6px_rgba(16,96,17,0.8)] animate-pulse" />
+          <h2 className="text-[#106011] font-display font-black tracking-[0.18em] uppercase text-sm drop-shadow-[0_0_8px_rgba(16,96,17,0.7)]">
+            Gods Eye for The Owner
+          </h2>
         </div>
         <div className="flex gap-3">
-          <span className="flex items-center gap-1 text-[10px] font-mono text-red-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> OVERSEER
+          <span className="flex items-center gap-1 text-[10px] font-mono text-[#106011] font-bold tracking-widest uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-ping mr-1.5" /> OVERSEER
           </span>
         </div>
       </div>
 
       {/* Map Area */}
-      <div className="flex-1 relative min-h-[300px]">
+      <div className="flex-1 relative min-h-[300px] z-10">
         <DropMap height="100%" />
         {/* Absolute HUD */}
         <div className="absolute top-4 left-4 z-[400] flex flex-col gap-2 pointer-events-none">
-          <HUDItem bg="bg-red-950/80" border="border-red-500/30" text="text-red-200">
-            <Terminal className="w-3 h-3 text-red-400" /> ALL AGENTS VISIBLE
+          <HUDItem bg="bg-black/85" border="border-[#106011]/40" text="text-[#106011] drop-shadow-[0_0_4px_rgba(16,96,17,0.5)]">
+            <Terminal className="w-3 h-3 text-[#106011]" /> ALL AGENTS VISIBLE
           </HUDItem>
-          <HUDItem bg="bg-red-950/80" border="border-red-500/30" text="text-red-200">
-            <Activity className="w-3 h-3 text-red-400" /> SYSTEM OVERRIDE ACTIVE
+          <HUDItem bg="bg-black/85" border="border-[#106011]/40" text="text-[#106011] drop-shadow-[0_0_4px_rgba(16,96,17,0.5)]">
+            <Activity className="w-3 h-3 text-[#106011]" /> SYSTEM OVERRIDE ACTIVE
           </HUDItem>
         </div>
       </div>
 
       {/* Control Panel Area */}
-      <div className="h-48 border-t border-red-500/20 bg-background/50 p-4 shrink-0 flex flex-col gap-2">
+      <div className="h-48 border-t border-[#106011]/40 bg-[#090b09]/95 p-4 shrink-0 flex flex-col gap-2 relative z-20">
         {/* Tabs */}
-        <div className="flex text-xs font-mono text-red-400/60 uppercase tracking-widest border-b border-red-500/10 pb-2">
-          <button className="text-red-400 border-b border-red-500 pb-2 -mb-[9px] mr-6">Live Logs</button>
-          <button className="hover:text-red-300 transition-colors mr-6">Inventory</button>
-          <button className="hover:text-red-300 transition-colors">Agents (12)</button>
+        <div className="flex text-xs font-mono text-[#106011]/60 uppercase tracking-widest border-b border-[#106011]/25 pb-2">
+          <button className="text-[#106011] border-b-2 border-[#106011] pb-2 -mb-[9px] mr-6 font-bold tracking-wider drop-shadow-[0_0_4px_rgba(16,96,17,0.5)]">Live Logs</button>
+          <button className="hover:text-slate-300 transition-colors mr-6">Inventory</button>
+          <button className="hover:text-slate-300 transition-colors">Agents (12)</button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 rounded border border-red-500/10 bg-red-950/20 p-2 overflow-y-auto font-mono text-[10px] flex flex-col gap-1">
+        <div className="flex-1 rounded border border-[#106011]/20 bg-[#106011]/5 p-2 overflow-y-auto font-mono text-[10px] flex flex-col gap-1 custom-scrollbar">
           <div className="flex gap-2">
-            <span className="text-red-500/50">[12:04:22]</span>
-            <span className="text-red-200">System uplink established. Scanning DropZones...</span>
+            <span className="text-[#106011]/50 font-bold">[12:04:22]</span>
+            <span className="text-slate-300">System uplink established. Scanning DropZones...</span>
           </div>
           <div className="flex gap-2">
-            <span className="text-red-500/50">[12:05:11]</span>
-            <span className="text-green-400">Agent 'Phantom' (Dropper) is online.</span>
+            <span className="text-[#106011]/50 font-bold">[12:05:11]</span>
+            <span className="text-[#106011] font-semibold drop-shadow-[0_0_4px_rgba(16,96,17,0.5)]">Agent 'Phantom' (Dropper) is online.</span>
           </div>
           <div className="flex gap-2">
-            <span className="text-red-500/50">[12:06:40]</span>
-            <span className="text-red-200">Awaiting encrypted comms from active operations.</span>
+            <span className="text-[#106011]/50 font-bold">[12:06:40]</span>
+            <span className="text-slate-300">Awaiting encrypted comms from active operations.</span>
           </div>
         </div>
       </div>

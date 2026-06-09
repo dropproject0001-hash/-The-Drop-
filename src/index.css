@@ -13,7 +13,17 @@
   --text-secondary: #a1a1aa;
   --font-sans: "Inter", system-ui, sans-serif;
   --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --animate-spin-slow: spin 15s linear infinite;
+  --animate-spin-reverse-slow: spin-reverse 20s linear infinite;
+  
   --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
 }
 
 body {

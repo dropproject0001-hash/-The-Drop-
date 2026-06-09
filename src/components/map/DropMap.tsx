@@ -278,35 +278,71 @@ export function DropMap({ height = '650px' }: DropMapProps) {
       <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
         <button
           onClick={() => setFilteredStatus('all')}
-          className={`px-3 py-1 rounded bg-black/80 backdrop-blur-md border text-xs font-mono tracking-widest uppercase transition-all ${
-            filteredStatus === 'all' ? 'border-[--accent-primary] text-[--accent-primary] shadow-[0_0_10px_rgba(34,197,94,0.3)]' : 'border-white/10 text-[--text-secondary] hover:border-white/30 hover:text-white'
+          className={`relative px-4 py-2 bg-black/95 border text-xs font-mono tracking-widest uppercase transition-all select-none overflow-hidden duration-300 rounded ${
+            filteredStatus === 'all'
+              ? 'border-[#106011]/90 text-[#106011] font-bold drop-shadow-[0_0_8px_rgba(16,96,17,0.85)] shadow-[0_0_15px_rgba(16,96,17,0.35)]'
+              : 'border-[#106011]/30 text-slate-400 hover:border-[#106011] hover:text-[#106011] hover:shadow-[0_0_10px_rgba(16,96,17,0.2)]'
           }`}
         >
-          ALL PINS
+          {/* Active indicator borders inside the button for tactical HUD nested style */}
+          <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-[#106011] pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-[#106011] pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-[#106011] pointer-events-none"></div>
+          <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-[#106011] pointer-events-none"></div>
+          
+          <div className="absolute inset-[2px] border border-dashed border-[#106011]/25 pointer-events-none rounded sm:scale-95"></div>
+          <span className="relative z-10 flex items-center justify-center gap-1.5">
+            ALL PINS
+          </span>
         </button>
         {/* FIX C-3: status values from DB enum */}
-        {(Object.keys(STATUS_COLORS) as DropStatus[]).map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilteredStatus(status)}
-            className={`px-3 py-1 rounded bg-black/80 backdrop-blur-md border text-xs font-mono tracking-widest uppercase transition-all ${
-              filteredStatus === status ? 'text-white border-current' : 'border-white/10 text-[--text-secondary] hover:border-white/30 hover:text-white'
-            }`}
-            style={{
-              borderColor: filteredStatus === status ? STATUS_COLORS[status] : undefined,
-              boxShadow: filteredStatus === status ? `0 0 10px ${STATUS_COLORS[status]}40` : undefined,
-            }}
-          >
-            {status}
-          </button>
-        ))}
+        {(Object.keys(STATUS_COLORS) as DropStatus[]).map((status) => {
+          const isActive = filteredStatus === status;
+          return (
+            <button
+              key={status}
+              onClick={() => setFilteredStatus(status)}
+              className={`relative px-4 py-2 bg-black/95 border text-xs font-mono tracking-widest uppercase transition-all select-none overflow-hidden duration-300 rounded ${
+                isActive
+                  ? 'border-[#106011]/90 text-[#106011] font-bold drop-shadow-[0_0_8px_rgba(16,96,17,0.85)] shadow-[0_0_15px_rgba(16,96,17,0.35)]'
+                  : 'border-[#106011]/30 text-slate-400 hover:border-[#106011] hover:text-[#106011] hover:shadow-[0_0_10px_rgba(16,96,17,0.2)]'
+              }`}
+            >
+              {/* Active indicator borders inside the button for tactical HUD nested style */}
+              <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-[#106011] pointer-events-none"></div>
+              <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-[#106011] pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-[#106011] pointer-events-none"></div>
+              <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-[#106011] pointer-events-none"></div>
+
+              <div className="absolute inset-[2px] border border-dashed border-[#106011]/25 pointer-events-none rounded sm:scale-95"></div>
+              <span className="relative z-10 flex items-center justify-center gap-1.5">
+                <span 
+                  className="w-1.5 h-1.5 rounded-full inline-block" 
+                  style={{ backgroundColor: STATUS_COLORS[status] }} 
+                />
+                {status}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {/* Map Container */}
       <div
         style={{ height: height === '100%' ? '100%' : height, width: '100%' }}
-        className="flex-1 w-full overflow-hidden relative z-0"
+        className="flex-1 w-full overflow-hidden relative z-0 border border-[#106011]/50 shadow-[0_0_30px_rgba(16,96,17,0.3)] rounded-2xl"
       >
+        {/* Floating tactical HUD overlays on top of map container margins */}
+        <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-[#106011] rounded-tl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
+        <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-[#106011] rounded-tr pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
+        <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-[#106011] rounded-bl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
+        <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-[#106011] rounded-br pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
+
+        {/* Double-Nested Rectangle Lines around map layer edges */}
+        <div className="absolute inset-4 border border-dashed border-[#106011]/25 pointer-events-none rounded-xl z-[900]"></div>
+        <div className="absolute inset-5 border border-[#106011]/15 pointer-events-none rounded-lg z-[900]"></div>
+        <div className="absolute inset-6 border border-[#106011]/10 pointer-events-none rounded-md z-[900]"></div>
+
         <MapContainer center={MAMBURAO_CENTER} zoom={14} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
