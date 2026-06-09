@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../stores';
 
 interface Analytics {
   totalUsers: number;
@@ -12,8 +13,10 @@ type Role = 'super_admin' | 'dropper' | 'client';
 
 interface User {
   id: string;
-  email: string;
-  phone: string;
+  email?: string;
+  phone?: string;
+  alias?: string | null;
+  username?: string | null;
   role: Role;
   created_at: string;
 }
@@ -29,6 +32,15 @@ export default function SuperAdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState<Role>('dropper');
+
+  // Create Dropper State
+  const [showCreateDropper, setShowCreateDropper] = useState(false);
+  const [newDropperUsername, setNewDropperUsername] = useState('');
+  const [newDropperPassword, setNewDropperPassword] = useState('');
+  const [newDropperPhone, setNewDropperPhone] = useState('');
+  const [createLoading, setCreateLoading] = useState(false);
+  
+  const currentProfile = useAuthStore(state => state.profile);
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -81,10 +93,55 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  const handleCreateDropper = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentProfile) {
+      alert('You must be logged in as Super Admin.');
+      return;
+    }
+    setCreateLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('create-dropper', {
+        body: {
+          username: newDropperUsername,
+          password: newDropperPassword,
+          phone: newDropperPhone,
+          requestedBy: currentProfile.id
+        }
+      });
+      
+      if (error) throw error;
+      
+      alert('Dropper account created successfully!');
+      setShowCreateDropper(false);
+      setNewDropperUsername('');
+      setNewDropperPassword('');
+      setNewDropperPhone('');
+      fetchUsers();
+      fetchAnalytics();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Failed to create dropper');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto text-white">
-      <h1 className="text-4xl font-bold mb-2">SUPER ADMIN DASHBOARD</h1>
-      <p className="text-[#106011] mb-8">Droppin Ops — Command & Control</p>
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">SUPER ADMIN DASHBOARD</h1>
+          <p className="text-[#106011]">Droppin Ops — Command &amp; Control</p>
+        </div>
+        <button
+          onClick={() => setShowCreateDropper(true)}
+          className="bg-[#106011] hover:bg-green-700 text-black font-mono font-bold tracking-widest uppercase px-6 py-3 rounded-xl transition"
+        >
+          Create Dropper
+        </button>
+      </div>
 
       {/* Analytics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -124,8 +181,8 @@ export default function SuperAdminDashboard() {
           <tbody>
             {users.map((user) => (
               <tr key={user.id} className="border-t border-zinc-800/50 hover:bg-zinc-950/50 transition-colors">
-                <td className="p-4">{user.email || 'N/A'}</td>
-                <td className="p-4 font-mono text-sm text-slate-300">{user.phone}</td>
+                <td className="p-4 font-mono text-sm">{user.username || user.alias || user.email || 'N/A'}</td>
+                <td className="p-4 font-mono text-sm text-slate-300">{user.phone || 'N/A'}</td>
                 <td className="p-4">
                   <span className="px-3 py-1 rounded-full text-xs font-mono uppercase tracking-widest bg-zinc-800 shadow-[0_0_10px_rgba(0,0,0,0.5)]">
                     {user.role}
@@ -173,11 +230,75 @@ export default function SuperAdminDashboard() {
               </button>
               <button 
                 onClick={updateUserRole}
-                className="flex-1 py-3 rounded-xl bg-[#106011] hover:bg-green-700 font-mono text-xs uppercase tracking-widest font-black transition"
+                className="flex-1 py-3 rounded-xl bg-[#106011] hover:bg-green-700 font-mono text-xs uppercase tracking-widest font-black transition text-black"
               >
                 Update Role
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Dropper Modal */}
+      {showCreateDropper && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="relative bg-zinc-950 border-2 border-emerald-600 rounded-2xl p-8 w-full max-w-md shadow-[0_0_50px_rgba(5,150,105,0.3)]">
+            <h3 className="text-lg font-bold uppercase text-white mb-6 flex items-center gap-2">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+              Create Dropper Account
+            </h3>
+            
+            <form onSubmit={handleCreateDropper} className="space-y-4">
+              <div>
+                <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">Username</label>
+                <input 
+                  required
+                  type="text"
+                  value={newDropperUsername}
+                  onChange={e => setNewDropperUsername(e.target.value)}
+                  className="w-full bg-black border border-zinc-700 focus:border-emerald-500 outline-none rounded-lg p-3 text-white font-mono text-sm"
+                  placeholder="agent_echo"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">Password</label>
+                <input 
+                  required
+                  type="password"
+                  value={newDropperPassword}
+                  onChange={e => setNewDropperPassword(e.target.value)}
+                  className="w-full bg-black border border-zinc-700 focus:border-emerald-500 outline-none rounded-lg p-3 text-white font-mono text-sm"
+                  placeholder="••••••••"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">Mobile (Optional)</label>
+                <input 
+                  type="tel"
+                  value={newDropperPhone}
+                  onChange={e => setNewDropperPhone(e.target.value)}
+                  className="w-full bg-black border border-zinc-700 focus:border-emerald-500 outline-none rounded-lg p-3 text-white font-mono text-sm"
+                  placeholder="+1234567890"
+                />
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button 
+                  type="button"
+                  onClick={() => setShowCreateDropper(false)}
+                  className="flex-1 py-3 rounded-xl border border-zinc-700 font-mono text-xs uppercase tracking-widest hover:bg-zinc-900 transition"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={createLoading}
+                  className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-mono text-xs uppercase tracking-widest font-black transition text-black disabled:opacity-50"
+                >
+                  {createLoading ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

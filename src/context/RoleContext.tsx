@@ -9,6 +9,7 @@ interface RoleContextType {
   isSuperAdmin: boolean;
   isDropper: boolean;
   isClient: boolean;
+  refreshRole: () => Promise<Role>;
 }
 
 const RoleContext = createContext<RoleContextType>({
@@ -17,27 +18,34 @@ const RoleContext = createContext<RoleContextType>({
   isSuperAdmin: false,
   isDropper: false,
   isClient: false,
+  refreshRole: async () => null,
 });
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<Role>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        
-        setRole(data?.role || null);
-      }
-      setLoading(false);
-    };
+  const fetchRole = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    let currentRole: Role = null;
+    if (user) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      currentRole = (data?.role || null) as Role;
+      setRole(currentRole);
+    } else {
+      setRole(null);
+    }
+    setLoading(false);
+    return currentRole;
+  };
 
+  useEffect(() => {
     fetchRole();
   }, []);
 
@@ -47,6 +55,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     isSuperAdmin: role === 'super_admin',
     isDropper: role === 'dropper',
     isClient: role === 'client',
+    refreshRole: fetchRole,
   };
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;

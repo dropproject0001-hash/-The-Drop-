@@ -23,9 +23,14 @@ export interface Database {
       profiles: {
         Row: {
           id: string;
-          /** Aligned to SQL: user_role enum ('super_admin', 'admin', 'client') */
-          role: 'super_admin' | 'admin' | 'client';
-          display_name: string;
+          /** Aligned to SQL: user_role enum ('super_admin', 'admin', 'client', 'dropper') */
+          role: 'super_admin' | 'admin' | 'client' | 'dropper';
+          display_name: string | null;
+          alias: string | null;
+          username: string | null;
+          phone: string | null;
+          phone_verified: boolean | null;
+          created_by: string | null;
           avatar_url: string | null;
           is_online: boolean;
           last_seen: string;
@@ -35,8 +40,13 @@ export interface Database {
         };
         Insert: {
           id: string;
-          role?: 'super_admin' | 'admin' | 'client';
-          display_name: string;
+          role?: 'super_admin' | 'admin' | 'client' | 'dropper';
+          display_name?: string | null;
+          alias?: string | null;
+          username?: string | null;
+          phone?: string | null;
+          phone_verified?: boolean | null;
+          created_by?: string | null;
           avatar_url?: string | null;
           is_online?: boolean;
           last_seen?: string;
@@ -46,8 +56,13 @@ export interface Database {
         };
         Update: {
           id?: string;
-          role?: 'super_admin' | 'admin' | 'client';
-          display_name?: string;
+          role?: 'super_admin' | 'admin' | 'client' | 'dropper';
+          display_name?: string | null;
+          alias?: string | null;
+          username?: string | null;
+          phone?: string | null;
+          phone_verified?: boolean | null;
+          created_by?: string | null;
           avatar_url?: string | null;
           is_online?: boolean;
           last_seen?: string;

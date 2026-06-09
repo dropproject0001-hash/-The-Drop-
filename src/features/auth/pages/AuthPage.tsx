@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { Shield, User, LogIn, UserPlus } from 'lucide-react';
+import { Shield, User, LogIn } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores';
 import { ClientRegistration } from './ClientRegistration';
@@ -11,10 +11,6 @@ export function AuthPage() {
   // Login Fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
-  // Sign Up Fields
-  const [displayName, setDisplayName] = useState('');
-  const [registerRole, setRegisterRole] = useState<'super_admin' | 'admin'>('super_admin');
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,8 +27,13 @@ export function AuthPage() {
       useAuthStore.getState().setSession({ user: { id: 'mock-id' }, access_token: 'mock', refresh_token: 'mock' });
       useAuthStore.getState().setProfile({
         id: 'mock-id',
-        role: isSuper ? 'super_admin' : 'admin',
-        display_name: isSuper ? 'Super Admin (Mock)' : 'Admin Dropper (Mock)',
+        role: isSuper ? 'super_admin' : 'dropper',
+        alias: null,
+        username: null,
+        phone: null,
+        phone_verified: null,
+        created_by: null,
+        display_name: isSuper ? 'Super Admin (Mock)' : 'Dropper (Mock)',
         avatar_url: null,
         is_online: true,
         last_seen: new Date().toISOString(),
@@ -55,84 +56,17 @@ export function AuthPage() {
     }
   };
 
-  const handleStaffSignUp = async (e: FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    const envMeta = (import.meta as any).env || {};
-    const isMock = (supabase as any).supabaseUrl?.includes('mock') || envMeta.VITE_SUPABASE_URL?.includes('mock');
-
-    if (isMock) {
-      const mockUserId = 'mock-' + Math.random().toString(36).substr(2, 9);
-      useAuthStore.getState().setSession({ user: { id: mockUserId }, access_token: 'mock', refresh_token: 'mock' });
-      useAuthStore.getState().setProfile({
-        id: mockUserId,
-        role: registerRole,
-        display_name: displayName || (registerRole === 'super_admin' ? 'Super Admin' : 'Admin'),
-        avatar_url: null,
-        is_online: true,
-        last_seen: new Date().toISOString(),
-        push_endpoint: null,
-        push_keys: null,
-        created_at: new Date().toISOString()
-      });
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // 1. Sign up the user in Supabase Authentication
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            display_name: displayName,
-          }
-        }
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('No user returned from sign up');
-
-      // 2. Create the profile row with the selected role (super_admin / admin)
-      const { error: profileError } = await (supabase as any).from('profiles').insert({
-        id: authData.user.id,
-        role: registerRole,
-        display_name: displayName,
-        is_online: true,
-        last_seen: new Date().toISOString(),
-      });
-
-      if (profileError) throw profileError;
-
-      // 3. Retrieve and establish the user session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        useAuthStore.getState().setSession(session);
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        if (profileData) {
-          useAuthStore.getState().setProfile(profileData as any);
-        }
-      }
-    } catch (err: any) {
-      setError(err.message || 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Developer bypass for testing client
   const mockClientLogin = () => {
     useAuthStore.getState().setSession({ user: { id: 'mock-client' }, access_token: 'mock', refresh_token: 'mock' });
     useAuthStore.getState().setProfile({
         id: 'mock-client',
         role: 'client',
+        alias: null,
+        username: null,
+        phone: null,
+        phone_verified: null,
+        created_by: null,
         display_name: 'Client User (Mock)',
         avatar_url: null,
         is_online: true,
@@ -150,7 +84,9 @@ export function AuthPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-primary mb-2">The Drop 👽</h1>
-          <p className="text-slate-400">Transaction📩  Pin Location Drop📍 Anonymous 👽</p>
+          <p className="text-amber-500 font-mono text-xs mt-2 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(245,158,11,0.55)] animate-pulse">
+            Warning: Do Not Use Personal Identity ⚠️
+          </p>
         </div>
 
         {/* Mode Toggle */}
@@ -191,25 +127,16 @@ export function AuthPage() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Shield size={20} className="text-primary" /> 
-                {staffAction === 'login' ? 'Dopper and Boss Logins' : 'Staff Registration'}
+                Dropper & Boss Logins
               </h2>
-              <button
-                onClick={() => {
-                  setStaffAction(staffAction === 'login' ? 'signup' : 'login');
-                  setError('');
-                }}
-                className="text-xs text-primary hover:underline"
-              >
-                {staffAction === 'login' ? 'Create Account' : 'Back to Login'}
-              </button>
             </div>
 
-            {staffAction === 'login' ? (
+            {staffAction === 'login' && (
               <form onSubmit={handleStaffLogin} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Email / Username</label>
                   <input
-                    type="email"
+                    type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@droppin.ops"
@@ -232,7 +159,7 @@ export function AuthPage() {
                 {error && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-500">{error}</div>}
                 {((supabase as any).supabaseUrl?.includes('mock') || ((import.meta as any).env || {}).VITE_SUPABASE_URL?.includes('mock')) && (
                    <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-xs text-yellow-500">
-                     Mock Mode Active: Enter "super@test.com" for Super Admin, or click "Create Account" above to register custom roles.
+                     Mock Mode Active: Enter "super@test.com" for Super Admin. Dropper accounts must be created by Super Admin.
                    </div>
                 )}
 
@@ -242,68 +169,8 @@ export function AuthPage() {
                   className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-medium transition disabled:opacity-50 text-sm"
                 >
                   <span className="flex items-center justify-center gap-2">
-                    <LogIn size={16} />
+                     <LogIn size={16} />
                     {loading ? 'Authenticating...' : 'Sign In'}
-                  </span>
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleStaffSignUp} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Display Name</label>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Lead Agent"
-                    className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:outline-none text-white text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="agent@droppin.ops"
-                    className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:outline-none text-white text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:outline-none text-white text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Role Type</label>
-                  <select
-                    value={registerRole}
-                    onChange={(e) => setRegisterRole(e.target.value as any)}
-                    className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:outline-none text-white text-sm"
-                  >
-                    <option value="super_admin">Super Admin</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-
-                {error && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-500">{error}</div>}
-                
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-medium transition disabled:opacity-50 text-sm"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <UserPlus size={16} />
-                    {loading ? 'Creating Account...' : `Register as ${registerRole === 'super_admin' ? 'Super Admin' : 'Admin'}`}
                   </span>
                 </button>
               </form>

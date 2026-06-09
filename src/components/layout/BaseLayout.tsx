@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlobalModals } from '@/components/ui/GlobalModals';
-import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock } from 'lucide-react';
+import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart } from 'lucide-react';
 
 import { CargoBayView } from './views/CargoBayView';
 import { ChatBoxView } from './views/ChatBoxView';
@@ -182,9 +182,17 @@ export function BaseLayout() {
           </div>
 
           <div className="flex items-center gap-4 relative z-10 pl-2">
-            <h1 className="text-xl font-display font-black tracking-[0.2em] text-[#106011] uppercase drop-shadow-[0_0_10px_rgba(16,96,17,0.85)]">
-              THE DROP SHOP
-            </h1>
+            <ShoppingCart className="w-6 h-6 text-[#106011] shrink-0 drop-shadow-[0_0_8px_rgba(16,96,17,0.8)]" />
+            <div className="w-44 sm:w-64 md:w-[400px] lg:w-[500px] overflow-hidden relative flex shrink-0 mask-image-fade">
+              <motion.h1 
+                initial={{ x: "0%" }}
+                animate={{ x: "-50%" }}
+                transition={{ repeat: Infinity, duration: 16, ease: "linear" }}
+                className="text-xs md:text-sm font-mono font-bold tracking-[0.05em] text-[#2e710d] uppercase drop-shadow-[0_0_10px_rgba(46,113,13,0.85)] whitespace-nowrap pr-4"
+              >
+                {"Message 📩- Payment💲 - Confirmation ✅- Approval 💯-Pin Dropped product loc📍- Legitimate transactions🫱🏻🫲🏽 • Message 📩- Payment💲 - Confirmation ✅- Approval 💯-Pin Dropped product loc📍- Legitimate transactions🫱🏻🫲🏽 • "}
+              </motion.h1>
+            </div>
             <div className="hidden md:flex items-center gap-2 pl-4 border-l border-[#106011]/30">
               <span className="w-2 h-2 rounded-full bg-[#106011] animate-ping"></span>
               <span className="text-xs font-mono text-[#106011] uppercase tracking-widest font-semibold drop-shadow-[0_0_5px_rgba(16,96,17,0.6)]">

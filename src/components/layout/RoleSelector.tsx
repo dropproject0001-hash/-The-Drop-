@@ -209,7 +209,7 @@ export function RoleSelector() {
          <RoleCard 
            to="/client" 
            icon={<NeonIcon imageSrc="/buyer-icon.png" color="green" size={56} className="group-hover:scale-110 transition-transform duration-300" />} 
-           title="Getto/Lotter" 
+           title="Getto Regestration 🔞" 
            features={[
              "PRODUCT MAP VIEW:",
              "Realtime map",
