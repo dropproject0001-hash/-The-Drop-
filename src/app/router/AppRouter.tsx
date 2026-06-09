@@ -6,6 +6,7 @@ import { DropperPanel } from '@/components/panels/DropperPanel';
 import { ClientPanel } from '@/components/panels/ClientPanel';
 
 export function AppRouter() {
+  console.log('AppRouter rendering');
   return (
     <BrowserRouter>
       <Routes>
