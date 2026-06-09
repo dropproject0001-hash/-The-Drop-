@@ -1,6 +1,7 @@
 // src/lib/env.ts
 // Cleaned: Removed all legacy variables (project migrated to Supabase)
-// NOTE: Validation happens in validateEnv.ts — do NOT duplicate logic here
+// FIX C-1: Harden to prevent boot-time crash. 
+// Values are still accessed, but errors are caught and validateEnv handles reporting.
 
 interface EnvConfig {
   SUPABASE_URL: string;
@@ -11,14 +12,20 @@ interface EnvConfig {
 }
 
 function getEnvVar(key: string, required = true): string {
-  const value = ((import.meta as any).env[key] as string | undefined)?.trim();
-
-  if (required && !value) {
-    throw new Error(`Missing required environment variable: ${key}`);
+  try {
+    const value = ((import.meta as any).env[key] as string | undefined)?.trim();
+    if (required && !value) {
+      console.warn(`[Env] Missing required variable: ${key}`);
+      return '';
+    }
+    return value || '';
+  } catch (e) {
+    console.error(`[Env] Error accessing ${key}:`, e);
+    return '';
   }
-  return value || '';
 }
 
+// Module-level state; won't throw now.
 export const env: EnvConfig = {
   SUPABASE_URL: getEnvVar('VITE_SUPABASE_URL'),
   SUPABASE_ANON_KEY: getEnvVar('VITE_SUPABASE_ANON_KEY'),
@@ -26,3 +33,26 @@ export const env: EnvConfig = {
   VAPID_PUBLIC_KEY: getEnvVar('VITE_VAPID_PUBLIC_KEY', false),
   STADIA_API_KEY: getEnvVar('VITE_STADIA_API_KEY', false),
 };
+
+// Optional: Runtime validation helper
+export interface EnvValidationResult {
+  ok: boolean;
+  missing: string[];
+}
+
+export function validateEnv(): EnvValidationResult {
+  const missing: string[] = [];
+  
+  if (!env.SUPABASE_URL || !env.SUPABASE_URL.includes('supabase.co')) {
+    missing.push('VITE_SUPABASE_URL');
+  }
+  
+  if (!env.SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY.length < 20) {
+    missing.push('VITE_SUPABASE_ANON_KEY');
+  }
+  
+  return {
+    ok: missing.length === 0,
+    missing
+  };
+}

@@ -22,7 +22,7 @@ export function useOTP() {
 
     try {
       // Tactical workaround: Use fetch directly for better control
-      const baseUrl = (supabase as any).supabaseUrl;
+      const baseUrl = ((supabase as any).supabaseUrl || '').replace(/\/+$/, '');
       const anonKey = (supabase as any).supabaseKey;
 
       const response = await fetch(`${baseUrl}/functions/v1/send-otp`, {
@@ -30,6 +30,7 @@ export function useOTP() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${anonKey}`,
+          'apikey': anonKey,
         },
         body: JSON.stringify({ phone, purpose }),
       });
@@ -105,7 +106,7 @@ export function useOTP() {
 
     try {
       // Tactical workaround: Use fetch directly for better control
-      const baseUrl = (supabase as any).supabaseUrl;
+      const baseUrl = ((supabase as any).supabaseUrl || '').replace(/\/+$/, '');
       const anonKey = (supabase as any).supabaseKey;
 
       const response = await fetch(`${baseUrl}/functions/v1/verify-otp`, {
@@ -113,6 +114,7 @@ export function useOTP() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${anonKey}`,
+          'apikey': anonKey,
         },
         body: JSON.stringify({ phone_number: phone, otp_code: code }),
       });

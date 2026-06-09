@@ -1,9 +1,11 @@
 {
-  "name": "The Drop 👽",
-  "description": "The Drop PWA - Premium mobile mapping, secure drop placements, QR pickups and offline tracking.",
+  "name": "DropPin Ops",
+  "description": "Premium tactical mobile tracking for secure field ops. Secure drops, GPS monitoring, and encrypted coordination for Mamburao.",
   "requestFramePermissions": [
     "camera",
     "geolocation"
   ],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
