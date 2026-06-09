@@ -18,15 +18,29 @@ export function useEdgeFunctions() {
     body: unknown
   ): Promise<T> => {
     setLoading(true);
-    setError(null); // Reset before each call
+    setError(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke(
-        functionName,
-        { body }
-      );
+      // Tactical workaround: Use fetch directly for better control
+      const baseUrl = ((supabase as any).supabaseUrl || '').replace(/\/+$/, '');
+      const anonKey = (supabase as any).supabaseKey;
 
-      if (fnError) throw fnError;
+      const response = await fetch(`${baseUrl}/functions/v1/${functionName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+          'apikey': anonKey,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `Function ${functionName} failed`);
+      }
+
+      const data = await response.json();
       return data as T;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);

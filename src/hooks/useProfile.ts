@@ -70,7 +70,8 @@ export function useProfile() {
     loading,
     // FIX C-3: role values now match DB enum ('super_admin' | 'admin' | 'client')
     isSuperAdmin: profile?.role === 'super_admin',
-    isAdmin: profile?.role === 'admin',
+    isAdmin: profile?.role === 'admin' || profile?.role === 'dropper',
+    isDropper: profile?.role === 'dropper',
     // FIX C-3, M-6: 'client' is the correct role name from the DB
     isClient: profile?.role === 'client',
   };

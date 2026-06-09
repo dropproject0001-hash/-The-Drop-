@@ -245,6 +245,29 @@ export interface Database {
         };
         Update: never; // activity_log is immutable
       };
+      otp_codes: {
+        Row: {
+          id: string;
+          phone: string;
+          code: string;
+          purpose: string;
+          expires_at: string;
+          used: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          phone: string;
+          code: string;
+          purpose?: string;
+          expires_at: string;
+          used?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          used?: boolean;
+        };
+      };
     };
     Views: Record<never, never>;
     Functions: Record<never, never>;

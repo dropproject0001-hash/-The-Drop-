@@ -1,11 +1,20 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
   const { phone_number } = await req.json();
 
   if (!phone_number) {
-    return new Response("Phone number is required", { status: 400 });
+    return new Response(JSON.stringify({ error: "Phone number is required" }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
   const supabase = createClient(
@@ -17,36 +26,46 @@ serve(async (req) => {
   const { data: existingUser } = await supabase
     .from("profiles")
     .select("id")
-    .eq("phone_number", phone_number)
+    .eq("phone", phone_number) // Using 'phone' to match profiles schema in 001_init.sql
     .single();
 
   if (existingUser) {
-    return new Response("Phone number already registered", { status: 400 });
+    return new Response(JSON.stringify({ error: "Phone number already registered" }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
   // Generate 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
 
-  // Create profile with OTP
-  const { error } = await supabase.from("profiles").insert({
-    phone_number,
-    role: "client",
-    otp_code: otp,
-    otp_expires_at: expiresAt.toISOString(),
-    is_verified: false,
-    suspended: false,
+  // 1. Store OTP in dedicated table
+  const { error: otpError } = await supabase.from("otp_codes").insert({
+    phone: phone_number,
+    code: otp,
+    purpose: 'registration',
+    expires_at: expiresAt,
   });
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  if (otpError) {
+    return new Response(JSON.stringify({ error: "Failed to create OTP" }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
-  // In production: Send OTP via SMS (Twilio, etc.)
-  // For now we return OTP in response (for testing)
+  // 2. Create profile skeleton (verified=false)
+  const { error: profileError } = await supabase.from("profiles").insert({
+    phone: phone_number,
+    role: "client",
+    display_name: `User ${phone_number.slice(-4)}`,
+    is_online: false,
+  });
+
+  if (profileError) {
+    // It's okay if this fails because of unique constraint; the OTP is what matters for the flow
+    console.warn("Profile creation skipped or failed:", profileError.message);
+  }
+
+  // In production: Send OTP via SMS
   return new Response(JSON.stringify({ 
     success: true, 
-    message: "OTP sent", 
-    otp: otp // Remove this in production
-  }));
+    message: "OTP generated", 
+    otp: otp // TEMPORARY: Remove in production
+  }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 });

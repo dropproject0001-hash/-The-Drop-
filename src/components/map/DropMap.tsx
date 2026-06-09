@@ -71,7 +71,7 @@ export function DropMap({ height = '650px' }: DropMapProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
 
-  const { profile, isSuperAdmin, isAdmin } = useProfile();
+  const { profile, isSuperAdmin, isAdmin, isDropper } = useProfile();
   const [adminLocations, setAdminLocations] = useState<Record<string, AdminLocation>>({});
 
   const lastBroadcastRef = useRef<number>(0);
@@ -200,11 +200,11 @@ export function DropMap({ height = '650px' }: DropMapProps) {
         setAccuracy(acc);
         setIsTracking(true);
 
-        // FIX C-5: Only broadcast if user is admin or super_admin
+        // FIX C-5: Only broadcast if user is admin, super_admin, or dropper
         const now = Date.now();
         if (
           profile?.id &&
-          (profile.role === 'admin' || profile.role === 'super_admin') &&
+          (profile.role === 'admin' || profile.role === 'super_admin' || profile.role === 'dropper') &&
           now - lastBroadcastRef.current > BROADCAST_THROTTLE_MS
         ) {
           lastBroadcastRef.current = now;
@@ -313,7 +313,7 @@ export function DropMap({ height = '650px' }: DropMapProps) {
               <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-[#106011] pointer-events-none"></div>
               <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-[#106011] pointer-events-none"></div>
               <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-[#106011] pointer-events-none"></div>
-
+ 
               <div className="absolute inset-[2px] border border-dashed border-[#106011]/25 pointer-events-none rounded sm:scale-95"></div>
               <span className="relative z-10 flex items-center justify-center gap-1.5">
                 <span 
@@ -326,7 +326,7 @@ export function DropMap({ height = '650px' }: DropMapProps) {
           )
         })}
       </div>
-
+ 
       {/* Map Container */}
       <div
         style={{ height: height === '100%' ? '100%' : height, width: '100%' }}
@@ -337,18 +337,18 @@ export function DropMap({ height = '650px' }: DropMapProps) {
         <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-[#106011] rounded-tr pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
         <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-[#106011] rounded-bl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
         <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-[#106011] rounded-br pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
-
+ 
         {/* Double-Nested Rectangle Lines around map layer edges */}
         <div className="absolute inset-4 border border-dashed border-[#106011]/25 pointer-events-none rounded-xl z-[900]"></div>
         <div className="absolute inset-5 border border-[#106011]/15 pointer-events-none rounded-lg z-[900]"></div>
         <div className="absolute inset-6 border border-[#106011]/10 pointer-events-none rounded-md z-[900]"></div>
-
+ 
         <MapContainer center={MAMBURAO_CENTER} zoom={14} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-
+ 
           {/* User's own live location */}
           {userLocation && (
             <LayerGroup>
@@ -380,7 +380,7 @@ export function DropMap({ height = '650px' }: DropMapProps) {
               )}
             </LayerGroup>
           )}
-
+ 
           {/* FIX H-2: <Marker> is now a direct child — no invalid <div> wrapper */}
           {isSuperAdmin &&
             Object.entries(adminLocations).map(([uid, loc]) => (
@@ -400,7 +400,7 @@ export function DropMap({ height = '650px' }: DropMapProps) {
                 </Popup>
               </Marker>
             ))}
-
+ 
           <MarkerClusterGroup>
             {filteredDrops.map((drop) => (
               <Marker
@@ -418,10 +418,10 @@ export function DropMap({ height = '650px' }: DropMapProps) {
             ))}
           </MarkerClusterGroup>
         </MapContainer>
-
+ 
         {/* Floating: Live Tracking Button */}
         <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
-          {(isAdmin || isSuperAdmin) && (
+          {(isAdmin || isSuperAdmin || isDropper) && (
             <button
               onClick={toggleLiveTracking}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium transition-all ${
