@@ -141,49 +141,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Set up auth state change listeners
+  // ✅ FIX C-3: Set up auth state change listeners + profile sync
   useEffect(() => {
     let active = true;
 
-    // Get current initial session
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      if (!active) return;
-      if (initialSession) {
-        setSession(initialSession);
-        setUser(initialSession.user);
-        fetchProfile(initialSession.user.id).then(() => {
-          if (active) setLoading(false);
-        });
-      } else {
+    const initializeAuth = async () => {
+      try {
+        // Get current initial session
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        
+        if (!active) return;
+        
+        if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+          await fetchProfile(initialSession.user.id);
+        }
+        
         setLoading(false);
+      } catch (err) {
+        console.error('[AuthContext] Get initial session error:', err);
+        if (active) setLoading(false);
       }
-    }).catch((err) => {
-      console.error('[AuthContext] Get initial session error:', err);
-      if (active) setLoading(false);
-    });
+    };
 
-    // Listen for auth state revisions
+    initializeAuth();
+
+    // ✅ FIX C-3: Listen for auth state changes (login/logout/session refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         if (!active) return;
+        
         console.log(`🌐 [AuthContext] Auth state change event: ${event}`);
 
         if (currentSession) {
           setSession(currentSession);
           setUser(currentSession.user);
+          
+          // ✅ Re-fetch profile on auth state change to keep it in sync
           await fetchProfile(currentSession.user.id);
         } else {
+          // User logged out
           setSession(null);
           setUser(null);
           setProfile(null);
         }
+        
         setLoading(false);
       }
     );
 
     return () => {
       active = false;
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, [fetchProfile]);
 
