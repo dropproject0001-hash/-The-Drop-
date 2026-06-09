@@ -1,6 +1,7 @@
 import { validateEnv } from '@/lib/validateEnv';
 
 function MissingEnvBanner({ errors }: { errors: string[] }) {
+  console.log('⚠️ [EnvChecker.tsx] Rendering MissingEnvBanner due to missing keys.');
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-8">
       <div className="max-w-md w-full bg-amber-950/20 border border-amber-700/30 rounded-2xl p-6 backdrop-blur-md">
@@ -18,11 +19,14 @@ function MissingEnvBanner({ errors }: { errors: string[] }) {
 }
 
 export function EnvChecker({ children }: { children: React.ReactNode }) {
-  const { isValid, errors } = validateEnv();
+  const result = validateEnv();
+  console.log('🔍 [EnvChecker.tsx] Environment validation result:', result);
   
-  if (!isValid) {
-    return <MissingEnvBanner errors={errors} />;
+  if (!result.isValid) {
+    return <MissingEnvBanner errors={result.errors} />;
   }
   
+  console.log('✅ [EnvChecker.tsx] Environment is valid. Rendering children...');
   return <>{children}</>;
 }
+

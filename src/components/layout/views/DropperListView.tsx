@@ -7,10 +7,10 @@ interface DropperListViewProps {
 
 export function DropperListView({ onSwitchToChat }: DropperListViewProps) {
   const [agents, setAgents] = useState([
-    { id: 'D10', alias: 'Phantom', sector: 'Mamburao Central East', status: 'Active', signal: '106.011 MHz', strength: 98, lat: 13.2265, lng: 120.5961, latency: '4ms' },
-    { id: 'D12', alias: 'Ghost', sector: 'Paypay Offshore Terminal', status: 'Running', signal: '106.045 MHz', strength: 71, lat: 13.2450, lng: 120.5822, latency: '22ms' },
-    { id: 'D14', alias: 'Vanguard', sector: 'Centro West Base 2', status: 'Standby', signal: '106.002 MHz', strength: 89, lat: 13.2118, lng: 120.6050, latency: '8ms' },
-    { id: 'D17', alias: 'Ranger', sector: 'Northern Airport Zone', status: 'Offline', signal: '106.014 MHz', strength: 0, lat: 13.2554, lng: 120.6121, latency: 'N/A' },
+    { id: 'D10', alias: 'DROPPER-01', sector: 'Mamburao Central East', status: 'Active', signal: '106.011 MHz', strength: 98, lat: 13.2265, lng: 120.5961, latency: '4ms' },
+    { id: 'D12', alias: 'DROPPER-02', sector: 'Paypay Offshore Terminal', status: 'Running', signal: '106.045 MHz', strength: 71, lat: 13.2450, lng: 120.5822, latency: '22ms' },
+    { id: 'D14', alias: 'DROPPER-03', sector: 'Centro West Base 2', status: 'Standby', signal: '106.002 MHz', strength: 89, lat: 13.2118, lng: 120.6050, latency: '8ms' },
+    { id: 'D17', alias: 'DROPPER-04', sector: 'Northern Airport Zone', status: 'Offline', signal: '106.014 MHz', strength: 0, lat: 13.2554, lng: 120.6121, latency: 'N/A' },
   ]);
 
   const [pingingAgent, setPingingAgent] = useState<string | null>(null);
@@ -51,7 +51,7 @@ export function DropperListView({ onSwitchToChat }: DropperListViewProps) {
             Mamburao Operator Network
           </span>
           <h2 className="text-2xl font-display font-black tracking-[0.15em] uppercase text-white drop-shadow-[0_0_12px_rgba(16,96,17,0.85)] mt-2">
-            DROPPER LIST // OPERATIVES INDEX
+            ADMIN/DROPPER LIST
           </h2>
         </div>
         

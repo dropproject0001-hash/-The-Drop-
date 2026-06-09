@@ -10,7 +10,7 @@ export function ClientPanel() {
       <div className="flex justify-between items-center px-4 py-3 bg-[--accent-primary]/10 border-b border-[--accent-primary]/20">
         <div className="flex items-center gap-2">
           <Target className="w-5 h-5 text-[--accent-primary]" />
-          <h2 className="text-[--accent-primary] font-display font-bold tracking-widest uppercase text-sm">Buyer / Client</h2>
+          <h2 className="text-[--accent-primary] font-display font-bold tracking-widest uppercase text-sm">Getto/Lotter</h2>
         </div>
         <div className="flex gap-3">
           <span className="flex items-center gap-1 text-[10px] font-mono text-[--accent-primary]">

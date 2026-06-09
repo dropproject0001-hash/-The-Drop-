@@ -104,9 +104,9 @@ export function BaseLayout() {
         {/* Sidebar Nav Items */}
         <nav className="flex-1 flex flex-col items-start gap-4 w-full z-10 mt-2">
           <NavItem icon={<MapIcon className="w-5 h-5" />} active={activeTab === 'map'} tooltip="Drop Map" label="DROP MAP" isExpanded={isExpanded} onClick={() => setActiveTab('map')} />
-          <NavItem icon={<Package className="w-5 h-5" />} active={activeTab === 'cargo'} tooltip="Inventory" label="CARGO BAY" isExpanded={isExpanded} onClick={() => setActiveTab('cargo')} />
+          <NavItem icon={<Package className="w-5 h-5" />} active={activeTab === 'cargo'} tooltip="Inventory" label="CARGO BAY" isExpanded={isExpanded} onClick={() => setActiveTab('cargo')} badge="04 DEPOTS" badgeStyle="border-[#106011] bg-black text-green-400 font-bold shadow-[0_0_12px_rgba(16,96,17,0.5)]" />
           <NavItem icon={<MessageSquare className="w-5 h-5" />} active={activeTab === 'chat'} tooltip="Chat Box" label="CHAT BOX" isExpanded={isExpanded} onClick={() => setActiveTab('chat')} />
-          <NavItem icon={<Users className="w-5 h-5" />} active={activeTab === 'droppers'} tooltip="Dropper List" label="DROPPER LIST" isExpanded={isExpanded} onClick={() => setActiveTab('droppers')} />
+          <NavItem icon={<Users className="w-5 h-5" />} active={activeTab === 'droppers'} tooltip="Dropper List" label="DROPPER LIST" isExpanded={isExpanded} onClick={() => setActiveTab('droppers')} badge="4 ACTIVE" badgeStyle="border-[#106011] bg-[#106011]/10 text-green-400 font-bold shadow-[0_0_12px_rgba(16,96,17,0.5)] animate-pulse" />
           <NavItem icon={<Activity className="w-5 h-5" />} active={activeTab === 'stocks'} tooltip="Stocks Analysis" label="STOCKS ANALYSIS" isExpanded={isExpanded} onClick={() => setActiveTab('stocks')} />
         </nav>
         
@@ -225,18 +225,26 @@ interface NavItemProps {
   label?: string;
   isExpanded?: boolean;
   onClick?: () => void;
+  badge?: string;
+  badgeStyle?: string;
 }
 
-function NavItem({ icon, active, tooltip, label, isExpanded, onClick }: NavItemProps) {
+function NavItem({ icon, active, tooltip, label, isExpanded, onClick, badge, badgeStyle }: NavItemProps) {
   const isChatBox = label === "CHAT BOX" || tooltip === "Chat Box";
   const isSettings = label === "CONTROL SETTINGS" || tooltip === "Control Settings";
   const isStocks = label === "STOCKS ANALYSIS" || tooltip === "Stocks Analysis";
+  const isDropperList = label === "DROPPER LIST" || tooltip === "Dropper List";
+  const isCargoBay = label === "CARGO BAY" || tooltip === "Inventory";
   const isSpecial = isChatBox || isSettings || isStocks;
 
   const buttonStyle = isSpecial
     ? "bg-black/95 text-[#106011] border-2 border-[#106011] shadow-[0_0_18px_rgba(16,96,17,0.55)] font-black"
     : active
     ? "bg-[#106011]/25 text-[#106011] shadow-[inset_0_0_12px_rgba(16,96,17,0.4)] border-2 border-[#106011] font-bold drop-shadow-[0_0_6px_rgba(16,96,17,0.7)] cursor-default"
+    : isDropperList
+    ? "text-slate-400 hover:text-[#106011] bg-black/40 border border-[#106011]/30 hover:border-[#106011] hover:shadow-[0_0_15px_rgba(34,197,94,0.45)] transition-all cursor-pointer relative"
+    : isCargoBay
+    ? "text-slate-400 hover:text-[#106011] bg-black/40 border border-[#106011]/30 hover:border-[#106011] hover:shadow-[0_0_15px_rgba(34,197,94,0.45)] transition-all cursor-pointer relative"
     : "text-slate-400 hover:text-[#106011] bg-black/40 border border-[#106011]/30 hover:border-[#106011] hover:shadow-[0_0_12px_rgba(16,96,17,0.3)] transition-all cursor-pointer";
 
   return (
@@ -245,35 +253,74 @@ function NavItem({ icon, active, tooltip, label, isExpanded, onClick }: NavItemP
       className={`relative group w-full h-11 rounded-xl flex items-center ${isExpanded ? 'px-3 gap-3 justify-start' : 'justify-center'} transition-all duration-300 overflow-hidden ${buttonStyle}`}
     >
       {/* Universal Tactical HUD Corner Brackets */}
-      <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] z-20 group-hover:scale-105 transition-transform duration-300"></div>
-      <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-[#106011] pointer-events-none drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] z-20 group-hover:scale-105 transition-transform duration-300"></div>
-      <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] z-20 group-hover:scale-105 transition-transform duration-300"></div>
-      <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-[#106011] pointer-events-none drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] z-20 group-hover:scale-105 transition-transform duration-300"></div>
+      <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 pointer-events-none z-20 group-hover:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+      <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 pointer-events-none z-20 group-hover:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+      <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 pointer-events-none z-20 group-hover:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+      <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 pointer-events-none z-20 group-hover:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
       
+      {/* Tactical diagonal hazard stripes background overlay for Cargo Bay */}
+      {isCargoBay && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl opacity-0 group-hover:opacity-10 transition-opacity duration-300 bg-[linear-gradient(45deg,#106011_25%,transparent_25%,transparent_50%,#106011_50%,#106011_75%,transparent_75%,transparent)] bg-[size:12px_12px]" />
+      )}
+
+      {/* Dynamic tactical scanline overlay for Dropper List tracking vibe */}
+      {isDropperList && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
+          <motion.div
+            animate={{
+              y: ["-10%", "110%", "-10%"]
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className="w-full h-1 bg-gradient-to-r from-transparent via-green-500/40 to-transparent shadow-[0_0_10px_rgba(34,197,94,0.6)] opacity-70 group-hover:opacity-100"
+          />
+        </div>
+      )}
+
       {/* Inner Nested Rectangle Lines */}
-      <div className="absolute inset-0.5 border border-dashed border-[#106011]/30 pointer-events-none rounded-[10px] z-10"></div>
-      <div className="absolute inset-1 border border-[#106011]/15 pointer-events-none rounded-[8px] z-10"></div>
+      <div className="absolute inset-0.5 border border-dashed pointer-events-none rounded-[10px] z-10 border-[#106011]/30"></div>
+      <div className="absolute inset-1 border pointer-events-none rounded-[8px] z-10 border-[#106011]/15"></div>
 
       <div className={`${isExpanded ? 'shrink-0' : 'mx-auto'} relative z-10 ${isSpecial ? 'text-[#106011] drop-shadow-[0_0_5px_rgba(16,96,17,0.85)] animate-pulse' : 'group-hover:scale-115 group-hover:text-[#106011] transition-all duration-300'}`}>
         {icon}
+        {isDropperList && (
+          <span className="absolute -inset-1.5 rounded-full border border-green-500/20 animate-ping pointer-events-none opacity-30 group-hover:opacity-60 group-hover:border-green-500/50" />
+        )}
       </div>
       
       <AnimatePresence>
         {isExpanded && (
-          <motion.span 
+          <motion.div 
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}
-            className={`text-[10px] font-display font-black tracking-widest uppercase truncate relative z-10 ${isSpecial ? 'text-[#106011] drop-shadow-[0_0_6px_rgba(16,96,17,0.7)]' : active ? 'text-[#106011]' : 'text-slate-200 group-hover:text-[#106011] group-hover:font-bold transition-colors'}`}
+            className="flex-1 flex items-center justify-between min-w-0"
           >
-            {label || tooltip}
-          </motion.span>
+            <span 
+              className={`text-[10px] font-display font-black tracking-widest uppercase truncate relative z-10 ${isSpecial ? 'text-[#106011] drop-shadow-[0_0_6px_rgba(16,96,17,0.7)]' : active ? 'text-[#106011]' : 'text-slate-200 group-hover:text-[#106011] group-hover:font-bold transition-colors'}`}
+            >
+              {label || tooltip}
+            </span>
+            {badge && (
+              <span className={`text-[7px] font-mono leading-none px-1 py-0.5 rounded border select-none h-fit shrink-0 tracking-wider font-extrabold max-w-[85px] truncate ${badgeStyle || 'border-[#106011] bg-black text-[#106011]'}`}>
+                {badge}
+              </span>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
 
+      {/* When collapsed, show tiny glowing badge pill or notification dot */}
+      {!isExpanded && badge && (
+        <span className={`absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full border border-black z-20 ${badge.includes('ACTIVE') ? 'bg-green-500 animate-pulse shadow-[0_0_6px_rgba(34,197,94,0.9)]' : 'bg-green-500 animate-pulse shadow-[0_0_6px_rgba(34,197,94,0.9)]'}`}></span>
+      )}
+
       {/* Tooltip Link */}
       {!isExpanded && (
-        <span className="absolute left-full ml-4 px-2.5 py-1 bg-black/95 border-2 border-[#106011] text-[#106011] drop-shadow-[0_0_5px_rgba(16,96,17,0.5)] shadow-[0_0_10px_rgba(16,96,17,0.3)] font-mono text-[9px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 tracking-widest">
+        <span className="absolute left-full ml-4 px-2.5 py-1 bg-black/95 border-2 text-[9px] font-mono rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 tracking-widest border-[#106011] text-[#106011] drop-shadow-[0_0_5px_rgba(16,96,17,0.5)] shadow-[0_0_10px_rgba(16,96,17,0.3)]">
           {tooltip}
         </span>
       )}

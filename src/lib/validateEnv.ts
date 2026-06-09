@@ -40,36 +40,8 @@ export function validateEnv(): EnvValidationResult {
   };
 }
 
-/**
- * Call this early in the app. Throws in development for visibility.
- */
-export function validateEnvOnStartup(): void {
-  const result = validateEnv();
-
-  if (result.warnings.length > 0) {
-    console.warn('[ENV] Warnings:', result.warnings);
-  }
-
-  if (!result.isValid) {
-    const message = `Environment validation failed:\n${result.errors.map(e => `• ${e}`).join('\n')}`;
-    console.error(message);
-
-    if ((import.meta as any).env.DEV) {
-      // Show visible error in development
-      const root = document.getElementById('root');
-      if (root) {
-        root.innerHTML = `
-          <div style="padding: 2rem; font-family: system-ui; background: #1f2937; color: #f87171;">
-            <h2 style="margin-top:0;">❌ Environment Configuration Error</h2>
-            <pre style="white-space: pre-wrap; background: #111827; padding: 1rem; border-radius: 6px;">${message}</pre>
-            <p>Please check your <code>.env.local</code> file and restart the dev server.</p>
-          </div>
-        `;
-      }
-    }
-
-    throw new Error(message);
-  }
-
-  console.log('%c[ENV] ✓ Environment validated successfully (Supabase)', 'color: #4ade80');
+export function getEnvValidationResult(): EnvValidationResult {
+  return validateEnv();
 }
+
+// Removed validateEnvOnStartup as it was causing crashes. Use getEnvValidationResult instead.

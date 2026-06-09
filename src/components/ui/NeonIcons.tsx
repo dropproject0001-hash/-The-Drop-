@@ -25,22 +25,26 @@ export function NeonIcon({
       green: {
         text: 'text-green-500',
         dropShadow: 'drop-shadow-[0_0_8px_rgba(34,197,94,0.8)] drop-shadow-[0_0_20px_rgba(34,197,94,0.4)]',
-        border: 'border-green-500/30 text-green-500/20'
+        border: 'border-green-500/30 text-green-500/20',
+        imgBorder: 'border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.6)]'
       },
       blue: {
         text: 'text-blue-500',
         dropShadow: 'drop-shadow-[0_0_8px_rgba(59,130,246,0.8)] drop-shadow-[0_0_20px_rgba(59,130,246,0.4)]',
-        border: 'border-blue-500/30 text-blue-500/20'
+        border: 'border-blue-500/30 text-blue-500/20',
+        imgBorder: 'border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.6)]'
       },
       red: {
         text: 'text-red-500',
         dropShadow: 'drop-shadow-[0_0_8px_rgba(239,68,68,0.8)] drop-shadow-[0_0_20px_rgba(239,68,68,0.4)]',
-        border: 'border-red-500/30 text-red-500/20'
+        border: 'border-red-500/30 text-red-500/20',
+        imgBorder: 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.6)]'
       },
       white: {
         text: 'text-slate-200',
         dropShadow: 'drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]',
-        border: 'border-slate-300/30 text-slate-300/20'
+        border: 'border-slate-300/30 text-slate-300/20',
+        imgBorder: 'border-slate-300/50 shadow-[0_0_15px_rgba(255,255,255,0.4)]'
       }
     };
     return glows[color];
@@ -67,7 +71,8 @@ export function NeonIcon({
         <img 
           src={imageSrc} 
           alt="HUD Interface Center"
-          className="relative z-10 rounded-full object-cover border-2 border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.6)]"
+          referrerPolicy="no-referrer"
+          className={`relative z-10 rounded-full object-cover border-2 ${style.imgBorder}`}
           style={{ width: size, height: size }}
         />
       ) : (

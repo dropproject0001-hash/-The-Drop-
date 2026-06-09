@@ -69,7 +69,7 @@ export function SuperAdminPanel() {
           </div>
           <div className="flex gap-2">
             <span className="text-[#106011]/50 font-bold">[12:05:11]</span>
-            <span className="text-[#106011] font-semibold drop-shadow-[0_0_4px_rgba(16,96,17,0.5)]">Agent 'Phantom' (Dropper) is online.</span>
+            <span className="text-[#106011] font-semibold drop-shadow-[0_0_4px_rgba(16,96,17,0.5)]">Dropper 'DROPPER-01' is online.</span>
           </div>
           <div className="flex gap-2">
             <span className="text-[#106011]/50 font-bold">[12:06:40]</span>

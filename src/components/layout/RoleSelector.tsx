@@ -64,7 +64,7 @@ export function RoleSelector() {
           <div className="absolute inset-3 border border-[#106011]/30 rounded-lg pointer-events-none"></div>
 
           <div className="pt-2 relative z-10">
-            <p className="relative mb-6 px-4 py-2 text-[#106011] bg-black/90 border-2 border-[#106011] shadow-[0_0_15px_rgba(16,96,17,0.4)] drop-shadow-[0_0_8px_rgba(16,96,17,0.7)] font-black uppercase text-[10px] text-center tracking-[0.25em] rounded select-none overflow-hidden">
+            <div className="relative mb-6 px-4 py-2 text-[#106011] bg-black/90 border-2 border-[#106011] shadow-[0_0_15px_rgba(16,96,17,0.4)] drop-shadow-[0_0_8px_rgba(16,96,17,0.7)] font-black uppercase text-[10px] text-center tracking-[0.25em] rounded select-none overflow-hidden">
               {/* Tactical HUD Corner Brackets */}
               <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)]"></div>
               <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)]"></div>
@@ -76,7 +76,7 @@ export function RoleSelector() {
               <div className="absolute inset-1 border border-[#106011]/15 rounded pointer-events-none"></div>
 
               <span className="relative z-10">Map System Features Active</span>
-            </p>
+            </div>
             <ul className="grid grid-cols-2 gap-x-2 gap-y-2 list-none text-[9px] uppercase text-slate-300">
               <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Realtime map rendering</li>
               <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> GPS tracking</li>
@@ -174,7 +174,7 @@ export function RoleSelector() {
          />
          <RoleCard 
            to="/dropper" 
-           icon={<NeonIcon icon={Satellite} color="blue" size={56} className="group-hover:scale-110 transition-transform duration-300" />} 
+           icon={<NeonIcon imageSrc="/Dropper-icon.png" color="blue" size={56} className="group-hover:scale-110 transition-transform duration-300" />} 
            title="DROPPER" 
            features={[
              "PRODUCT DROP SYSTEM:",
@@ -208,8 +208,8 @@ export function RoleSelector() {
          />
          <RoleCard 
            to="/client" 
-           icon={<NeonIcon icon={Target} color="white" size={56} className="group-hover:scale-110 transition-transform duration-300" />} 
-           title="Buyer / Client" 
+           icon={<NeonIcon imageSrc="/buyer-icon.png" color="green" size={56} className="group-hover:scale-110 transition-transform duration-300" />} 
+           title="Getto/Lotter" 
            features={[
              "PRODUCT MAP VIEW:",
              "Realtime map",

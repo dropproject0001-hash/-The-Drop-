@@ -3,9 +3,9 @@ import { MessageSquare, Send, Paperclip, ShieldCheck, Check, CornerDownLeft, Eye
 
 export function ChatBoxView() {
   const [messages, setMessages] = useState([
-    { id: '1', sender: 'Phantom', text: 'Cargo drop initialized at Sector 3 paypay.', time: '12:01', isMe: false, isSeen: true },
-    { id: '2', sender: 'Me', text: 'Roger that. Coordinates mapped to God\'s Eye system.', time: '12:02', isMe: true, isSeen: true },
-    { id: '3', sender: 'Phantom', text: 'Awaiting client confirm for delivery verification code.', time: '12:03', isMe: false, isSeen: true },
+    { id: '1', sender: 'DROPPER-01', text: 'Cargo drop initialized at Sector 3 paypay.', time: '12:01', isMe: false, isSeen: true },
+    { id: '2', sender: 'OPERATOR-HQ', text: 'Roger that. Coordinates mapped to God\'s Eye system.', time: '12:02', isMe: true, isSeen: true },
+    { id: '3', sender: 'DROPPER-01', text: 'Awaiting client confirm for delivery verification code.', time: '12:03', isMe: false, isSeen: true },
   ]);
 
   const [inputMessage, setInputMessage] = useState('');
@@ -21,7 +21,7 @@ export function ChatBoxView() {
     
     const userMsg = {
       id: Date.now().toString(),
-      sender: 'Me',
+      sender: 'OPERATOR-HQ',
       text: inputMessage,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isMe: true,
@@ -48,7 +48,7 @@ export function ChatBoxView() {
       
       const repMsg = {
         id: (Date.now() + 1).toString(),
-        sender: 'Phantom',
+        sender: 'DROPPER-01',
         text: botResponses[Math.floor(Math.random() * botResponses.length)],
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isMe: false,
@@ -77,7 +77,7 @@ export function ChatBoxView() {
             LOCKED RADIO COMM CHANNEL
           </span>
           <h2 className="text-2xl font-display font-black tracking-[0.15em] uppercase text-white drop-shadow-[0_0_12px_rgba(16,96,17,0.85)] mt-2">
-            CHAT BOX // LOGISTICS FEED
+            CHAT BOX
           </h2>
         </div>
         
@@ -106,7 +106,7 @@ export function ChatBoxView() {
           <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar">
             <div className="p-3 rounded-lg bg-[#106011]/15 border-2 border-[#106011] shadow-[0_0_10px_rgba(16,96,17,0.2)] flex flex-col gap-1 relative cursor-pointer select-none">
               <div className="flex justify-between items-center">
-                <span className="text-white text-xs font-bold font-display uppercase tracking-wider">Phantom (Dropper)</span>
+                <span className="text-white text-xs font-bold font-display uppercase tracking-wider">DROPPER-01</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
               </div>
               <span className="text-[8.5px] font-mono text-[#106011] font-bold">SIGNAL: 106.011 MHz</span>
@@ -114,7 +114,7 @@ export function ChatBoxView() {
 
             <div className="p-3 rounded-lg bg-black/40 border border-[#106011]/20 hover:border-[#106011] transition-all flex flex-col gap-1 relative cursor-pointer select-none">
               <div className="flex justify-between items-center">
-                <span className="text-slate-400 font-bold font-display uppercase tracking-wider text-xs">A-Agent Orbit (Dropper)</span>
+                <span className="text-slate-400 font-bold font-display uppercase tracking-wider text-xs">DROPPER-02</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-[#106011]"></span>
               </div>
               <span className="text-[8.5px] font-mono text-slate-500">SIGNAL: 106.045 MHz</span>
@@ -122,7 +122,7 @@ export function ChatBoxView() {
 
             <div className="p-3 rounded-lg bg-black/40 border border-[#106011]/20 hover:border-[#106011] transition-all flex flex-col gap-1 relative cursor-pointer select-none">
               <div className="flex justify-between items-center">
-                <span className="text-slate-400 font-bold font-display uppercase tracking-wider text-xs">Buyer S-42 (Client)</span>
+                <span className="text-slate-400 font-bold font-display uppercase tracking-wider text-xs">BUYER-42</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
               </div>
               <span className="text-[8.5px] font-mono text-slate-500">PAYMENT STATUS: VERIFIED</span>
@@ -176,7 +176,7 @@ export function ChatBoxView() {
             {isTyping && (
               <div className="flex flex-col mr-auto max-w-[80%] items-start">
                 <div className="flex items-center gap-1.5 text-[9px] font-mono uppercase text-[#106011]/70 mb-1 px-1 font-bold">
-                  <span>Phantom</span>
+                  <span>DROPPER-01</span>
                   <span>•</span>
                   <span className="animate-pulse">TYPING FEED ACTIVE...</span>
                 </div>
