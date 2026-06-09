@@ -1,61 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useAuthStore } from '@/stores';
+import { useOTP } from '@/hooks/useOTP';
 
 export function ClientRegistration() {
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [otp, setOtp] = useState('');
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Step 1: Send OTP
-  const sendOTP = async () => {
+  const {
+    otp,
+    setOtp,
+    loading: otpLoading,
+    error: otpError,
+    requestOTP,
+    verifyOTP,
+  } = useOTP();
+
+  // Sync error messages from hook if they change
+  useEffect(() => {
+    if (otpError) {
+      setMessage(otpError);
+    }
+  }, [otpError]);
+
+  // Handle Send OTP
+  const handleSendOTP = async () => {
     if (!phoneNumber) return;
 
-    setLoading(true);
     setMessage('');
-
-    if (!isSupabaseConfigured) {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setMessage('OTP sent successfully! Enter 123456 as code.');
+    const result = await requestOTP(phoneNumber, 'login');
+    if (result.success) {
+      if (result.mock) {
+        setMessage('OTP sent successfully! Enter 123456 as code.');
+      } else {
+        setMessage('OTP sent successfully! Checking for incoming SMS...');
+      }
       setStep('otp');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('register-client', {
-        body: { phone_number: phoneNumber },
-      });
-
-      if (error) throw error;
-
-      setMessage('OTP sent successfully!');
-      setStep('otp');
-    } catch (error: any) {
-      setMessage(error.message || 'Failed to send OTP');
-    } finally {
-      setLoading(false);
+    } else {
+      setMessage(otpError || 'Failed to send OTP');
     }
   };
 
-  // Step 2: Verify OTP
-  const verifyOTP = async () => {
+  // Handle Verify OTP
+  const handleVerifyOTP = async () => {
     if (!otp) return;
 
-    setLoading(true);
     setMessage('');
-
-    if (!isSupabaseConfigured) {
-      await new Promise((resolve) => setTimeout(resolve, 850));
-      if (otp !== '123456') {
-        setMessage('Invalid OTP code. Try of 123456.');
-        setLoading(false);
-        return;
-      }
-      
-      const mockId = 'mock-client-' + Math.random().toString(36).substr(2, 9);
+    const result = await verifyOTP(phoneNumber, otp, 'login');
+    if (result.success) {
+      // Create session for user
+      const mockId = 'client-' + Math.random().toString(36).substr(2, 9);
       useAuthStore.getState().setSession({ user: { id: mockId }, access_token: 'mock', refresh_token: 'mock' });
       useAuthStore.getState().setProfile({
         id: mockId,
@@ -68,26 +63,12 @@ export function ClientRegistration() {
         push_keys: null,
         created_at: new Date().toISOString()
       });
-      setMessage('Registration successful! Welcome!');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('verify-otp', {
-        body: { phone_number: phoneNumber, otp_code: otp },
-      });
-
-      if (error) throw error;
-
-      setMessage(`Registration successful! Welcome, ${data.full_name}`);
-      // Redirect to dashboard or home
-    } catch (error: any) {
-      setMessage(error.message || 'Invalid OTP');
-    } finally {
-      setLoading(false);
+      setMessage('Registration successful! Welcome to The Drop!');
+    } else {
+      setMessage(otpError || 'Invalid or expired OTP');
     }
   };
+
 
 
   return (
@@ -108,11 +89,11 @@ export function ClientRegistration() {
           </div>
 
           <button
-            onClick={sendOTP}
-            disabled={loading || !phoneNumber}
+            onClick={handleSendOTP}
+            disabled={otpLoading || !phoneNumber}
             className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-medium disabled:opacity-50 transition"
           >
-            {loading ? 'Sending OTP...' : 'Send OTP'}
+            {otpLoading ? 'Sending OTP...' : 'Send OTP'}
           </button>
         </div>
       )}
@@ -132,11 +113,11 @@ export function ClientRegistration() {
           </div>
 
           <button
-            onClick={verifyOTP}
-            disabled={loading || otp.length !== 6}
+            onClick={handleVerifyOTP}
+            disabled={otpLoading || otp.length !== 6}
             className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-medium disabled:opacity-50 transition"
           >
-            {loading ? 'Verifying...' : 'Verify & Register'}
+            {otpLoading ? 'Verifying...' : 'Verify & Register'}
           </button>
 
           <button

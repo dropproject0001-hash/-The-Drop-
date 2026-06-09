@@ -4,6 +4,7 @@ import { RoleSelector } from '@/components/layout/RoleSelector';
 import { SuperAdminPanel } from '@/components/panels/SuperAdminPanel';
 import { DropperPanel } from '@/components/panels/DropperPanel';
 import { ClientPanel } from '@/components/panels/ClientPanel';
+import LoginWithOTP from '@/pages/LoginWithOTP';
 
 export function AppRouter() {
   console.log('AppRouter rendering');
@@ -15,6 +16,7 @@ export function AppRouter() {
           <Route path="super-admin" element={<SuperAdminPanel />} />
           <Route path="dropper" element={<DropperPanel />} />
           <Route path="client" element={<ClientPanel />} />
+          <Route path="login-otp" element={<LoginWithOTP />} />
         </Route>
       </Routes>
     </BrowserRouter>

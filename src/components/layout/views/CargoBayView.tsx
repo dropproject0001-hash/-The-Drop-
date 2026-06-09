@@ -55,13 +55,13 @@ export function CargoBayView() {
             Secured Depot Log
           </span>
           <h2 className="text-2xl font-display font-black tracking-[0.15em] uppercase text-white drop-shadow-[0_0_12px_rgba(16,96,17,0.85)] mt-2">
-            CARGO BAY // SYSTEM DEPOTS
+            Dropped System Depots
           </h2>
         </div>
         
         <div className="p-2.5 bg-black/80 border-2 border-[#106011] rounded shadow-[0_0_12px_rgba(16,96,17,0.3)] flex items-center gap-2 text-slate-300 font-mono text-[10px] uppercase font-bold">
           <Package className="w-4 h-4 text-[#106011]" />
-          <span>INVENTORY CARGO BLOCKS: {cargo.length} SYSTEM RECORDS</span>
+          <span>Dropped {cargo.length} system records</span>
         </div>
       </div>
 
@@ -79,12 +79,12 @@ export function CargoBayView() {
 
           <div className="flex items-center gap-2 border-b border-[#106011]/30 pb-3 mb-6 relative z-10">
             <FilePlus className="w-4.5 h-4.5 text-[#106011] drop-shadow-[0_0_5px_rgba(16,96,17,0.8)] animate-pulse" />
-            <span className="text-white font-display font-bold tracking-[0.16em] text-xs">REGISTER NEW CARGO STOCK</span>
+            <span className="text-white font-display font-bold tracking-[0.16em] text-xs">Register New Product stock</span>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-4 relative z-10 text-slate-300 font-mono text-xs uppercase tracking-wide">
             <div className="space-y-1.5 select-text">
-              <label className="text-[#106011] font-black">Cargo Item Name</label>
+              <label className="text-[#106011] font-black">Product Name or "codename"</label>
               <input
                 type="text"
                 required
@@ -154,7 +154,7 @@ export function CargoBayView() {
             <div className="absolute inset-1 border border-dashed border-[#106011]/30 rounded-xl pointer-events-none"></div>
 
             <div className="border-b border-[#106011]/30 pb-3 mb-4 flex justify-between items-center relative z-10">
-              <span className="text-white font-display font-black tracking-[0.16em] text-xs">SYS_MAMBURAO CARGO STOCK REGISTRY</span>
+              <span className="tracking-[0.16em] border border-[#106f0a] h-[36px] bg-[#020302] italic font-bold no-underline text-[20px] leading-[17px] text-left font-['Times_New_Roman'] text-[#03ad29] flex items-center px-2">Mamburao Dropped Registry</span>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar relative z-10 pb-2">

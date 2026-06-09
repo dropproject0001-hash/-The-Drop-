@@ -137,7 +137,7 @@ export function DropperListView({ onSwitchToChat }: DropperListViewProps) {
                         className="flex-1 h-9 border-2 border-[#106011]/60 rounded-lg flex items-center justify-center gap-1.5 font-mono text-[10px] font-black uppercase tracking-wider bg-black text-[#106011] hover:bg-[#106011]/20 hover:scale-[1.02] shadow-sm shadow-[#106011]/30 transition-all cursor-pointer disabled:bg-red-950/15 disabled:border-red-900/40 disabled:text-slate-500 disabled:cursor-not-allowed"
                       >
                         <MessageSquare className="w-3 h-3" />
-                        <span>COMMS FEED</span>
+                        <span>Message 📩</span>
                       </button>
                     </div>
 
