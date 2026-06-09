@@ -47,7 +47,7 @@ export function RoleSelector() {
               />
             </div>
             <h1 className="text-xl lg:text-3xl tracking-[0.2em] text-[#106011] drop-shadow-[0_0_15px_rgba(16,96,17,0.75)] uppercase font-display font-bold text-center">
-               Occidental Mindoro Mamburao
+               Occi.Mindo Drop And Grab
             </h1>
           </div>
         </div>
@@ -75,7 +75,7 @@ export function RoleSelector() {
               <div className="absolute inset-0.5 border border-dashed border-[#106011]/35 rounded pointer-events-none"></div>
               <div className="absolute inset-1 border border-[#106011]/15 rounded pointer-events-none"></div>
 
-              <span className="relative z-10">Map System Features Active</span>
+              <span className="relative z-10">100% no personal identy</span>
             </div>
             <ul className="grid grid-cols-2 gap-x-2 gap-y-2 list-none text-[9px] uppercase text-slate-300">
               <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Realtime map rendering</li>

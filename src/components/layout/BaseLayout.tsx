@@ -94,7 +94,7 @@ export function BaseLayout() {
                   <span className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-pulse shadow-[0_0_6px_rgba(16,96,17,0.8)]"></span>
                 </div>
                 <span className="text-[7.5px] font-mono text-[#106011] tracking-[0.12em] mt-1.5 uppercase font-bold drop-shadow-[0_0_4px_rgba(16,96,17,0.4)] group-hover/brand:drop-shadow-[0_0_6px_rgba(16,96,17,0.85)] transition-all">
-                  LOGISTICS COMMS // CHAT BOX
+                  Drop Drawer 📩💲📍✅
                 </span>
               </motion.div>
             )}
@@ -104,7 +104,7 @@ export function BaseLayout() {
         {/* Sidebar Nav Items */}
         <nav className="flex-1 flex flex-col items-start gap-4 w-full z-10 mt-2">
           <NavItem icon={<MapIcon className="w-5 h-5" />} active={activeTab === 'map'} tooltip="Drop Map" label="DROP MAP" isExpanded={isExpanded} onClick={() => setActiveTab('map')} />
-          <NavItem icon={<Package className="w-5 h-5" />} active={activeTab === 'cargo'} tooltip="Inventory" label="CARGO BAY" isExpanded={isExpanded} onClick={() => setActiveTab('cargo')} badge="04 DEPOTS" badgeStyle="border-[#106011] bg-black text-green-400 font-bold shadow-[0_0_12px_rgba(16,96,17,0.5)]" />
+          <NavItem icon={<Package className="w-5 h-5" />} active={activeTab === 'cargo'} tooltip="Inventory" label="inv. Locker 🗝️📊" isExpanded={isExpanded} onClick={() => setActiveTab('cargo')} badge="LOCK 📵" badgeStyle="border-[#106011] bg-black text-green-400 font-bold shadow-[0_0_12px_rgba(16,96,17,0.5)]" />
           <NavItem icon={<MessageSquare className="w-5 h-5" />} active={activeTab === 'chat'} tooltip="Chat Box" label="CHAT BOX" isExpanded={isExpanded} onClick={() => setActiveTab('chat')} />
           <NavItem icon={<Users className="w-5 h-5" />} active={activeTab === 'droppers'} tooltip="Dropper List" label="DROPPER LIST" isExpanded={isExpanded} onClick={() => setActiveTab('droppers')} badge="4 ACTIVE" badgeStyle="border-[#106011] bg-[#106011]/10 text-green-400 font-bold shadow-[0_0_12px_rgba(16,96,17,0.5)] animate-pulse" />
           <NavItem icon={<Activity className="w-5 h-5" />} active={activeTab === 'stocks'} tooltip="Stocks Analysis" label="STOCKS ANALYSIS" isExpanded={isExpanded} onClick={() => setActiveTab('stocks')} />
@@ -188,8 +188,8 @@ export function BaseLayout() {
           
           <div className="flex items-center gap-4 relative z-10 pr-2">
             <div className="hidden md:flex flex-col items-end mr-4">
-              <span className="text-sm font-bold text-white font-display uppercase tracking-wider">Super Admin Portal Overview</span>
-              <span className="text-[10px] font-mono text-[#106011] uppercase tracking-widest font-semibold">Super Admin Clearance</span>
+              <span className="text-sm font-bold text-white font-display uppercase tracking-wider">Landing Page</span>
+              <span className="text-[10px] font-mono text-[#106011] uppercase tracking-widest font-semibold">Getto OTP Required 🔞</span>
             </div>
             <div className="relative group/avatar cursor-pointer">
               {/* Outer Glowing Pulsing Ring */}
@@ -234,7 +234,7 @@ function NavItem({ icon, active, tooltip, label, isExpanded, onClick, badge, bad
   const isSettings = label === "CONTROL SETTINGS" || tooltip === "Control Settings";
   const isStocks = label === "STOCKS ANALYSIS" || tooltip === "Stocks Analysis";
   const isDropperList = label === "DROPPER LIST" || tooltip === "Dropper List";
-  const isCargoBay = label === "CARGO BAY" || tooltip === "Inventory";
+  const isCargoBay = label === "CARGO BAY" || label === "Inventry Locker 🗝️" || label === "inv. Locker 🗝️📊" || tooltip === "Inventory";
   const isSpecial = isChatBox || isSettings || isStocks;
 
   const buttonStyle = isSpecial

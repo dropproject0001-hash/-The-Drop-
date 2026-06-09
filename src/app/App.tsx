@@ -1,5 +1,6 @@
 import { ErrorBoundary } from './providers/ErrorBoundary';
 import { EnvChecker } from './providers/EnvChecker';
+import { AuthProvider } from './providers/AuthContext';
 import { AppRouter } from './router/AppRouter';
 
 export default function App() {
@@ -7,7 +8,9 @@ export default function App() {
   return (
     <ErrorBoundary>
       <EnvChecker>
-        <AppRouter />
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
       </EnvChecker>
     </ErrorBoundary>
   );
