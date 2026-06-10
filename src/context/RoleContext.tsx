@@ -27,6 +27,15 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
 
   const fetchRole = async () => {
     setLoading(true);
+    
+    // Check for demo bypass first
+    const demoRole = localStorage.getItem('demo_role') as Role;
+    if (demoRole) {
+      setRole(demoRole);
+      setLoading(false);
+      return demoRole;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     let currentRole: Role = null;
     if (user) {

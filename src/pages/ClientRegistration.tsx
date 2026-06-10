@@ -38,7 +38,7 @@ export default function ClientRegistration() {
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6 text-white">
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
-        <h1 className="text-2xl font-bold mb-6 text-center">Getto Regestration 🔞</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Client Registration</h1>
 
         {step === 'details' && (
           <div className="space-y-5">

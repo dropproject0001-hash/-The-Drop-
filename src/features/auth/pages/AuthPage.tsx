@@ -97,7 +97,7 @@ export function AuthPage() {
               mode === 'client' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-300'
             }`}
           >
-            <User size={18} /> Getto Logins💲
+            <User size={18} /> Client Admission
           </button>
           <button
             onClick={() => {

@@ -99,7 +99,7 @@ export function ClientRegistration() {
 
   return (
     <div className="max-w-md mx-auto p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg text-slate-100">
-      <h2 id="client-registration-header" className="text-2xl font-bold mb-6 text-center text-white">Getto Regestration 🔞</h2>
+      <h2 id="client-registration-header" className="text-2xl font-bold mb-6 text-center text-white">Client Registration</h2>
 
       {step === 'mobile' && (
         <div className="space-y-4">

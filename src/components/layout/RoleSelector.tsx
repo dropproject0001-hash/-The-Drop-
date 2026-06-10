@@ -1,21 +1,26 @@
 import { Link } from 'react-router-dom';
 import { Radio, Target, Leaf, Satellite } from 'lucide-react';
 import { NeonIcon } from '../ui/NeonIcons';
+import { BannerSlider } from '../ui/BannerSlider';
 
 export function RoleSelector() {
   return (
-    <div className="relative flex flex-col items-center justify-start min-h-[calc(100vh-80px)] gap-12 py-12 px-6 text-center overflow-y-auto custom-scrollbar">
+    <div className="relative flex flex-col items-center justify-start min-h-[calc(100vh-80px)] gap-6 pt-4 pb-12 px-6 text-center overflow-y-auto custom-scrollbar">
       {/* Background Cover Photo */}
       <div 
         className="absolute inset-0 w-full h-full opacity-20 pointer-events-none mix-blend-luminosity bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url('/CoverpPhoto.png')` }}
+        style={{ backgroundImage: `url('/Backgroundimage.png')` }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[--bg-primary]/30 via-[--bg-primary]/80 to-[--bg-primary] pointer-events-none" />
 
-      <div className="space-y-4 relative z-10">
-        <div className="flex items-center justify-center flex-col md:flex-row gap-6 mb-8">
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className="relative p-4 max-w-[320px] md:max-w-[420px] w-full bg-black/80 rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(16,96,17,0.4)] border border-[#106011]/50">
+      <div className="space-y-4 relative z-10 w-full flex flex-col items-center">
+        <div className="flex items-center justify-center flex-col md:flex-row gap-6 mb-4 w-full">
+          <div className="flex flex-col items-center justify-center gap-4 w-full">
+
+            <div 
+              className="relative p-4 bg-black/80 rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(16,96,17,0.4)] border border-[#106011]/50 mx-auto w-full max-w-4xl"
+              style={{ height: '200px' }}
+            >
               {/* Corner HUD Brackets */}
               <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-[#106011] rounded-tl-2xl drop-shadow-[0_0_12px_rgba(16,96,17,0.95)]"></div>
               <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-[#106011] rounded-tr-2xl drop-shadow-[0_0_12px_rgba(16,96,17,0.95)]"></div>
@@ -25,6 +30,11 @@ export function RoleSelector() {
               {/* Inner Nested High-Contrast Tactical HUD Lines */}
               <div className="absolute inset-2 border-2 border-dashed border-[#106011]/60 rounded-xl pointer-events-none"></div>
               <div className="absolute inset-4 border border-[#106011]/40 rounded-lg pointer-events-none"></div>
+
+              {/* HUD Telemetry Labels */}
+              <div className="absolute top-6 right-6 z-20 text-[8px] font-mono text-[#106011] tracking-[0.3em] uppercase flex items-center gap-1.5">
+                <span className="animate-pulse">● THE DROP SYSTEM V1.0</span>
+              </div>
 
               {/* Tactical grid scale lines/deco */}
               <div className="absolute top-6 bottom-6 left-2 w-px border-l border-dotted border-[#106011]/30"></div>
@@ -39,93 +49,11 @@ export function RoleSelector() {
                 <span className="animate-pulse">● FEED ONLINE</span>
               </div>
 
-              {/* Actual Image */}
-              <img 
-                src="/CoverpPhoto.png" 
-                alt="Cover" 
-                className="w-full h-auto rounded-lg border-2 border-[#106011]/50 shadow-[0_0_20px_rgba(16,96,17,0.3)] object-cover filter brightness-90 contrast-125 relative z-10" 
-              />
+              {/* Actual Dynamic Slider */}
+              <div className="w-full h-full relative z-10">
+                <BannerSlider />
+              </div>
             </div>
-            <h1 className="text-xl lg:text-3xl tracking-[0.2em] text-[#106011] drop-shadow-[0_0_15px_rgba(16,96,17,0.75)] uppercase font-display font-bold text-center">
-               Occi.Mindo Drop And Grab
-            </h1>
-          </div>
-        </div>
-        
-        <div className="text-[--text-secondary] font-mono text-left max-w-xl mx-auto text-xs bg-black/95 p-8 rounded-2xl border-2 border-[#106011] shadow-[0_0_35px_rgba(16,96,17,0.5)] tracking-widest max-h-[250px] overflow-y-auto custom-scrollbar relative">
-          {/* Tactical HUD Corner Brackets */}
-          <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#106011] rounded-tl-xl pointer-events-none drop-shadow-[0_0_12px_rgba(16,96,17,0.95)]"></div>
-          <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#106011] rounded-tr-xl pointer-events-none drop-shadow-[0_0_12px_rgba(16,96,17,0.95)]"></div>
-          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#106011] rounded-bl-xl pointer-events-none drop-shadow-[0_0_12px_rgba(16,96,17,0.95)]"></div>
-          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#106011] rounded-br-xl pointer-events-none drop-shadow-[0_0_12px_rgba(16,96,17,0.95)]"></div>
-          
-          {/* Inner Nested Rectangle Lines */}
-          <div className="absolute inset-1.5 border-2 border-dashed border-[#106011]/60 rounded-xl pointer-events-none"></div>
-          <div className="absolute inset-3 border border-[#106011]/30 rounded-lg pointer-events-none"></div>
-
-          <div className="pt-2 relative z-10">
-            <div className="relative mb-6 px-4 py-2 text-[#106011] bg-black/90 border-2 border-[#106011] shadow-[0_0_15px_rgba(16,96,17,0.4)] drop-shadow-[0_0_8px_rgba(16,96,17,0.7)] font-black uppercase text-[10px] text-center tracking-[0.25em] rounded select-none overflow-hidden">
-              {/* Tactical HUD Corner Brackets */}
-              <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)]"></div>
-              <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)]"></div>
-              <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)]"></div>
-              <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)]"></div>
-
-              {/* Double-nested tactical border dashes */}
-              <div className="absolute inset-0.5 border border-dashed border-[#106011]/35 rounded pointer-events-none"></div>
-              <div className="absolute inset-1 border border-[#106011]/15 rounded pointer-events-none"></div>
-
-              <span className="relative z-10">100% no personal identy</span>
-            </div>
-            <ul className="grid grid-cols-2 gap-x-2 gap-y-2 list-none text-[9px] uppercase text-slate-300">
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Realtime map rendering</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> GPS tracking</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Live moving markers</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Product pin markers</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> User markers</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Marker modal popups</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Route navigation</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> GPS pathway indicators</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Marker clustering</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Zoom controls</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Fullscreen mode</li>
-            </ul>
-
-            <p className="mt-8 mb-4 text-[#106011] drop-shadow-[0_0_8px_rgba(16,96,17,0.6)] font-bold uppercase text-[11px] text-center tracking-[0.2em]">Chat System</p>
-            <ul className="grid grid-cols-2 gap-x-2 gap-y-2 list-none text-[9px] uppercase text-slate-300">
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> WebSocket realtime chat</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> User online status</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Typing indicator</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Seen messages</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Image/video sending</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Chat notifications</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Chat history</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Mobile optimized chat UI</li>
-            </ul>
-
-            <p className="mt-8 mb-4 text-[#106011] drop-shadow-[0_0_8px_rgba(16,96,17,0.6)] font-bold uppercase text-[11px] text-center tracking-[0.2em]">PWA Features</p>
-            <ul className="grid grid-cols-2 gap-x-2 gap-y-2 list-none text-[9px] uppercase text-slate-300">
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Installable on Android</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Offline support</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Cached maps</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Push notifications</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Background sync</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Fast loading</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> App manifest</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Service worker</li>
-            </ul>
-
-            <p className="mt-8 mb-4 text-[#106011] drop-shadow-[0_0_8px_rgba(16,96,17,0.6)] font-bold uppercase text-[11px] text-center tracking-[0.2em]">Bonus Features</p>
-            <ul className="grid grid-cols-2 gap-x-2 gap-y-2 list-none text-[9px] uppercase text-slate-300 relative pb-2">
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> AI analytics dashboard</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Geofencing alerts</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Heatmaps</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Realtime alerts</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Auto-expiring product pins</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Voice notes in chat</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Multi-language support</li>
-              <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#106011] shadow-[0_0_5px_rgba(16,96,17,0.8)]"></span> Admin statistics dashboard</li>
-            </ul>
           </div>
         </div>
       </div>
@@ -209,7 +137,7 @@ export function RoleSelector() {
          <RoleCard 
            to="/client" 
            icon={<NeonIcon imageSrc="/buyer-icon.png" color="green" size={56} className="group-hover:scale-110 transition-transform duration-300" />} 
-           title="Getto Regestration 🔞" 
+           title="Client" 
            features={[
              "PRODUCT MAP VIEW:",
              "Realtime map",
@@ -254,6 +182,13 @@ function RoleCard({ to, icon, title, description, features, color }: { to: strin
 
   return (
     <Link to={to} className={`group flex flex-col items-center gap-6 p-8 rounded-2xl bg-black/95 transition-all duration-500 border ${borderColors[color as keyof typeof borderColors]} hover:-translate-y-2 relative overflow-hidden select-none`}>
+      {/* Background Cover Photo Overlay */}
+      <div 
+        className="absolute inset-0 w-full h-full opacity-10 pointer-events-none mix-blend-overlay bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
+        style={{ backgroundImage: `url('/Backgroundimage.png')` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
+
       {/* Tactical HUD Corner Brackets */}
       <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-[#106011] rounded-tl-xl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.85)] opacity-50 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"></div>
       <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-[#106011] rounded-tr-xl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.85)] opacity-50 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"></div>

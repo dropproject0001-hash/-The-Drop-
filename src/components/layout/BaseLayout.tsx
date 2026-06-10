@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlobalModals } from '@/components/ui/GlobalModals';
 import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart } from 'lucide-react';
@@ -9,16 +9,31 @@ import { ChatBoxView } from './views/ChatBoxView';
 import { DropperListView } from './views/DropperListView';
 import { StocksAnalysisView } from './views/StocksAnalysisView';
 import { ControlSettingsView } from './views/ControlSettingsView';
+import { useRole } from '@/context/RoleContext';
 
 export function BaseLayout() {
+  const { isClient, role, loading } = useRole();
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [activeTab, setActiveTab] = useState<'map' | 'cargo' | 'chat' | 'droppers' | 'stocks' | 'settings'>('map');
   
   const isExpanded = isHovered || isLocked;
 
+  // Auto-redirect if client tries to access restricted tabs
+  useEffect(() => {
+    if (!loading && isClient && (activeTab === 'cargo' || activeTab === 'stocks' || activeTab === 'droppers')) {
+      setActiveTab('map');
+    }
+  }, [activeTab, isClient, loading]);
+
   return (
-    <div className="min-h-screen bg-[--bg-primary] text-[--text-primary] flex font-sans overflow-hidden">
+    <div 
+      className="min-h-screen bg-[--bg-primary] text-[--text-primary] flex font-sans overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url('/Backgroundimage.png')` }}
+    >
+      <div className="absolute inset-0 bg-black/60 pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#106011]/10 via-transparent to-[#106011]/10 pointer-events-none z-0" />
       
       {/* Sidebar Navigation */}
       <motion.aside 
@@ -59,62 +74,39 @@ export function BaseLayout() {
         <Link 
           to="/" 
           onClick={() => setActiveTab('map')}
-          className="relative group/brand flex items-center gap-3 w-full p-2.5 rounded-xl bg-black/95 border border-[#106011]/50 shadow-[0_0_15px_rgba(16,96,17,0.25)] hover:border-[#106011] hover:shadow-[0_0_20px_rgba(16,96,17,0.5)] transition-all duration-300 select-none z-10 overflow-hidden"
+          className="relative group/brand flex items-center justify-center w-full h-16 rounded-xl bg-black/95 border border-[#106011]/50 shadow-[0_0_15px_rgba(16,96,17,0.25)] hover:border-[#106011] hover:shadow-[0_0_20px_rgba(16,96,17,0.5)] transition-all duration-300 select-none z-10 overflow-hidden"
           id="sidebar-brand-link"
         >
           {/* Nested Rectangle Tactical HUD borders */}
           <div className="absolute inset-0.5 border border-[#106011]/25 pointer-events-none rounded-[10px] group-hover/brand:border-[#106011]/45 transition-colors duration-300"></div>
-          <div className="absolute inset-1 border border-dashed border-[#106011]/15 pointer-events-none rounded-[8px] group-hover/brand:border-[#106011]/30 transition-colors duration-300"></div>
-
-          {/* Corner Brackets inside the mini brand box */}
-          <div className="absolute top-0.5 left-0.5 w-3 h-3 border-t-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.8)]"></div>
-          <div className="absolute top-0.5 right-0.5 w-3 h-3 border-t-2 border-r-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.8)]"></div>
-          <div className="absolute bottom-0.5 left-0.5 w-3 h-3 border-b-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.8)]"></div>
-          <div className="absolute bottom-0.5 right-0.5 w-3 h-3 border-b-2 border-r-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.8)]"></div>
-
-          {/* Mini telemetry detail */}
-          <div className="absolute right-1 top-1 text-[5px] font-mono text-[#106011]/40 tracking-wider hidden lg:block uppercase select-none group-hover/brand:text-[#106011]/70 transition-colors duration-300">
-            CH: 01
-          </div>
-
-          <div className="w-9 h-9 shrink-0 rounded-full bg-[#106011]/10 flex items-center justify-center border border-[#106011]/50 shadow-[0_0_12px_rgba(16,96,17,0.4)] group-hover/brand:bg-[#106011]/25 group-hover/brand:border-[#106011] group-hover/brand:shadow-[0_0_15px_rgba(16,96,17,0.7)] transition-all duration-300 cursor-pointer relative z-10 overflow-hidden">
-            <img 
-              src="/Appicon.png" 
-              alt="Droppin Ops" 
-              className="w-full h-full rounded-full object-cover relative z-10 group-hover/brand:scale-110 transition-transform duration-300" 
-              referrerPolicy="no-referrer"
-            />
-          </div>
           
-          <AnimatePresence>
-            {isExpanded && (
-              <motion.div 
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="flex flex-col relative z-10"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span className="font-display font-black text-[11px] text-white tracking-[0.2em] leading-none uppercase group-hover/brand:text-white transition-colors">
-                    Droppin Ops
-                  </span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-pulse shadow-[0_0_6px_rgba(16,96,17,0.8)]"></span>
-                </div>
-                <span className="text-[7.5px] font-mono text-[#106011] tracking-[0.12em] mt-1.5 uppercase font-bold drop-shadow-[0_0_4px_rgba(16,96,17,0.4)] group-hover/brand:drop-shadow-[0_0_6px_rgba(16,96,17,0.85)] transition-all">
-                  Drop Drawer 📩💲📍✅
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <img 
+            src="/coverphoto3.jpg" 
+            alt="Droppin Ops Brand" 
+            className="w-full h-full object-cover relative z-10 opacity-90 group-hover/brand:opacity-100 group-hover/brand:scale-105 transition-all duration-300" 
+            referrerPolicy="no-referrer"
+          />
+
+          {/* Tactical Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none z-20"></div>
+          <div className="absolute top-1 right-2 text-[6px] font-mono text-[#106011] tracking-widest uppercase z-30 opacity-70">
+            OP.UNIT: ALPHA
+          </div>
         </Link>
         
         {/* Sidebar Nav Items */}
         <nav className="flex-1 flex flex-col items-start gap-4 w-full z-10 mt-2">
           <NavItem icon={<MapIcon className="w-5 h-5" />} active={activeTab === 'map'} tooltip="Drop Map" label="DROP MAP" isExpanded={isExpanded} onClick={() => setActiveTab('map')} />
-          <NavItem icon={<Package className="w-5 h-5" />} active={activeTab === 'cargo'} tooltip="Inventory" label="INV. LOCKER" isExpanded={isExpanded} onClick={() => setActiveTab('cargo')} badge="LOCK ON" badgeStyle="border-red-900 bg-red-950 text-red-500 font-bold shadow-[0_0_12px_rgba(220,38,38,0.5)]" />
+          {!isClient && (
+            <NavItem icon={<Package className="w-5 h-5" />} active={activeTab === 'cargo'} tooltip="Inventory" label="INV. LOCKER" isExpanded={isExpanded} onClick={() => setActiveTab('cargo')} badge="LOCK ON" badgeStyle="border-red-900 bg-red-950 text-red-500 font-bold shadow-[0_0_12px_rgba(220,38,38,0.5)]" />
+          )}
           <NavItem icon={<MessageSquare className="w-5 h-5" />} active={activeTab === 'chat'} tooltip="Chat Box" label="CHAT BOX" isExpanded={isExpanded} onClick={() => setActiveTab('chat')} />
-          <NavItem icon={<Users className="w-5 h-5" />} active={activeTab === 'droppers'} tooltip="Dropper List" label="ONLINE DROPPERS" isExpanded={isExpanded} onClick={() => setActiveTab('droppers')} badge="4 ACTIVE" badgeStyle="border-[#106011] bg-[#106011]/20 text-green-400 font-bold shadow-[0_0_12px_rgba(16,96,17,0.5)] animate-pulse" />
-          <NavItem icon={<Activity className="w-5 h-5" />} active={activeTab === 'stocks'} tooltip="Stocks Analysis" label="STOCKS ANALYSIS" isExpanded={isExpanded} onClick={() => setActiveTab('stocks')} />
+          {!isClient && (
+            <NavItem icon={<Users className="w-5 h-5" />} active={activeTab === 'droppers'} tooltip="Dropper List" label="ONLINE DROPPERS" isExpanded={isExpanded} onClick={() => setActiveTab('droppers')} badge="4 ACTIVE" badgeStyle="border-[#106011] bg-[#106011]/20 text-green-400 font-bold shadow-[0_0_12px_rgba(16,96,17,0.5)] animate-pulse" />
+          )}
+          {!isClient && (
+            <NavItem icon={<Activity className="w-5 h-5" />} active={activeTab === 'stocks'} tooltip="Stocks Analysis" label="STOCKS ANALYSIS" isExpanded={isExpanded} onClick={() => setActiveTab('stocks')} />
+          )}
         </nav>
         
         {/* Bottom Actions */}
@@ -188,7 +180,8 @@ export function BaseLayout() {
                 initial={{ x: "0%" }}
                 animate={{ x: "-50%" }}
                 transition={{ repeat: Infinity, duration: 16, ease: "linear" }}
-                className="text-xs md:text-sm font-mono font-bold tracking-[0.05em] text-[#2e710d] uppercase drop-shadow-[0_0_10px_rgba(46,113,13,0.85)] whitespace-nowrap pr-4"
+                className="text-xs md:text-sm font-mono font-bold tracking-[0.05em] text-[#2e710d] uppercase drop-shadow-[0_0_10px_rgba(46,113,13,0.85)] whitespace-nowrap"
+                style={{ paddingRight: '22px' }}
               >
                 {"Message 📩- Payment💲 - Confirmation ✅- Approval 💯-Pin Dropped product loc📍- Legitimate transactions🫱🏻🫲🏽 • Message 📩- Payment💲 - Confirmation ✅- Approval 💯-Pin Dropped product loc📍- Legitimate transactions🫱🏻🫲🏽 • "}
               </motion.h1>
@@ -202,18 +195,7 @@ export function BaseLayout() {
           </div>
           
           <div className="flex items-center gap-4 relative z-10 pr-2">
-            <div className="hidden md:flex flex-col items-end mr-4">
-              <span className="text-sm font-bold text-white font-display uppercase tracking-wider">Landing Page</span>
-              <span className="text-[10px] font-mono text-[#106011] uppercase tracking-widest font-semibold">Getto OTP Required 🔞</span>
-            </div>
-            <div className="relative group/avatar cursor-pointer">
-              {/* Outer Glowing Pulsing Ring */}
-              <div className="absolute -inset-0.5 rounded-full bg-[#106011] opacity-50 blur-sm group-hover/avatar:opacity-100 transition-opacity animate-pulse"></div>
-              {/* Profile Image Container */}
-              <div className="relative w-10 h-10 rounded-full border-2 border-[#106011] bg-black overflow-hidden shadow-[0_0_15px_rgba(16,96,17,0.9)] p-[1px] transition-transform duration-300 hover:scale-105">
-                <img src="/Appicon.png" alt="avatar" className="w-full h-full rounded-full object-cover" />
-              </div>
-            </div>
+            
           </div>
         </header>
 

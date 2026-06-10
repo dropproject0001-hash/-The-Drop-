@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sign out function
   const signOut = useCallback(async () => {
     try {
+      localStorage.removeItem('demo_role');
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
@@ -167,6 +168,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, currentSession) => {
         if (!active) return;
         console.log(`🌐 [AuthContext] Auth state change event: ${event}`);
+
+        if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('demo_role');
+        }
 
         if (currentSession) {
           setSession(currentSession);

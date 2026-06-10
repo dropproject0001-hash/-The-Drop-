@@ -32,7 +32,7 @@ export default function LoginWithOTP() {
       {/* Background elements */}
       <div 
         className="absolute inset-0 w-full h-full opacity-10 pointer-events-none mix-blend-luminosity bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url('/CoverpPhoto.png')` }}
+        style={{ backgroundImage: `url('/Backgroundimage.png')` }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/90 to-black pointer-events-none" />
 

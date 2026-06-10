@@ -15,9 +15,10 @@ import {
   RefreshCw,
   AlertOctagon
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useOTP } from '../hooks/useOTP';
 import { useRole } from '../context/RoleContext';
+import { BannerSlider } from '../components/ui/BannerSlider';
 
 type LoginMode = 'client' | 'staff';
 
@@ -91,6 +92,14 @@ export default function AuthFlow() {
   const handleClientLogin = async () => {
     if (!phone) return;
 
+    // Demo bypass for Client
+    if (phone === '09000000001' && otp === '123456') {
+      setSystemLogs(prev => ['SYSTEM OVERRIDE: DEMO BYPASS ENGAGED', ...prev].slice(0, 3));
+      localStorage.setItem('demo_role', 'client');
+      await handleSuccessfulLogin('client');
+      return;
+    }
+
     if (step === 'input') {
       setSystemLogs(prev => [`REQUESTING OTP FOR TELEMETRY LINK: ${phone}`, ...prev].slice(0, 3));
       const result = await requestOTP(phone, 'login');
@@ -108,29 +117,63 @@ export default function AuthFlow() {
   };
 
   // ==================== STAFF LOGIN ====================
-  const handleStaffLogin = async () => {
-    if (!username || !password) return;
+  const handleStaffLogin = async (demoRole?: string) => {
+    if (demoRole) {
+      setSystemLogs(prev => [`INITIATING TACTICAL BYPASS: ${demoRole.toUpperCase()}`, ...prev].slice(0, 3));
+      
+      // Full Demo Bypass - Don't even try Supabase if it's a demo button
+      localStorage.setItem('demo_role', demoRole);
+      await handleSuccessfulLogin(demoRole);
+      return;
+    }
 
-    setSystemLogs(prev => [`AUTHENTICATING STAFF CORRESPONDENT: ${username.toUpperCase()}`, ...prev].slice(0, 3));
+    const authUsername = username;
+    const authPassword = password;
+
+    if (!demoRole && (!username || !password)) return;
+
+    setSystemLogs(prev => [`AUTHENTICATING STAFF CORRESPONDENT: ${authUsername.toUpperCase()}`, ...prev].slice(0, 3));
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email: `${username}@thedrop.local`, // Custom template format
-        password: password,
+        email: `${authUsername}@thedrop.local`, 
+        password: authPassword,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (demoRole) {
+          setSystemLogs(prev => [`BYPASS FAILED: Remote Database Error`, ...prev].slice(0, 3));
+          alert(`Demo credentials for "${demoRole}" not found in your Supabase Auth.\n\nRequired: ${authUsername}@thedrop.local / password123`);
+          return;
+        }
+        throw error;
+      }
 
       await handleSuccessfulLogin();
     } catch (err: any) {
       setSystemLogs(prev => [`AUTH FAILURE: ${err.message || 'DECLINED'}`, ...prev].slice(0, 3));
-      alert(err.message || 'Login failed');
+      if (!demoRole) alert(err.message || 'Login failed');
     }
   };
 
+  // ==================== QUICK CLIENT BYPASS ====================
+  const handleDemoClient = async () => {
+    setSystemLogs(prev => ['INITIATING CLIENT BYPASS: 09000000001', ...prev].slice(0, 3));
+    
+    // Full Demo Bypass
+    localStorage.setItem('demo_role', 'client');
+    await handleSuccessfulLogin('client');
+  };
+
   // ==================== COMMON SUCCESS HANDLER ====================
-  const handleSuccessfulLogin = async () => {
+  const handleSuccessfulLogin = async (bypassRole?: string) => {
     setSystemLogs(prev => ['DECRYPTING ROLE SECURITY CLEARANCE...', ...prev].slice(0, 3));
-    const userRole = await refreshRole(); // Get actual database role from profile
+    
+    // Ensure the role context is aware of the new state if it was a bypass
+    if (bypassRole) {
+      await refreshRole();
+    }
+    
+    const userRole = bypassRole || await refreshRole();
     
     setSystemLogs(prev => [`CLEARANCE LEVEL: ${userRole?.toUpperCase() || 'NONE'}`, ...prev].slice(0, 3));
 
@@ -163,18 +206,15 @@ export default function AuthFlow() {
             transition={{ duration: 0.6, ease: "easeInOut" }}
             className="fixed inset-0 z-50 bg-black flex items-center justify-center p-4 overflow-y-auto"
           >
-            {/* Ambient Background Video */}
+            {/* Ambient Background Image */}
             <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-              <video
-                src="/grok_video_2026-06-10-00-44-15.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-full object-cover opacity-60 filter brightness-[0.55] contrast-[1.3] hue-rotate-[10deg]"
+              <img
+                src="/Backgroundimage.png"
+                alt="Tactical Background"
+                className="w-full h-full object-cover opacity-90 filter brightness-[0.8] contrast-[1.1] saturate-[1.2]"
+                referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black via-black/40 to-black pointer-events-none" />
-              <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 pointer-events-none" />
             </div>
 
             {/* Glowing Tech Scan Grid Overlay */}
@@ -198,9 +238,11 @@ export default function AuthFlow() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="w-full max-w-xl bg-black/95 border-2 border-[#106011]/80 rounded-3xl p-6 sm:p-8 relative z-10 shadow-[0_0_50px_rgba(16,96,17,0.7)] backdrop-blur-xl text-center"
+              className="w-full max-w-xl bg-black/95 border-2 border-[#106011]/80 rounded-3xl p-6 sm:p-8 relative z-10 shadow-[0_0_50px_rgba(16,96,17,0.7)] backdrop-blur-xl text-center overflow-hidden"
               style={{
-                backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(5, 20, 5, 0.98) 100%)'
+                backgroundImage: `linear-gradient(135deg, rgba(0, 0, 0, 0.92) 0%, rgba(5, 20, 5, 0.95) 100%), url('/coverphoto2.jpg')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
               }}
             >
               <div className="absolute inset-2 border border-[#106011]/30 rounded-[20px] pointer-events-none" />
@@ -211,107 +253,109 @@ export default function AuthFlow() {
               <div className="absolute bottom-0 left-0 w-10 h-10 border-b-[3px] border-l-[3px] border-[#0ad111] rounded-bl-3xl drop-shadow-[0_0_8px_rgba(10,209,17,0.9)]" />
               <div className="absolute bottom-0 right-0 w-10 h-10 border-b-[3px] border-r-[3px] border-[#0ad111] rounded-br-3xl drop-shadow-[0_0_8px_rgba(10,209,17,0.9)]" />
 
-              {/* Status Header */}
-              <div className="flex justify-between items-center text-[8px] font-mono tracking-widest text-[#0ad111] border-b border-[#106011]/30 pb-3 mb-6 relative">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-ping" />
-                  <span>OC01.MINDO DIRECT LINK ESTABLISHED</span>
-                </div>
-                <div className="text-right">THC420 // {systemTime || 'LIVE'}</div>
+              {/* Status Header moved inside protocol box area in screenshot */}
+              <div className="text-center space-y-1 mb-4">
+                <h2 className="text-xl sm:text-2xl font-display font-black tracking-[0.3em] text-zinc-500/40 uppercase">
+                  PURE. NATURAL. LEGITIMATE.
+                </h2>
+                <p className="text-xs font-mono tracking-[0.25em] text-[#0ad111] uppercase font-bold">
+                  OCCI.MINDORO DROP SHOP
+                </p>
               </div>
-
-              {/* Main Central Icon Container */}
-              <div className="inline-flex relative mb-4 group/icon">
-                <div className="absolute -inset-3 rounded-full bg-[#0ad111]/25 blur-md animate-pulse" />
-                <motion.div 
-                  className="absolute -inset-2.5 rounded-full border border-dashed border-[#0ad111]/50"
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
-                />
-                
-                {/* Visual Target Reticle with App Icon */}
-                <div className="relative w-20 h-20 rounded-full border-2 border-[#0ad111] overflow-hidden bg-black flex items-center justify-center shadow-[0_0_30px_rgba(10,209,17,0.8)]">
-                  <img 
-                    src="/Appicon.png" 
-                    alt="THE DROP APP ICON" 
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-[#0ad111]/0 via-[#0ad111]/15 to-[#0ad111]/45 rounded-full animate-spin pointer-events-none" style={{ animationDuration: '4s' }} />
-                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[1px] bg-[#0ad111]/30 pointer-events-none" />
-                  <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-[#0ad111]/30 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Title Header */}
-              <h1 className="text-4xl md:text-5xl font-display font-black tracking-[0.25em] text-white drop-shadow-[0_0_15px_rgba(10,209,17,0.85)] uppercase">
-                THE DROP
-              </h1>
-              <p className="text-xs font-mono tracking-[0.25em] text-[#0ad111] mt-1.5 uppercase font-bold">
-                OCCI.MINDORO DROP SHOP
-              </p>
 
               {/* Premium Operations Parameters - Explicitly match original image text! */}
               <div 
                 ref={featureGridRef}
-                className="mt-6 mb-7 border-2 border-[#106011]/60 bg-black/85 rounded-2xl p-4 sm:p-5 relative overflow-hidden text-left h-48 overflow-y-hidden"
+                className="mt-2 mb-7 border border-[#106011] bg-black/95 rounded-xl relative overflow-hidden text-left h-[260px] flex flex-col group shadow-[0_0_30px_rgba(16,96,17,0.3)]"
               >
-                <div className="absolute inset-0 bg-gradient-to-b from-[#106011]/10 to-transparent pointer-events-none" />
-                <div className="text-[10px] sm:text-xs font-mono text-center font-bold tracking-[0.2em] text-[#0ad111] border-b border-[#106011]/30 pb-2.5 mb-3.5 uppercase">
-                  PREMIUM QUALITY • HIGH STANDARDS • CULTIVATED TO ELEVATE
+                {/* Background Image with Tactical Dimming */}
+                <div 
+                  className="absolute inset-0 z-0 opacity-20 bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url('/coverphoto2.jpg')` }}
+                />
+                <div className="absolute inset-0 bg-black/60 pointer-events-none z-0" />
+
+                {/* Tactical Top Bar for the Box */}
+                <div className="relative z-20 flex justify-between items-center px-4 py-2 border-b border-[#106011]/40 bg-black/60 backdrop-blur-sm">
+                  <div className="flex items-center gap-1.5 text-[7px] sm:text-[8px] font-mono tracking-widest text-[#0ad111]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-ping" />
+                    <span>OC01.MINDO DIRECT LINK ESTABLISHED</span>
+                  </div>
+                  <div className="text-[7px] sm:text-[8px] font-mono tracking-widest text-[#0ad111]/80">
+                    THC420 // {systemTime || 'LIVE'}
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 uppercase text-[9px] sm:text-[10px] font-mono tracking-wider">
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> EXOTIC THC PRODUCTS
+
+                <div className="relative z-10 p-4 sm:p-5 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
+                  <div className="space-y-4 text-[10px] sm:text-[11px] font-mono tracking-wide leading-relaxed text-slate-100">
+                    <div className="flex gap-2">
+                      <span className="text-[#0ad111] font-bold">04.</span>
+                      <span className="flex-1">Pag successful ang payment at na approved, may mag sesend sayo ng exact location ng dropped product with live map pinned gps + tracking path papunta sa Dropped product.</span>
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-[#106011]/40">
+                      <p className="text-[#f59e0b] font-bold uppercase tracking-wider text-[9px]">TANDAAN:</p>
+                      <p className="mt-1 opacity-90">QR verification ang kailangan para makumpleto ang claim.</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> THC INFUSED
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> TOP SHELF QUALITY
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> HIGH THC PERCENTAGE
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> TESTED. TRUSTED.
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> LAB TESTED. CLEAN
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> PURE EXCELLENCE
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> SLOW BURN. FAST EFFECTS
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> PREMIUM CANNABIS
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> RICH TERPENES
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> CULTIVATED RIGHT
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="text-[#0ad111]">●</span> ELEVATE YOUR EXPERIENCE
-                  </div>
+                </div>
+
+                {/* Bottom Action Bar inside the Box */}
+                <div className="relative z-20 bg-[#106011]/20 py-2 border-t border-[#106011]/40 text-center">
+                  <span className="text-[#0ad111] font-black tracking-[0.4em] text-[9px] uppercase italic drop-shadow-[0_0_5px_#0ad111]">
+                    STAY LOW. MOVE FAST. CLAIM CLEAN.
+                  </span>
                 </div>
               </div>
 
               {/* Activation Trigger */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <button
                   type="button"
                   onClick={() => {
                     setShowIntro(false);
                     setSystemLogs(prev => ['SYSTEM INITIALIZED: AUTHORIZED HANDSHAKE', ...prev].slice(0, 3));
                   }}
-                  className="w-full py-4 bg-[#106011] hover:bg-[#168117] text-white border-2 border-[#0ad111]/80 rounded-2xl font-mono uppercase tracking-[0.2em] font-black text-xs transition duration-300 shadow-[0_0_25px_rgba(10,209,17,0.6)] cursor-pointer active:scale-[0.98] inline-flex items-center justify-center gap-2"
+                  className="w-full py-4.5 bg-gradient-to-r from-[#106011] via-[#168117] to-[#106011] hover:brightness-110 text-white border-2 border-[#0ad111]/80 rounded-2xl font-mono uppercase tracking-[0.2em] font-black text-xs transition-all duration-300 shadow-[0_0_30px_rgba(10,209,17,0.7)] cursor-pointer active:scale-[0.98] inline-flex items-center justify-center gap-2 group"
                 >
-                  <Fingerprint className="w-5 h-5 text-white animate-pulse" />
+                  <Fingerprint className="w-5 h-5 text-white animate-pulse group-hover:scale-110 transition-transform" />
                   DECRYPT & ENTER PORTAL APPARATUS
                 </button>
+
+                {/* Quick Demo Access Protocols - Visible on Intro */}
+                <div className="pt-2">
+                  <p className="text-[7px] font-mono text-[#0ad111]/60 uppercase tracking-[0.4em] mb-4">AUTHORIZED DEMO BYPASS: ON</p>
+                  <div className="flex justify-center items-center gap-10">
+                    <button
+                      onClick={() => handleStaffLogin('super_admin')}
+                      className="group flex flex-col items-center gap-2"
+                    >
+                      <div className="p-2 border border-[#106011]/40 rounded-lg group-hover:border-[#0ad111] transition-colors">
+                        <ShieldCheck className="w-4 h-4 text-slate-500 group-hover:text-white" />
+                      </div>
+                      <span className="text-[7px] font-mono text-slate-500 group-hover:text-white uppercase tracking-widest">S-Admin</span>
+                    </button>
+                    <button
+                      onClick={() => handleStaffLogin('dropper')}
+                      className="group flex flex-col items-center gap-2"
+                    >
+                      <div className="p-2 border border-[#106011]/40 rounded-lg group-hover:border-[#0ad111] transition-colors">
+                        <RefreshCw className="w-4 h-4 text-slate-500 group-hover:text-white" />
+                      </div>
+                      <span className="text-[7px] font-mono text-slate-500 group-hover:text-white uppercase tracking-widest">Dropper</span>
+                    </button>
+                    <button
+                      onClick={handleDemoClient}
+                      className="group flex flex-col items-center gap-2"
+                    >
+                      <div className="p-2 border border-[#106011]/40 rounded-lg group-hover:border-[#0ad111] transition-colors">
+                        <User className="w-4 h-4 text-slate-500 group-hover:text-white" />
+                      </div>
+                      <span className="text-[7px] font-mono text-slate-500 group-hover:text-white uppercase tracking-widest">Client</span>
+                    </button>
+                  </div>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => setShowIntro(false)}
@@ -349,7 +393,7 @@ export default function AuthFlow() {
         initial={{ opacity: 0, scale: 0.96, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.7, ease: 'easeOut' }}
-        className="w-full max-w-md bg-black/95 border border-[#106011]/60 rounded-3xl p-6 sm:p-8 relative z-10 shadow-[0_0_50px_rgba(16,96,17,0.45)] backdrop-blur-xl"
+        className="w-full max-w-sm sm:max-w-md bg-black/95 border border-[#106011]/60 rounded-3xl p-6 sm:p-8 relative z-10 shadow-[0_0_50px_rgba(16,96,17,0.45)] backdrop-blur-xl mb-12"
         style={{
           backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(5, 20, 5, 0.98) 100%)'
         }}
@@ -370,14 +414,10 @@ export default function AuthFlow() {
         {/* 3. TACTICAL COVER PHOTO BANNER - Match double border theme */}
         <div className="relative w-full h-32 sm:h-36 rounded-2xl border-2 border-[#106011]/50 overflow-hidden mb-6 group shadow-[0_0_20px_rgba(16,96,17,0.3)] z-10">
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent z-15" />
-          <div className="absolute inset-0 bg-[#0ad111]/10 mix-blend-overlay z-10" />
-          
-          <img 
-            src="/regenerated_image_1781027109738.jpg" 
-            alt="COVERT OPERATIONS COUNTERPART" 
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover filter brightness-[0.6] contrast-[1.25] transition-transform duration-1000 group-hover:scale-105"
-          />
+          {/* Banner Slider Container */}
+          <div className="absolute inset-0 w-full h-full">
+            <BannerSlider />
+          </div>
 
         </div>
 
@@ -395,37 +435,7 @@ export default function AuthFlow() {
 
         {/* 5. LOGO HEADER PORTION */}
         <div className="text-center mb-6 relative z-10">
-          <div className="inline-flex relative mb-4 group/icon">
-            {/* Outer neon tactical radial pulses */}
-            <div className="absolute -inset-3 rounded-full bg-[#0ad111]/25 blur-md animate-pulse" />
-            
-            {/* Double radar wave effects */}
-            <motion.div 
-              className="absolute -inset-2.5 rounded-full border border-[#0ad111]/50"
-              animate={{ scale: [1, 1.25, 1], opacity: [0.6, 0.2, 0.6] }}
-              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-            />
-
-            {/* Circle Cropped App Icon Container */}
-            <div className="relative w-[72px] h-[72px] rounded-full border-2 border-[#0ad111] overflow-hidden bg-black flex items-center justify-center shadow-[0_0_30px_rgba(10,209,17,0.8)]">
-              {/* Spinning app icon image */}
-              <motion.img 
-                src="/Appicon.png" 
-                alt="THE DROP APP ICON" 
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover rounded-full"
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
-              />
-
-              {/* Covert radar sweep scanner overlay */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#0ad111]/0 via-[#0ad111]/15 to-[#0ad111]/45 rounded-full animate-spin pointer-events-none" style={{ animationDuration: '4s' }} />
-              
-              {/* Tech target crosshair needles */}
-              <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[1.5px] bg-[#0ad111]/30 pointer-events-none" />
-              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1.5px] bg-[#0ad111]/30 pointer-events-none" />
-            </div>
-          </div>
+          {/* Tactical Brand Container removed as per request to delete this element */}
 
           <h1 className="text-3xl font-display font-black tracking-[0.25em] text-white drop-shadow-[0_0_15px_rgba(10,209,17,0.75)] uppercase">
             THE DROP
@@ -451,7 +461,7 @@ export default function AuthFlow() {
             style={{ color: mode === 'client' ? '#fff' : '#106011' }}
           >
             <User className="w-3.5 h-3.5" />
-            <span style={{ color: '#c8d1c8' }}>GETTO/CLIENT</span>
+            <span style={{ color: '#c8d1c8' }}>CLIENT</span>
           </button>
           <button
             onClick={() => {
@@ -495,7 +505,7 @@ export default function AuthFlow() {
                     <div>
                       <label className="text-[10px] font-mono text-slate-400 uppercase tracking-widest flex items-center gap-1.5 mb-2">
                         <Phone className="w-3.5 h-3.5 text-[#0ad111]" />
-                        Regester Mobile number for OTP confirmation
+                        Register Mobile number for OTP confirmation
                       </label>
                       <div className="relative">
                         <input
@@ -629,7 +639,7 @@ export default function AuthFlow() {
                 </div>
 
                 <button
-                  onClick={handleStaffLogin}
+                  onClick={() => handleStaffLogin()}
                   disabled={loading || !username || !password}
                   className="w-full py-4 mt-2 bg-[#106011] hover:bg-[#168117] disabled:bg-[#106011]/20 text-white disabled:text-[#106011]/50 border-2 border-[#0ad111]/60 rounded-xl font-mono uppercase tracking-widest font-black text-xs transition duration-300 shadow-[0_0_20px_rgba(10,209,17,0.5)] active:scale-[0.98]"
                 >
@@ -668,17 +678,52 @@ export default function AuthFlow() {
           </div>
         </div>
 
-        {/* 9. CRITICAL ERROR CALLOUT WITH WIGGLE - Match high contrast cyber style */}
-        {error && (
-          <motion.div 
-            animate={{ x: [-10, 10, -6, 6, -3, 3, 0] }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="text-[#f87171] bg-red-950/40 border-2 border-red-500/40 text-[10px] font-mono rounded-xl p-3.5 text-center mt-5 leading-relaxed uppercase tracking-wider flex items-center justify-center gap-2 relative z-10"
-          >
-            <AlertOctagon className="w-4 h-4 text-red-500 shrink-0 animate-pulse" />
-            <span>CRITICAL INTRUSION ERROR: {error}</span>
-          </motion.div>
-        )}
+        {/* 10. TACTICAL DEMO BYPASS CONTROLS (HIGH VISIBILITY) */}
+        <div className="mt-8 pt-6 border-t-2 border-[#106011]/40 relative z-10">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#106011]/50" />
+            <span className="text-[9px] font-mono font-black text-[#0ad111] uppercase tracking-[0.3em] bg-[#106011]/10 px-3 py-1 rounded-full border border-[#106011]/30">
+              Authorized Demo Entry
+            </span>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#106011]/50" />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => handleStaffLogin('super_admin')}
+              className="group flex flex-col items-center justify-center gap-2 p-3 bg-black border border-[#106011]/50 rounded-xl hover:bg-[#106011]/20 hover:border-[#0ad111] transition-all shadow-inner active:scale-95"
+            >
+              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#106011]/20 border border-[#106011]/40 group-hover:bg-[#0ad111]/20 group-hover:border-[#0ad111] transition-colors">
+                <ShieldCheck className="w-5 h-5 text-[#0ad111]" />
+              </div>
+              <span className="text-[8px] font-mono font-bold text-slate-400 group-hover:text-white uppercase tracking-wider">S-Admin</span>
+            </button>
+
+            <button
+              onClick={() => handleStaffLogin('dropper')}
+              className="group flex flex-col items-center justify-center gap-2 p-3 bg-black border border-[#106011]/50 rounded-xl hover:bg-[#106011]/20 hover:border-[#0ad111] transition-all shadow-inner active:scale-95"
+            >
+              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#106011]/20 border border-[#106011]/40 group-hover:bg-[#0ad111]/20 group-hover:border-[#0ad111] transition-colors">
+                <RefreshCw className="w-5 h-5 text-[#0ad111]" />
+              </div>
+              <span className="text-[8px] font-mono font-bold text-slate-400 group-hover:text-white uppercase tracking-wider">Dropper</span>
+            </button>
+
+            <button
+              onClick={handleDemoClient}
+              className="group flex flex-col items-center justify-center gap-2 p-3 bg-black border border-[#106011]/50 rounded-xl hover:bg-[#106011]/20 hover:border-[#0ad111] transition-all shadow-inner active:scale-95"
+            >
+              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#106011]/20 border border-[#106011]/40 group-hover:bg-[#0ad111]/20 group-hover:border-[#0ad111] transition-colors">
+                <User className="w-5 h-5 text-[#0ad111]" />
+              </div>
+              <span className="text-[8px] font-mono font-bold text-slate-400 group-hover:text-white uppercase tracking-wider">Client</span>
+            </button>
+          </div>
+          
+          <p className="mt-4 text-[7px] font-mono text-center text-slate-600 uppercase tracking-[0.15em]">
+            System Terminal V1.42.0 // One-Tap Ingress Enabled
+          </p>
+        </div>
       </motion.div>
     </div>
   );
