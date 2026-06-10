@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 @theme {
   /* Emerald Cyber-Luxury Theme */
@@ -90,4 +91,33 @@ body {
 .mask-image-fade {
   mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+/* Tactical Map Styling */
+.tactical-map .leaflet-container {
+  background: #050505 !important;
+  filter: grayscale(1) invert(1) contrast(3) brightness(0.7) hue-rotate(100deg);
+}
+
+.tactical-map .leaflet-tile-pane {
+  filter: brightness(0.6) contrast(1.2) sepia(100%) hue-rotate(80deg) saturate(150%);
+}
+
+.tactical-map .leaflet-control-zoom {
+  border: 1px solid rgba(16, 96, 17, 0.4) !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(8px);
+}
+
+.tactical-map .leaflet-control-zoom a {
+  background: transparent !important;
+  color: #0ad111 !important;
+  border-bottom: 1px solid rgba(16, 96, 17, 0.2) !important;
+}
+
+.tactical-map .leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.5) !important;
+  color: #106011 !important;
+  font-family: inherit;
+  font-size: 8px;
 }

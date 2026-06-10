@@ -1,31 +1,33 @@
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { locationService, LocationCoords } from '../services/LocationService';
 
 export function useLiveLocation(dropId: string, enabled: boolean = true) {
   useEffect(() => {
     if (!enabled || !dropId) return;
 
-    let watchId: number;
-
-    const sendLocation = async (position: GeolocationPosition) => {
-      await supabase.from('drop_locations').insert({
-        drop_id: dropId,
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-        timestamp: new Date().toISOString(),
-      });
+    const sendLocation = async (coords: LocationCoords) => {
+      try {
+        const { error } = await supabase.from('drop_locations').insert({
+          drop_id: dropId,
+          lat: coords.latitude,
+          lng: coords.longitude,
+          timestamp: new Date().toISOString(),
+        });
+        
+        if (error) console.error(" [UAV_UPLINK] Transmission Interrupted:", error.message);
+      } catch (err) {
+        console.error(" [UAV_UPLINK] Critical Failure");
+      }
     };
 
-    if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(
-        sendLocation,
-        (error) => console.error("Location error:", error),
-        { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
-      );
-    }
+    locationService.startTracking(
+      sendLocation,
+      (error) => console.error(" [GPS_SIG_LOST] Protocol Failure:", error.message)
+    );
 
     return () => {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
+      locationService.stopTracking();
     };
   }, [dropId, enabled]);
 }

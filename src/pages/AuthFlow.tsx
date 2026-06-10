@@ -36,21 +36,35 @@ export default function AuthFlow() {
   // Auto-scroll effect
   useEffect(() => {
     const el = featureGridRef.current;
-    if (!el) return;
+    if (!el || !showIntro) return;
 
     let requestId: number;
+    let isHovered = false;
+
+    const onMouseEnter = () => { isHovered = true; };
+    const onMouseLeave = () => { isHovered = false; };
+
+    el.addEventListener('mouseenter', onMouseEnter);
+    el.addEventListener('mouseleave', onMouseLeave);
+
     const scroll = () => {
-      // scroll down slowly
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight) {
-        el.scrollTop = 0; // jump back to top
-      } else {
-        el.scrollTop += 0.4; // very slow speed
+      if (!isHovered) {
+        // scroll down slowly
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight) {
+          el.scrollTop = 0; // jump back to top
+        } else {
+          el.scrollTop += 0.25; // tactical slow speed
+        }
       }
       requestId = requestAnimationFrame(scroll);
     };
 
     requestId = requestAnimationFrame(scroll);
-    return () => cancelAnimationFrame(requestId);
+    return () => {
+      cancelAnimationFrame(requestId);
+      el.removeEventListener('mouseenter', onMouseEnter);
+      el.removeEventListener('mouseleave', onMouseLeave);
+    };
   }, [showIntro]);
   // Tactical simulation states for HUD realism
   const [systemLogs, setSystemLogs] = useState<string[]>([
@@ -238,12 +252,7 @@ export default function AuthFlow() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="w-full max-w-xl bg-black/95 border-2 border-[#106011]/80 rounded-3xl p-6 sm:p-8 relative z-10 shadow-[0_0_50px_rgba(16,96,17,0.7)] backdrop-blur-xl text-center overflow-hidden"
-              style={{
-                backgroundImage: `linear-gradient(135deg, rgba(0, 0, 0, 0.92) 0%, rgba(5, 20, 5, 0.95) 100%), url('/coverphoto2.jpg')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
+              className="w-full max-w-xl bg-black border-2 border-[#106011]/80 rounded-3xl p-6 sm:p-8 relative z-10 shadow-[0_0_50px_rgba(16,96,17,0.7)] backdrop-blur-xl text-center overflow-hidden"
             >
               <div className="absolute inset-2 border border-[#106011]/30 rounded-[20px] pointer-events-none" />
               
@@ -265,14 +274,8 @@ export default function AuthFlow() {
 
               {/* Premium Operations Parameters - Explicitly match original image text! */}
               <div 
-                ref={featureGridRef}
                 className="mt-2 mb-7 border border-[#106011] bg-black/95 rounded-xl relative overflow-hidden text-left h-[260px] flex flex-col group shadow-[0_0_30px_rgba(16,96,17,0.3)]"
               >
-                {/* Background Image with Tactical Dimming */}
-                <div 
-                  className="absolute inset-0 z-0 opacity-20 bg-cover bg-center bg-no-repeat"
-                  style={{ backgroundImage: `url('/coverphoto2.jpg')` }}
-                />
                 <div className="absolute inset-0 bg-black/60 pointer-events-none z-0" />
 
                 {/* Tactical Top Bar for the Box */}
@@ -286,7 +289,10 @@ export default function AuthFlow() {
                   </div>
                 </div>
 
-                <div className="relative z-10 p-4 sm:p-5 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
+                <div 
+                  ref={featureGridRef}
+                  className="relative z-10 p-4 sm:p-5 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide"
+                >
                   <div className="space-y-4 text-[10px] sm:text-[11px] font-mono tracking-wide leading-relaxed text-slate-100">
                     <div className="flex gap-2">
                       <span className="text-[#0ad111] font-bold">04.</span>

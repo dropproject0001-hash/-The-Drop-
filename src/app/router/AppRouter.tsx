@@ -7,6 +7,9 @@ import { ClientPanel } from '@/components/panels/ClientPanel';
 import LoginWithOTP from '@/pages/LoginWithOTP';
 import AuthFlow from '@/pages/AuthFlow';
 import ClientRegistration from '@/pages/ClientRegistration';
+import { CaptureTest } from '@/pages/CaptureTest';
+import { LocationTest } from '@/pages/LocationTest';
+import { MapTest } from '@/pages/MapTest';
 import CreateDropper from '@/pages/CreateDropper';
 import SuperAdminSetup from '@/pages/SuperAdminSetup';
 import Unauthorized from '@/pages/Unauthorized';
@@ -22,6 +25,9 @@ export function AppRouter() {
         <Route path="/register" element={<ClientRegistration />} />
         <Route path="/super-admin-setup" element={<SuperAdminSetup />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/capture" element={<CaptureTest />} />
+        <Route path="/location" element={<LocationTest />} />
+        <Route path="/map" element={<MapTest />} />
 
         {/* Portal Base Routing */}
         <Route path="/" element={<BaseLayout />}>
