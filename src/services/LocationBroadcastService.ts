@@ -156,6 +156,16 @@ class LocationBroadcastService {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Fetch user profile for username and role to support debug pane representation
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username, alias, role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const username = profile?.username || profile?.alias || user.email?.split('@')[0] || 'Unknown Agent';
+    const role = profile?.role || 'agent';
+
     this.presenceChannel = supabase.channel('field-agents-presence');
 
     await this.presenceChannel
@@ -165,6 +175,8 @@ class LocationBroadcastService {
           await this.presenceChannel.track({
             user_id: user.id,
             drop_id: dropId,
+            username,
+            role,
             timestamp: new Date().toISOString(),
           });
         }

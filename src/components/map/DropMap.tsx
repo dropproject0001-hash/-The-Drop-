@@ -23,10 +23,11 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { supabase } from '@/lib/supabase';
 import { EpicModal } from '@/components/ui/EpicModal';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useProfile } from '@/hooks/useProfile';
 import type { Drop, DropStatus } from '@/types/domain';
 import { useDrops } from '@/hooks/useDrops';
-import { useLocationBroadcast } from '@/hooks/useLocationBroadcast';
+import { locationBroadcastService } from '@/services/LocationBroadcastService';
 import { usePresenceTracking } from '@/hooks/realtime/usePresenceTracking';
 import { useLiveLocations } from '@/hooks/realtime/useLiveLocations';
 import { TelemetryNavigator } from './TelemetryNavigator';
@@ -86,7 +87,6 @@ export function DropMap({ height = '650px' }: DropMapProps) {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [isTracking, setIsTracking] = useState(false);
-  const [watchId, setWatchId] = useState<number | null>(null);
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
@@ -96,10 +96,7 @@ export function DropMap({ height = '650px' }: DropMapProps) {
   const isClientUser = !isSuperAdmin && !isAdmin && !isDropper;
   const [adminLocations, setAdminLocations] = useState<Record<string, AdminLocation>>({});
 
-  const { broadcast } = useLocationBroadcast();
-  const { trackPresence, untrackPresence } = usePresenceTracking();
   const [recentlyUpdatedUsers, setRecentlyUpdatedUsers] = useState<Set<string>>(new Set());
-  const lastBroadcastRef = useRef<number>(0);
 
   // === REAL-TIME LOCATION UPDATES FOR SUPER ADMIN ===
   const { locations: liveAdminLocations } = useLiveLocations({});
@@ -156,6 +153,13 @@ export function DropMap({ height = '650px' }: DropMapProps) {
     }
   }, [liveAdminLocations, isSuperAdmin]);
 
+  // Cleanup tracking on unmount
+  useEffect(() => {
+    return () => {
+      locationBroadcastService.stopTracking();
+    };
+  }, []);
+
   // ── FIX H-4: Memoised icon factories ───────────────────────────────────────
   const createIcon = useCallback((status: DropStatus) =>
     L.divIcon({
@@ -173,23 +177,21 @@ export function DropMap({ height = '650px' }: DropMapProps) {
     }),
   []);
 
-  const superAdminUserIcon = useMemo(
-    () =>
-      L.divIcon({
-        className: 'custom-marker bg-transparent border-none shadow-none',
-        html: `
-          <div style="
-            background-color:#ef4444;
-            width:24px;height:24px;border-radius:9999px;
-            display:flex;align-items:center;justify-content:center;
-            border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);">
-            <span style="color:white;font-size:10px;">A</span>
-          </div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
-      }),
-    []
-  );
+  const getSuperAdminUserIcon = useCallback((isLive: boolean) => {
+    return L.divIcon({
+      className: 'custom-marker bg-transparent border-none shadow-none',
+      html: `
+        <div class="${isLive ? 'live-marker' : ''}" style="
+          background-color:#ef4444;
+          width:24px;height:24px;border-radius:9999px;
+          display:flex;align-items:center;justify-content:center;
+          border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);">
+          <span style="color:white;font-size:10px;font-weight:bold;">A</span>
+        </div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    });
+  }, []);
 
   const userLocationIcon = useMemo(
     () =>
@@ -217,13 +219,11 @@ export function DropMap({ height = '650px' }: DropMapProps) {
 
   // ── Live tracking ───────────────────────────────────────────────────────────
   const toggleLiveTracking = useCallback(async () => {
-    if (isTracking && watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
+    if (isTracking) {
+      locationBroadcastService.stopTracking();
       setIsTracking(false);
-      setWatchId(null);
       setUserLocation(null);
       setAccuracy(null);
-      await untrackPresence();
       return;
     }
 
@@ -232,55 +232,20 @@ export function DropMap({ height = '650px' }: DropMapProps) {
       return;
     }
 
-    if (!isTracking) {
-      if (profile) {
-        await trackPresence({
-          user_id: profile.id,
-          username: profile.username || profile.alias,
-          role: profile.role,
-        });
-      }
+    setIsTracking(true);
+    try {
+      await locationBroadcastService.startTracking({
+        dropId: activeDropId,
+        onUpdate: (loc) => {
+          setUserLocation([loc.lat, loc.lng]);
+          setAccuracy(loc.accuracy);
+        },
+      });
+    } catch (err) {
+      console.error('[DropMap] LocationBroadcastService start failed:', err);
+      setIsTracking(false);
     }
-
-    const id = navigator.geolocation.watchPosition(
-      async (position) => {
-        const { latitude, longitude, accuracy: acc } = position.coords;
-        setUserLocation([latitude, longitude]);
-        setAccuracy(acc);
-        setIsTracking(true);
-
-        // FIX C-5: Only broadcast if user is admin, super_admin, or dropper
-        const now = Date.now();
-        if (
-          profile?.id &&
-          (profile.role === 'admin' || profile.role === 'super_admin' || profile.role === 'dropper') &&
-          now - lastBroadcastRef.current > BROADCAST_THROTTLE_MS
-        ) {
-          lastBroadcastRef.current = now;
-          try {
-            await broadcast({
-              lat: latitude,
-              lng: longitude,
-              accuracy: acc,
-              heading: position.coords.heading,
-              speed: position.coords.speed,
-              altitude: position.coords.altitude,
-              drop_id: activeDropId,
-            });
-          } catch (broadcastErr) {
-            console.error('Location broadcast failed:', broadcastErr);
-          }
-        }
-      },
-      (err) => {
-        console.error('Geolocation error:', err);
-        alert('Unable to get your location');
-      },
-      { enableHighAccuracy: true, maximumAge: 10_000, timeout: 5_000 }
-    );
-
-    setWatchId(id);
-  }, [isTracking, watchId, profile, activeDropId, broadcast]);
+  }, [isTracking, activeDropId]);
 
   // ── Offline tile download ───────────────────────────────────────────────────
   const downloadMamburaoTiles = useCallback(async () => {
@@ -452,7 +417,8 @@ export function DropMap({ height = '650px' }: DropMapProps) {
         <div className="absolute inset-5 border border-[#106011]/15 pointer-events-none rounded-lg z-[900]"></div>
         <div className="absolute inset-6 border border-[#106011]/10 pointer-events-none rounded-md z-[900]"></div>
  
-        <MapContainer center={MAMBURAO_CENTER} zoom={14} style={{ height: '100%', width: '100%' }}>
+        <ErrorBoundary fallbackTitle="Map Grid Initialization Failure">
+          <MapContainer center={MAMBURAO_CENTER} zoom={14} style={{ height: '100%', width: '100%' }}>
           {mapStyle === 'tactical' ? (
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -530,7 +496,7 @@ export function DropMap({ height = '650px' }: DropMapProps) {
                 <Marker
                   key={uid}
                   position={[loc.lat, loc.lng]}
-                  icon={superAdminUserIcon}
+                  icon={getSuperAdminUserIcon(isLive)}
                 >
                   <Popup>
                     <div className="text-center text-slate-900">
@@ -566,6 +532,7 @@ export function DropMap({ height = '650px' }: DropMapProps) {
             ))}
           </MarkerClusterGroup>
         </MapContainer>
+        </ErrorBoundary>
  
         {/* Floating: Live Tracking Button */}
         <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
