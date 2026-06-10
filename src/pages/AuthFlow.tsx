@@ -264,7 +264,10 @@ export default function AuthFlow() {
 
               {/* Status Header moved inside protocol box area in screenshot */}
               <div className="text-center space-y-1 mb-4">
-                <h2 className="text-xl sm:text-2xl font-display font-black tracking-[0.3em] text-zinc-500/40 uppercase">
+                <h2 
+                  className="text-xl sm:text-2xl font-display font-black tracking-[0.3em] uppercase"
+                  style={{ borderStyle: 'none', color: '#229606', textAlign: 'center', fontFamily: 'Courier New' }}
+                >
                   PURE. NATURAL. LEGITIMATE.
                 </h2>
                 <p className="text-xs font-mono tracking-[0.25em] text-[#0ad111] uppercase font-bold">
@@ -281,8 +284,8 @@ export default function AuthFlow() {
                 {/* Tactical Top Bar for the Box */}
                 <div className="relative z-20 flex justify-between items-center px-4 py-2 border-b border-[#106011]/40 bg-black/60 backdrop-blur-sm">
                   <div className="flex items-center gap-1.5 text-[7px] sm:text-[8px] font-mono tracking-widest text-[#0ad111]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-ping" />
-                    <span>OC01.MINDO DIRECT LINK ESTABLISHED</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-ping" style={{ color: '#0aa627', fontFamily: 'Space Grotesk' }} />
+                    <span style={{ color: '#55d11e', textAlign: 'justify', fontFamily: 'Space Grotesk' }}>OC01.MINDO DIRECT LINK ESTABLISHED</span>
                   </div>
                   <div className="text-[7px] sm:text-[8px] font-mono tracking-widest text-[#0ad111]/80">
                     THC420 // {systemTime || 'LIVE'}
@@ -308,7 +311,10 @@ export default function AuthFlow() {
 
                 {/* Bottom Action Bar inside the Box */}
                 <div className="relative z-20 bg-[#106011]/20 py-2 border-t border-[#106011]/40 text-center">
-                  <span className="text-[#0ad111] font-black tracking-[0.4em] text-[9px] uppercase italic drop-shadow-[0_0_5px_#0ad111]">
+                  <span 
+                    className="text-[#0ad111] font-black tracking-[0.4em] text-[9px] uppercase italic drop-shadow-[0_0_5px_#0ad111]"
+                    style={{ color: '#daff1f' }}
+                  >
                     STAY LOW. MOVE FAST. CLAIM CLEAN.
                   </span>
                 </div>
@@ -322,10 +328,11 @@ export default function AuthFlow() {
                     setShowIntro(false);
                     setSystemLogs(prev => ['SYSTEM INITIALIZED: AUTHORIZED HANDSHAKE', ...prev].slice(0, 3));
                   }}
-                  className="w-full py-4.5 bg-gradient-to-r from-[#106011] via-[#168117] to-[#106011] hover:brightness-110 text-white border-2 border-[#0ad111]/80 rounded-2xl font-mono uppercase tracking-[0.2em] font-black text-xs transition-all duration-300 shadow-[0_0_30px_rgba(10,209,17,0.7)] cursor-pointer active:scale-[0.98] inline-flex items-center justify-center gap-2 group"
+                  className="w-full py-4.5 bg-gradient-to-r from-[#106011] via-[#168117] to-[#106011] hover:brightness-110 border-2 border-[#0ad111]/80 rounded-2xl font-mono uppercase tracking-[0.2em] font-black text-xs transition-all duration-300 shadow-[0_0_30px_rgba(10,209,17,0.7)] cursor-pointer active:scale-[0.98] inline-flex items-center justify-center gap-2 group"
+                  style={{ color: '#dd2424' }}
                 >
                   <Fingerprint className="w-5 h-5 text-white animate-pulse group-hover:scale-110 transition-transform" />
-                  DECRYPT & ENTER PORTAL APPARATUS
+                  <span style={{ color: '#ebe2e2' }}>DECRYPT & ENTER PORTAL APPARATUS</span>
                 </button>
 
                 {/* Quick Demo Access Protocols - Visible on Intro */}
@@ -431,7 +438,7 @@ export default function AuthFlow() {
         <div className="flex justify-between items-center text-[8px] font-mono tracking-widest text-[#0ad111] border-b border-[#106011]/30 pb-3 mb-6 relative z-10">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-ping" />
-            <span className="uppercase font-semibold">shop is active</span>
+            <span className="uppercase font-semibold" style={{ color: '#55d11e' }}>shop is active</span>
           </div>
           <div className="flex items-center gap-2">
             <Wifi className="w-3 h-3 text-[#0ad111] animate-pulse" />
@@ -467,7 +474,7 @@ export default function AuthFlow() {
             style={{ color: mode === 'client' ? '#fff' : '#106011' }}
           >
             <User className="w-3.5 h-3.5" />
-            <span style={{ color: '#c8d1c8' }}>CLIENT</span>
+            <span style={{ color: '#4db016' }}>CLIENT</span>
           </button>
           <button
             onClick={() => {
@@ -688,7 +695,10 @@ export default function AuthFlow() {
         <div className="mt-8 pt-6 border-t-2 border-[#106011]/40 relative z-10">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#106011]/50" />
-            <span className="text-[9px] font-mono font-black text-[#0ad111] uppercase tracking-[0.3em] bg-[#106011]/10 px-3 py-1 rounded-full border border-[#106011]/30">
+            <span 
+              className="text-[9px] font-mono font-black text-[#0ad111] uppercase tracking-[0.3em] bg-[#106011]/10 px-3 py-1 rounded-full border border-[#106011]/30"
+              style={{ color: '#daff1f' }}
+            >
               Authorized Demo Entry
             </span>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#106011]/50" />

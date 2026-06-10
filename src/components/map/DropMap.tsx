@@ -14,8 +14,8 @@
  *  C-3  : DropStatus enum aligned to DB values ('active'|'claimed'|'expired').
  */
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, LayerGroup } from 'react-leaflet';
-import { Navigation, Download } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, Circle, LayerGroup, Polyline, useMap } from 'react-leaflet';
+import { Navigation, Download, Layers, Globe } from 'lucide-react';
 import L from 'leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import 'leaflet/dist/leaflet.css';
@@ -26,6 +26,7 @@ import { EpicModal } from '@/components/ui/EpicModal';
 import { useProfile } from '@/hooks/useProfile';
 import type { Drop, DropStatus } from '@/types/domain';
 import { useDrops } from '@/hooks/useDrops';
+import { TelemetryNavigator } from './TelemetryNavigator';
 
 // ── FIX H-3: Leaflet default icon fix for Vite ────────────────────────────────
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -41,6 +42,17 @@ const STATUS_COLORS: Record<DropStatus, string> = {
   claimed: '#3B82F6',
   expired: '#EF4444',
 };
+
+// Map controller to coordinate center/recentering flyTo animations smoothly inside Leaflet context
+function MapController({ flyToTarget }: { flyToTarget: [number, number] | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (flyToTarget) {
+      map.flyTo(flyToTarget, 16, { animate: true, duration: 1.5 });
+    }
+  }, [flyToTarget, map]);
+  return null;
+}
 
 interface DropMapProps {
   height?: string;
@@ -63,6 +75,10 @@ export function DropMap({ height = '650px' }: DropMapProps) {
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Tactical waypoint telemetry states
+  const [activeWaypoint, setActiveWaypoint] = useState<Drop | null>(null);
+  const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null);
+
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [isTracking, setIsTracking] = useState(false);
@@ -70,8 +86,10 @@ export function DropMap({ height = '650px' }: DropMapProps) {
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [mapStyle, setMapStyle] = useState<'tactical' | 'satellite'>('tactical');
 
   const { profile, isSuperAdmin, isAdmin, isDropper } = useProfile();
+  const isClientUser = !isSuperAdmin && !isAdmin && !isDropper;
   const [adminLocations, setAdminLocations] = useState<Record<string, AdminLocation>>({});
 
   const lastBroadcastRef = useRef<number>(0);
@@ -174,6 +192,7 @@ export function DropMap({ height = '650px' }: DropMapProps) {
   // ── FIX M-5: Memoised click handler ────────────────────────────────────────
   const handleMarkerClick = useCallback((drop: Drop) => {
     setSelectedDrop(drop);
+    setActiveWaypoint(drop);
     setIsModalOpen(true);
   }, []);
 
@@ -274,6 +293,59 @@ export function DropMap({ height = '650px' }: DropMapProps) {
 
   return (
     <div className="relative h-full flex flex-col">
+      {/* Real-time Telemetry & Waypoint Vector Calculator */}
+      <TelemetryNavigator
+        userLocation={userLocation}
+        accuracy={accuracy}
+        drops={drops}
+        activeDrop={activeWaypoint}
+        onSelectDrop={setActiveWaypoint}
+        onFlyTo={setFlyToTarget}
+        isTracking={isTracking}
+        onToggleTracking={toggleLiveTracking}
+        className={`absolute left-4 z-[400] w-72 sm:w-80 select-none transition-all duration-300 ${
+          isClientUser ? 'top-[96px]' : 'top-[80px]'
+        }`}
+      />
+
+      {/* Map Style Selector */}
+      <div className={`absolute top-4 z-[400] flex flex-col gap-1.5 transition-all duration-300 ${
+        isClientUser ? 'left-[200px]' : 'left-4'
+      }`}>
+        <span className="text-[7.5px] font-mono text-[#0ad111]/70 tracking-[0.35em] uppercase font-bold pl-1">
+          MAP_LAYER_SELECT
+        </span>
+        <div className="bg-black/95 border-2 border-[#106011]/30 rounded-lg p-1 flex items-center gap-1 shadow-[0_0_20px_rgba(16,96,17,0.25)] relative overflow-hidden">
+          {/* Corner accents for style select */}
+          <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-[#106011] pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-[#106011] pointer-events-none" />
+          
+          <button
+            onClick={() => setMapStyle('tactical')}
+            className={`relative px-3 py-1.5 text-[9px] font-mono tracking-widest uppercase transition-all select-none duration-300 rounded flex items-center gap-1.5 ${
+              mapStyle === 'tactical'
+                ? 'bg-[#106011]/20 border border-[#106011]/85 text-[#0ad111] font-bold drop-shadow-[0_0_5px_#0ad111]'
+                : 'border border-transparent text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <Layers size={11} className={mapStyle === 'tactical' ? "text-[#0ad111]" : "text-slate-500"} />
+            TACTICAL
+          </button>
+          
+          <button
+            onClick={() => setMapStyle('satellite')}
+            className={`relative px-3 py-1.5 text-[9px] font-mono tracking-widest uppercase transition-all select-none duration-300 rounded flex items-center gap-1.5 ${
+              mapStyle === 'satellite'
+                ? 'bg-[#106011]/20 border border-[#106011]/85 text-[#0ad111] font-bold drop-shadow-[0_0_5px_#0ad111]'
+                : 'border border-transparent text-slate-500 hover:text-[#0ad111]'
+            }`}
+          >
+            <Globe size={11} className={mapStyle === 'satellite' ? "text-[#0ad111]" : "text-slate-500"} />
+            SATELLITE
+          </button>
+        </div>
+      </div>
+
       {/* Status Filters */}
       <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
         <button
@@ -344,10 +416,41 @@ export function DropMap({ height = '650px' }: DropMapProps) {
         <div className="absolute inset-6 border border-[#106011]/10 pointer-events-none rounded-md z-[900]"></div>
  
         <MapContainer center={MAMBURAO_CENTER} zoom={14} style={{ height: '100%', width: '100%' }}>
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+          {mapStyle === 'tactical' ? (
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            />
+          ) : (
+            <TileLayer
+              attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            />
+          )}
+
+          {/* Real-time laser line of sight telemetry vector */}
+          {userLocation && activeWaypoint && (
+            <Polyline
+              positions={[
+                userLocation,
+                [
+                  activeWaypoint.lat ?? (activeWaypoint as any).location?.lat,
+                  activeWaypoint.lng ?? (activeWaypoint as any).location?.lng
+                ]
+              ]}
+              pathOptions={{
+                color: '#0ad111',
+                weight: 2.5,
+                dashArray: '5, 8',
+                lineCap: 'round',
+                lineJoin: 'round',
+                opacity: 0.85,
+              }}
+            />
+          )}
+
+          {/* Map recentering controller */}
+          <MapController flyToTarget={flyToTarget} />
  
           {/* User's own live location */}
           {userLocation && (

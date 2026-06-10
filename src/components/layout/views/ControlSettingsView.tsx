@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Sliders, Shield, Bell, HardDrive, Volume2, Globe, LogOut } from 'lucide-react';
-import { useAuth } from '@/app/providers/AuthContext';
+import { Sliders, Shield, Bell, HardDrive, Volume2, Globe } from 'lucide-react';
 
 export function ControlSettingsView() {
   const [cacheMaps, setCacheMaps] = useState(true);
@@ -9,17 +7,10 @@ export function ControlSettingsView() {
   const [autoExpire, setAutoExpire] = useState(true);
   const [voiceNotes, setVoiceNotes] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
-  const { signOut } = useAuth();
-  const navigate = useNavigate();
 
   const handleToggle = (setting: string, val: boolean, setter: (v: boolean) => void) => {
     setter(!val);
     setLogs(prev => [`[${new Date().toLocaleTimeString()}] UPDATE: ${setting} initialized as ${!val ? 'ON' : 'OFF'}.`, ...prev]);
-  };
-
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/auth');
   };
 
   return (
@@ -41,13 +32,6 @@ export function ControlSettingsView() {
             <Sliders className="w-4 h-4 text-[#106011]" />
             <span>FIRMWARE REVISION: 13.04-MBR</span>
           </div>
-          <button
-            onClick={handleLogout}
-            className="p-2.5 bg-red-900/20 border-2 border-red-700/50 rounded shadow-[0_0_12px_rgba(153,27,27,0.3)] flex items-center gap-2 text-red-400 font-mono text-[10px] uppercase font-bold hover:bg-red-900/40"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Terminate Session</span>
-          </button>
         </div>
       </div>
 

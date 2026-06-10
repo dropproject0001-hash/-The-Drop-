@@ -71,8 +71,12 @@ export function ChatBoxView() {
     <div className="p-6 text-[#106011] space-y-8 select-none relative custom-scrollbar overflow-hidden h-[calc(100vh-80px)] flex flex-col">
       
       {/* Header telemetry info */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#106011]/40 pb-6 shrink-0 z-10">
-        <div>
+      <div 
+        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#106011]/40 p-4 pb-6 shrink-0 z-10 relative overflow-hidden rounded-xl bg-cover bg-center"
+        style={{ backgroundImage: `url('/coverphoto2.jpg')` }}
+      >
+        <div className="absolute inset-0 bg-black/85 z-0 pointer-events-none" />
+        <div className="relative z-10">
           <span className="text-[9px] font-mono tracking-[0.25em] bg-[#106011]/15 px-2.5 py-1 rounded border border-[#106011]/30 uppercase font-black">
             LOCKED RADIO COMM CHANNEL
           </span>
@@ -81,7 +85,7 @@ export function ChatBoxView() {
           </h2>
         </div>
         
-        <div className="flex flex-wrap gap-4 font-mono text-[10px] uppercase font-bold text-slate-300">
+        <div className="flex flex-wrap gap-4 font-mono text-[10px] uppercase font-bold text-slate-300 relative z-10">
           <div className="p-2 bg-black/80 border-2 border-[#106011] rounded shadow-[0_0_12px_rgba(16,96,17,0.3)] flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-[#106011]" />
             <span>CHANNEL ENCRYPTION: SHA-256 AES</span>

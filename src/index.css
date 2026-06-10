@@ -18,8 +18,20 @@
   
   --animate-spin-slow: spin 15s linear infinite;
   --animate-spin-reverse-slow: spin-reverse 20s linear infinite;
+  --animate-breathe: breathe 3.5s ease-in-out infinite;
   
   --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(0.9);
+  }
+  50% {
+    transform: scale(1.06);
+    filter: brightness(1.25);
+  }
 }
 
 @keyframes spin-reverse {

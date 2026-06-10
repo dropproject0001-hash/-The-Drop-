@@ -1,7 +1,7 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
-export type NeonColor = 'green' | 'blue' | 'red' | 'white';
+export type NeonColor = 'green' | 'blue' | 'red' | 'white' | 'gold';
 
 interface NeonIconProps {
   icon?: LucideIcon;
@@ -45,6 +45,12 @@ export function NeonIcon({
         dropShadow: 'drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]',
         border: 'border-slate-300/30 text-slate-300/20',
         imgBorder: 'border-slate-300/50 shadow-[0_0_15px_rgba(255,255,255,0.4)]'
+      },
+      gold: {
+        text: 'text-[#e2c80f]',
+        dropShadow: 'drop-shadow-[0_0_8px_rgba(226,200,15,0.8)] drop-shadow-[0_0_20px_rgba(226,200,15,0.4)]',
+        border: 'border-[#e2c80f]/30 text-[#e2c80f]/20',
+        imgBorder: 'border-[#e2c80f]/50 shadow-[0_0_15px_rgba(226,200,15,0.65)]'
       }
     };
     return glows[color];
@@ -72,7 +78,7 @@ export function NeonIcon({
           src={imageSrc} 
           alt="HUD Interface Center"
           referrerPolicy="no-referrer"
-          className={`relative z-10 rounded-full object-cover border-2 ${style.imgBorder}`}
+          className={`relative z-10 rounded-full object-cover border-2 ${style.imgBorder} animate-breathe`}
           style={{ width: size, height: size }}
         />
       ) : (

@@ -15,50 +15,7 @@ export function RoleSelector() {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[--bg-primary]/30 via-[--bg-primary]/80 to-[--bg-primary] pointer-events-none" />
 
-      <div className="space-y-4 relative z-10 w-full flex flex-col items-center">
-        <div className="flex items-center justify-center flex-col md:flex-row gap-6 mb-4 w-full">
-          <div className="flex flex-col items-center justify-center gap-4 w-full">
 
-            <div 
-              className="relative p-4 bg-black/80 rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(16,96,17,0.4)] border border-[#106011]/50 mx-auto w-full max-w-4xl"
-              style={{ height: '200px' }}
-            >
-              {/* Corner HUD Brackets */}
-              <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-[#106011] rounded-tl-2xl drop-shadow-[0_0_12px_rgba(16,96,17,0.95)]"></div>
-              <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-[#106011] rounded-tr-2xl drop-shadow-[0_0_12px_rgba(16,96,17,0.95)]"></div>
-              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-[#106011] rounded-bl-2xl drop-shadow-[0_0_12px_rgba(16,96,17,0.95)]"></div>
-              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-[#106011] rounded-br-2xl drop-shadow-[0_0_12px_rgba(16,96,17,0.95)]"></div>
-
-              {/* Inner Nested High-Contrast Tactical HUD Lines */}
-              <div className="absolute inset-2 border-2 border-dashed border-[#106011]/60 rounded-xl pointer-events-none"></div>
-              <div className="absolute inset-4 border border-[#106011]/40 rounded-lg pointer-events-none"></div>
-
-              {/* HUD Telemetry Labels */}
-              <div className="absolute top-6 right-6 z-20 text-[8px] font-mono text-[#106011] tracking-[0.3em] uppercase flex items-center gap-1.5">
-                <span className="animate-pulse">● THE DROP SYSTEM V1.0</span>
-              </div>
-
-              {/* Tactical grid scale lines/deco */}
-              <div className="absolute top-6 bottom-6 left-2 w-px border-l border-dotted border-[#106011]/30"></div>
-              <div className="absolute top-6 bottom-6 right-2 w-px border-r border-dotted border-[#106011]/30"></div>
-
-              {/* Tactical frequency details & telemetry overlay */}
-              <div className="absolute bottom-6 left-6 right-6 flex justify-between items-center text-[9px] font-mono text-[#106011] tracking-widest drop-shadow-[0_0_6px_rgba(16,96,17,0.9)] pointer-events-none bg-black/80 px-3 py-1 rounded border border-[#106011]/40 z-20">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-ping"></span>
-                  SIG: 106.011 MHz
-                </span>
-                <span className="animate-pulse">● FEED ONLINE</span>
-              </div>
-
-              {/* Actual Dynamic Slider */}
-              <div className="w-full h-full relative z-10">
-                <BannerSlider />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full relative z-10">
          <RoleCard 
@@ -100,7 +57,7 @@ export function RoleSelector() {
              "User activity logs",
              "Security logs"
            ]}
-           color="red"
+           color="green"
          />
          <RoleCard 
            to="/dropper" 
@@ -138,7 +95,7 @@ export function RoleSelector() {
          />
          <RoleCard 
            to="/client" 
-           icon={<NeonIcon imageSrc="/buyer-icon.png" color="green" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
+           icon={<NeonIcon imageSrc="/buyer-icon.png" color="gold" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
            title="Client" 
            features={[
              "PRODUCT MAP VIEW:",
@@ -162,7 +119,7 @@ export function RoleSelector() {
              "Transaction closes automatically",
              "Timestamp logs saved"
            ]}
-           color="green"
+           color="gold"
          />
       </div>
 
@@ -230,6 +187,25 @@ function RoleCard({ to, icon, title, description, features, color }: { to: strin
       bgOverlay: "from-emerald-950/5 via-transparent to-emerald-950/10",
       accentTitleText: "text-[#106011] group-hover:text-[#0ad111]",
       bulletSubheaderText: "text-[#0ad111]/90 font-black uppercase tracking-[0.15em] border-l-2 border-[#106011] pl-2"
+    },
+    gold: { // Client (Tactical Gold / Solar Amber)
+      border: "border-[#e2c80f]/30 hover:border-[#fdb804]/85 shadow-[0_0_15px_rgba(226,200,15,0.1)] hover:shadow-[0_0_30px_rgba(253,184,4,0.35)]",
+      text: "text-[#e2c80f] drop-shadow-[0_0_5px_rgba(226,200,15,0.5)]",
+      hoverText: "group-hover:text-[#fdb804] group-hover:drop-shadow-[0_0_12px_rgba(253,184,4,0.85)]",
+      iconBg: "border-[#e2c80f]/30 group-hover:border-[#fdb804]",
+      iconGlow: "group-hover:shadow-[0_0_20px_rgba(253,184,4,0.4)]",
+      titleBorder: "border-[#e2c80f] group-hover:shadow-[0_0_22px_rgba(253,184,4,0.85)] group-hover:drop-shadow-[0_0_15px_rgba(253,184,4,1)] bg-black/95",
+      subBorder: "border-[#e2c80f]/45 group-hover:border-[#fdb804]/80 group-hover:shadow-[0_0_15px_rgba(253,184,4,0.5)]",
+      headingText: "text-[#e2c80f]",
+      lineBorder: "border-[#e2c80f]/20 group-hover:border-[#fdb804]/45",
+      cornerBorder: "border-[#e2c80f] opacity-50 group-hover:opacity-100",
+      bulletBg: "bg-[#e2c80f] shadow-[0_0_6px_rgba(226,200,15,0.85)]",
+      sigDot: "bg-[#f8b206] drop-shadow-[0_0_5px_rgba(248,178,6,0.95)] animate-pulse",
+      sigText: "text-[#f5b616] font-black drop-shadow-[0_0_4px_rgba(245,182,22,0.55)]",
+      sigLabel: "217.180 MHz",
+      bgOverlay: "from-amber-950/5 via-transparent to-amber-950/10",
+      accentTitleText: "text-[#e2c80f] group-hover:text-[#fdb804]",
+      bulletSubheaderText: "text-[#fdb804]/90 font-black uppercase tracking-[0.15em] border-l-2 border-[#e2c80f] pl-2"
     }
   };
 
@@ -341,17 +317,24 @@ function BulletinDrawer() {
   ];
 
   return (
-    <div className="w-full max-w-4xl mt-6 mb-8 relative z-10 px-4 mx-auto">
+    <div className="w-full max-w-5xl mt-6 mb-8 relative z-10 mx-auto">
       {/* Background Glow */}
       <div className={`absolute inset-0 bg-[#106011]/5 blur-3xl rounded-full transition-opacity duration-500 ${isOpen ? 'opacity-100' : 'opacity-0'}`} />
 
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-black/90 border-2 border-[#106011]/60 hover:border-[#106011] rounded-2xl p-4 flex items-center justify-between shadow-[0_0_20px_rgba(16,96,17,0.2)] hover:shadow-[0_0_30px_rgba(16,96,17,0.4)] transition-all group overflow-hidden relative"
+        className="w-full bg-black/90 border-2 border-[#106011]/60 hover:border-[#106011] rounded-xl p-4 flex items-center justify-between shadow-[0_0_20px_rgba(16,96,17,0.2)] hover:shadow-[0_0_30px_rgba(16,96,17,0.4)] transition-all group overflow-hidden relative"
       >
-        {/* Tactical HUD accents for button */}
-        <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#106011] rounded-tl-lg pointer-events-none group-hover:scale-110 transition-transform" />
-        <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#106011] rounded-br-lg pointer-events-none group-hover:scale-110 transition-transform" />
+        {/* Universal Tactical HUD Corner Brackets */}
+        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] group-hover:scale-110 transition-transform"></div>
+        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] group-hover:scale-110 transition-transform"></div>
+        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] group-hover:scale-110 transition-transform"></div>
+        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] group-hover:scale-110 transition-transform"></div>
+
+        {/* Nested Rectangle Tactical HUD borders */}
+        <div className="absolute inset-1 border-[1.5px] border-dashed pointer-events-none rounded-lg z-20 border-[#106011]/40 group-hover:border-[#106011]/60 transition-colors"></div>
+        <div className="absolute inset-2 border pointer-events-none rounded-md z-20 border-[#106011]/20 group-hover:border-[#106011]/40 transition-colors"></div>
+
 
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#0ad111] bg-black shrink-0 shadow-[0_0_10px_rgba(10,209,17,0.4)] flex items-center justify-center p-0.5 group-hover:shadow-[0_0_15px_#0ad111]">
@@ -380,7 +363,13 @@ function BulletinDrawer() {
             exit={{ height: 0, opacity: 0, y: -20 }}
             className="overflow-hidden"
           >
-            <div className="mt-4 bg-black/95 border-2 border-[#106011]/30 rounded-2xl p-6 shadow-[inset_0_0_50px_rgba(16,96,17,0.1)] relative text-left">
+            <div className="mt-4 bg-black/95 border-2 border-[#106011]/30 rounded-2xl p-6 shadow-[inset_0_0_50px_rgba(16,96,17,0.1)] relative text-left overflow-hidden">
+              {/* Background Cover Photo Overlay */}
+              <div 
+                className="absolute inset-0 w-full h-full opacity-15 pointer-events-none mix-blend-luminosity bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: `url('/coverphoto2.jpg')` }}
+              />
+
               {/* Nested HUD Lines */}
               <div className="absolute inset-1 border border-dashed border-[#106011]/10 rounded-xl pointer-events-none" />
               

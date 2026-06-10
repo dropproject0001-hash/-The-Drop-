@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlobalModals } from '@/components/ui/GlobalModals';
-import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart } from 'lucide-react';
+import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart, LogOut } from 'lucide-react';
 
 import { CargoBayView } from './views/CargoBayView';
 import { ChatBoxView } from './views/ChatBoxView';
@@ -10,9 +10,11 @@ import { DropperListView } from './views/DropperListView';
 import { StocksAnalysisView } from './views/StocksAnalysisView';
 import { ControlSettingsView } from './views/ControlSettingsView';
 import { useRole } from '@/context/RoleContext';
+import { useAuth } from '@/app/providers/AuthContext';
 
 export function BaseLayout() {
   const { isClient, role, loading } = useRole();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
@@ -26,6 +28,11 @@ export function BaseLayout() {
       setActiveTab('map');
     }
   }, [activeTab, isClient, loading]);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   return (
     <div 
@@ -74,8 +81,15 @@ export function BaseLayout() {
           className="relative group/brand flex items-center justify-center w-full h-16 rounded-xl bg-black/95 border border-[#106011]/50 shadow-[0_0_15px_rgba(16,96,17,0.25)] hover:border-[#106011] hover:shadow-[0_0_20px_rgba(16,96,17,0.5)] transition-all duration-300 select-none z-10 overflow-hidden"
           id="sidebar-brand-link"
         >
-          {/* Nested Rectangle Tactical HUD borders */}
-          <div className="absolute inset-0.5 border border-[#106011]/25 pointer-events-none rounded-[10px] group-hover/brand:border-[#106011]/45 transition-colors duration-300"></div>
+          {/* Universal Tactical HUD Corner Brackets (On top of image) */}
+          <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 pointer-events-none z-20 group-hover/brand:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+          <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 pointer-events-none z-20 group-hover/brand:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+          <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 pointer-events-none z-20 group-hover/brand:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+          <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 pointer-events-none z-20 group-hover/brand:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+
+          {/* Nested Rectangle Tactical HUD borders (On top of image) */}
+          <div className="absolute inset-0.5 border border-dashed pointer-events-none rounded-[10px] z-20 border-[#106011]/30 group-hover/brand:border-[#106011]/50 transition-colors"></div>
+          <div className="absolute inset-1 border pointer-events-none rounded-[8px] z-20 border-[#106011]/15 group-hover/brand:border-[#106011]/30 transition-colors"></div>
           
           <img 
             src="/coverphoto3.jpg" 
@@ -110,55 +124,6 @@ export function BaseLayout() {
         <div className="w-full flex flex-col gap-3 z-10 pt-4 border-t border-[#106011]/20">
           <NavItem icon={<Settings className="w-5 h-5 animate-spin-slow" />} active={activeTab === 'settings'} tooltip="Control Settings" label="CONTROL SETTINGS" isExpanded={isExpanded} onClick={() => setActiveTab('settings')} />
           
-          {/* Mission Protocol / Instructions Drawer */}
-          <AnimatePresence>
-            {isExpanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="w-full bg-black/60 border border-[#106011]/40 rounded-xl overflow-hidden p-3 space-y-3 shadow-[inset_0_0_15px_rgba(16,96,17,0.1)] mb-1"
-              >
-                <div className="flex items-center gap-2 border-b border-[#106011]/30 pb-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-pulse" />
-                  <span className="text-[10px] font-mono font-black text-[#0ad111] tracking-widest uppercase">Mission Protocol</span>
-                </div>
-                
-                <div className="space-y-3 overflow-y-auto max-h-[160px] pr-1 custom-scrollbar">
-                  {/* Boss/Owner Instructions */}
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-amber-600 pl-1.5 font-mono">BOSS / OWNER</p>
-                    <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
-                      <li className="flex gap-1"><span>•</span> <span>Track Droppers in real-time</span></li>
-                      <li className="flex gap-1"><span>•</span> <span>Monitor spatial telemetry updates</span></li>
-                      <li className="flex gap-1"><span>•</span> <span>Verify payment & drop proof</span></li>
-                    </ul>
-                  </div>
-
-                  {/* Dropper Instructions */}
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-blue-600 pl-1.5 font-mono">ADMIN / DROPPER</p>
-                    <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
-                      <li className="flex gap-1"><span>•</span> <span>Initialize product drop units</span></li>
-                      <li className="flex gap-1"><span>•</span> <span>Pin exact GPS grid coordinates</span></li>
-                      <li className="flex gap-1"><span>•</span> <span>Sync tactical photo evidence</span></li>
-                    </ul>
-                  </div>
-
-                  {/* Client Instructions */}
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-[#106011] pl-1.5 font-mono">CLIENT / BUYER</p>
-                    <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
-                      <li className="flex gap-1"><span>•</span> <span>Access real-time sector map</span></li>
-                      <li className="flex gap-1"><span>•</span> <span>View verified drop waypoints</span></li>
-                      <li className="flex gap-1"><span>•</span> <span>Submit payment decryption</span></li>
-                    </ul>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           {/* Latch Lock Switch */}
           <button 
             onClick={() => setIsLocked(!isLocked)}
@@ -196,8 +161,103 @@ export function BaseLayout() {
             </AnimatePresence>
           </button>
 
+          {/* Mission Protocol / Instructions Drawer */}
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="w-full bg-[#050f05]/95 border-2 border-[#106011]/60 rounded-xl overflow-hidden p-3 shadow-[inset_0_0_20px_rgba(16,96,17,0.15)] mb-1 relative"
+              >
+                {/* Background Cover Photo Overlay */}
+                <div 
+                  className="absolute inset-0 w-full h-full opacity-15 pointer-events-none mix-blend-luminosity bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url('/coverphoto3.jpg')` }}
+                />
+
+                {/* Universal Tactical HUD Corner Brackets */}
+                <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+                <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+                <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+                <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+
+                {/* Nested Rectangle Tactical HUD borders */}
+                <div className="absolute inset-0.5 border border-dashed pointer-events-none rounded-[10px] z-20 border-[#106011]/30"></div>
+                <div className="absolute inset-1 border pointer-events-none rounded-[8px] z-20 border-[#106011]/15"></div>
+
+                <div className="relative z-10 space-y-3">
+                  <div className="flex items-center gap-2 border-b border-[#106011]/30 pb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-pulse" />
+                    <span className="text-[10px] font-mono font-black text-[#0ad111] tracking-widest uppercase">Mission Protocol</span>
+                  </div>
+                  
+                  <div className="space-y-3 overflow-y-auto max-h-[160px] pr-1 custom-scrollbar">
+                    {/* Boss/Owner Instructions */}
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-amber-600 pl-1.5 font-mono">BOSS / OWNER</p>
+                      <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
+                        <li className="flex gap-1"><span>•</span> <span>Track Droppers in real-time</span></li>
+                        <li className="flex gap-1"><span>•</span> <span>Monitor spatial telemetry updates</span></li>
+                        <li className="flex gap-1"><span>•</span> <span>Verify payment & drop proof</span></li>
+                      </ul>
+                    </div>
+
+                    {/* Dropper Instructions */}
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-blue-600 pl-1.5 font-mono">ADMIN / DROPPER</p>
+                      <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
+                        <li className="flex gap-1"><span>•</span> <span>Initialize product drop units</span></li>
+                        <li className="flex gap-1"><span>•</span> <span>Pin exact GPS grid coordinates</span></li>
+                        <li className="flex gap-1"><span>•</span> <span>Sync tactical photo evidence</span></li>
+                      </ul>
+                    </div>
+
+                    {/* Client Instructions */}
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-[#106011] pl-1.5 font-mono">CLIENT / BUYER</p>
+                      <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
+                        <li className="flex gap-1"><span>•</span> <span>Access real-time sector map</span></li>
+                        <li className="flex gap-1"><span>•</span> <span>View verified drop waypoints</span></li>
+                        <li className="flex gap-1"><span>•</span> <span>Submit payment decryption</span></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* About System / Guides Drawer */}
           <AboutDrawer isExpanded={isExpanded} />
+
+          {/* Logout / Terminate Session Button */}
+          <button 
+            onClick={handleLogout}
+            className="w-full h-8 bg-red-950/40 border border-red-900/60 hover:border-red-600 rounded-lg text-red-500 hover:text-red-400 font-mono text-[8px] font-black tracking-[0.25em] transition-all uppercase flex items-center justify-center gap-2 group cursor-pointer shadow-[0_0_10px_rgba(220,38,38,0.1)] relative"
+          >
+            <LogOut className={`w-3 h-3 group-hover:scale-110 transition-transform ${isExpanded ? '' : 'drop-shadow-[0_0_5px_rgba(220,38,38,0.8)]'}`} />
+            
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.span 
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  className="whitespace-nowrap overflow-hidden"
+                >
+                  LOG OUT
+                </motion.span>
+              )}
+            </AnimatePresence>
+
+            {/* Tooltip for collapsed state */}
+            {!isExpanded && (
+              <span className="absolute left-full ml-4 px-2.5 py-1 bg-black/95 border-2 text-[9px] font-mono rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 tracking-widest border-red-900 text-red-500 shadow-[0_0_10px_rgba(220,38,38,0.3)]">
+                LOG OUT
+              </span>
+            )}
+          </button>
         </div>
       </motion.aside>
 
@@ -229,7 +289,7 @@ export function BaseLayout() {
                 initial={{ x: "0%" }}
                 animate={{ x: "-50%" }}
                 transition={{ repeat: Infinity, duration: 16, ease: "linear" }}
-                className="text-xs md:text-sm font-mono font-bold tracking-[0.05em] text-[#2e710d] uppercase drop-shadow-[0_0_10px_rgba(46,113,13,0.85)] whitespace-nowrap"
+                className="text-[10px] md:text-xs font-mono font-bold tracking-[0.12em] text-[#0ad111] uppercase border border-[#ba0202] px-2 py-0.5 bg-black/60 text-center no-underline not-italic drop-shadow-[0_0_8px_rgba(10,209,17,0.75)] whitespace-nowrap"
                 style={{ paddingRight: '22px' }}
               >
                 {"Message 📩- Payment💲 - Confirmation ✅- Approval 💯-Pin Dropped product loc📍- Legitimate transactions🫱🏻🫲🏽 • Message 📩- Payment💲 - Confirmation ✅- Approval 💯-Pin Dropped product loc📍- Legitimate transactions🫱🏻🫲🏽 • "}
@@ -237,7 +297,10 @@ export function BaseLayout() {
             </div>
             <div className="hidden md:flex items-center gap-2 pl-4 border-l border-[#106011]/30">
               <span className="w-2 h-2 rounded-full bg-[#106011] animate-ping"></span>
-              <span className="text-xs font-mono text-[#106011] uppercase tracking-widest font-semibold drop-shadow-[0_0_5px_rgba(16,96,17,0.6)]">
+              <span 
+                className="text-xs font-mono uppercase tracking-widest font-semibold drop-shadow-[0_0_5px_rgba(16,96,17,0.6)]"
+                style={{ color: '#2fe731' }}
+              >
                 CONNECTION ESTABLISHED
               </span>
             </div>
@@ -357,9 +420,25 @@ function AboutDrawer({ isExpanded }: { isExpanded: boolean }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="w-full bg-[#050f05]/90 border border-[#106011]/20 rounded-lg overflow-hidden backdrop-blur-sm shadow-[inset_0_0_20px_rgba(16,96,17,0.15)]"
+            className="w-full bg-[#050f05]/95 border-2 border-[#106011]/60 rounded-lg overflow-hidden backdrop-blur-sm shadow-[inset_0_0_20px_rgba(16,96,17,0.15)] relative"
           >
-            <div className="p-3 space-y-3 custom-scrollbar max-h-[220px] overflow-y-auto">
+            {/* Background Cover Photo Overlay */}
+            <div 
+              className="absolute inset-0 w-full h-full opacity-15 pointer-events-none mix-blend-luminosity bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: `url('/coverphoto3.jpg')` }}
+            />
+
+            {/* Universal Tactical HUD Corner Brackets */}
+            <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+            <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+            <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+            <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+
+            {/* Nested Rectangle Tactical HUD borders (On top of image) */}
+            <div className="absolute inset-0.5 border border-dashed pointer-events-none rounded-[6px] z-20 border-[#106011]/30"></div>
+            <div className="absolute inset-1 border pointer-events-none rounded-[4px] z-20 border-[#106011]/15"></div>
+
+            <div className="p-3 space-y-3 custom-scrollbar max-h-[220px] overflow-y-auto relative z-10">
               {/* System Functionality */}
               <div className="space-y-1.5 border-b border-[#106011]/10 pb-2">
                 <div className="flex items-center gap-2">
