@@ -29,11 +29,8 @@ export function BaseLayout() {
 
   return (
     <div 
-      className="min-h-screen bg-[--bg-primary] text-[--text-primary] flex font-sans overflow-hidden bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url('/Backgroundimage.png')` }}
+      className="min-h-screen bg-black text-[--text-primary] flex font-sans overflow-hidden"
     >
-      <div className="absolute inset-0 bg-black/60 pointer-events-none z-0" />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#106011]/10 via-transparent to-[#106011]/10 pointer-events-none z-0" />
       
       {/* Sidebar Navigation */}
       <motion.aside 
@@ -110,10 +107,59 @@ export function BaseLayout() {
         </nav>
         
         {/* Bottom Actions */}
-        <div className="w-full flex flex-col gap-4 z-10 pt-4 border-t border-[#106011]/20">
+        <div className="w-full flex flex-col gap-3 z-10 pt-4 border-t border-[#106011]/20">
           <NavItem icon={<Settings className="w-5 h-5 animate-spin-slow" />} active={activeTab === 'settings'} tooltip="Control Settings" label="CONTROL SETTINGS" isExpanded={isExpanded} onClick={() => setActiveTab('settings')} />
           
-          {/* Latch Lock Switch with High-Contrast Tactical HUD and Nested Signal Borders */}
+          {/* Mission Protocol / Instructions Drawer */}
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="w-full bg-black/60 border border-[#106011]/40 rounded-xl overflow-hidden p-3 space-y-3 shadow-[inset_0_0_15px_rgba(16,96,17,0.1)] mb-1"
+              >
+                <div className="flex items-center gap-2 border-b border-[#106011]/30 pb-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-pulse" />
+                  <span className="text-[10px] font-mono font-black text-[#0ad111] tracking-widest uppercase">Mission Protocol</span>
+                </div>
+                
+                <div className="space-y-3 overflow-y-auto max-h-[160px] pr-1 custom-scrollbar">
+                  {/* Boss/Owner Instructions */}
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-amber-600 pl-1.5 font-mono">BOSS / OWNER</p>
+                    <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
+                      <li className="flex gap-1"><span>•</span> <span>Track Droppers in real-time</span></li>
+                      <li className="flex gap-1"><span>•</span> <span>Monitor spatial telemetry updates</span></li>
+                      <li className="flex gap-1"><span>•</span> <span>Verify payment & drop proof</span></li>
+                    </ul>
+                  </div>
+
+                  {/* Dropper Instructions */}
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-blue-600 pl-1.5 font-mono">ADMIN / DROPPER</p>
+                    <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
+                      <li className="flex gap-1"><span>•</span> <span>Initialize product drop units</span></li>
+                      <li className="flex gap-1"><span>•</span> <span>Pin exact GPS grid coordinates</span></li>
+                      <li className="flex gap-1"><span>•</span> <span>Sync tactical photo evidence</span></li>
+                    </ul>
+                  </div>
+
+                  {/* Client Instructions */}
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-[#106011] pl-1.5 font-mono">CLIENT / BUYER</p>
+                    <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
+                      <li className="flex gap-1"><span>•</span> <span>Access real-time sector map</span></li>
+                      <li className="flex gap-1"><span>•</span> <span>View verified drop waypoints</span></li>
+                      <li className="flex gap-1"><span>•</span> <span>Submit payment decryption</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Latch Lock Switch */}
           <button 
             onClick={() => setIsLocked(!isLocked)}
             className="w-full h-10 rounded-xl flex items-center justify-center text-[#106011] bg-black/95 hover:bg-[#106011]/20 border-2 border-[#106011] shadow-[0_0_15px_rgba(16,96,17,0.45)] hover:shadow-[0_0_22px_rgba(16,96,17,0.7)] transition-all duration-300 cursor-pointer relative gap-3 px-3 overflow-hidden select-none font-bold group"
@@ -149,6 +195,9 @@ export function BaseLayout() {
               )}
             </AnimatePresence>
           </button>
+
+          {/* About System / Guides Drawer */}
+          <AboutDrawer isExpanded={isExpanded} />
         </div>
       </motion.aside>
 
@@ -284,5 +333,80 @@ function NavItem({ icon, active, tooltip, label, isExpanded, onClick, badge, bad
         </span>
       )}
     </button>
+  );
+}
+
+function AboutDrawer({ isExpanded }: { isExpanded: boolean }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!isExpanded) return null;
+
+  return (
+    <div className="w-full space-y-1.5 mt-1">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full h-8 bg-black/80 border border-[#106011]/40 hover:border-[#106011] rounded-lg text-[#106011] font-mono text-[8px] font-black tracking-[0.25em] transition-all uppercase flex items-center justify-center gap-2 group cursor-pointer shadow-[0_0_10px_rgba(16,96,17,0.1)]"
+      >
+        <ShieldAlert className={`w-3 h-3 group-hover:scale-110 transition-transform ${isOpen ? 'text-[#0ad111] drop-shadow-[0_0_5px_#0ad111]' : ''}`} />
+        ABOUT / PROTOCOLS
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="w-full bg-[#050f05]/90 border border-[#106011]/20 rounded-lg overflow-hidden backdrop-blur-sm shadow-[inset_0_0_20px_rgba(16,96,17,0.15)]"
+          >
+            <div className="p-3 space-y-3 custom-scrollbar max-h-[220px] overflow-y-auto">
+              {/* System Functionality */}
+              <div className="space-y-1.5 border-b border-[#106011]/10 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-[#0ad111]" />
+                  <span className="text-[9px] font-black text-slate-100 tracking-wider font-mono">SYSTEM_GUIDES</span>
+                </div>
+                <p className="text-[7px] text-slate-500 font-mono leading-relaxed pl-3">
+                  This terminal facilitates secure drop tracking via real-time satellite UAV uplinks. Use the sidebar to toggle between map telemetry, secure comms, and inventory locks.
+                </p>
+              </div>
+
+              {/* Tactical Guilds */}
+              <div className="space-y-1.5 border-b border-[#106011]/10 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-blue-500" />
+                  <span className="text-[9px] font-black text-slate-100 tracking-wider font-mono">OPERATIONAL_FLOW</span>
+                </div>
+                <p className="text-[7px] text-slate-500 font-mono leading-relaxed pl-3">
+                  Drops follow a strict three-phase protocol: <br/>
+                  1. Initialize Grid Location <br/>
+                  2. Upload Tactical Evidence <br/>
+                  3. Verify Decrypted Receipt
+                </p>
+              </div>
+
+              {/* Security Credentials */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-red-600 animate-pulse" />
+                  <span className="text-[9px] font-black text-slate-100 tracking-wider font-mono">CREDENTIAL_PROTOCOL</span>
+                </div>
+                <div className="bg-red-950/20 border border-red-500/20 p-2 rounded">
+                  <p className="text-[7px] text-red-400 font-mono leading-relaxed italic">
+                    All field credentials are short-lived. Rotate OTP sequences every session. Never share terminal access keys via unencrypted bands.
+                  </p>
+                </div>
+              </div>
+
+              {/* Manifest Data */}
+              <div className="pt-1 flex justify-between items-center opacity-30">
+                <span className="text-[6px] text-[#106011] font-mono tracking-widest">VER: 1.0.82_STABLE</span>
+                <span className="text-[6px] text-[#106011] font-mono tracking-widest">SIG: ENCRYPTED</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

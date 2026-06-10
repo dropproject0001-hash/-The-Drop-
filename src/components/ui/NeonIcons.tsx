@@ -53,7 +53,7 @@ export function NeonIcon({
   const style = getGlowStyles(color);
 
   return (
-    <div className={`relative flex items-center justify-center ${className} w-[120px] h-[120px]`}>
+    <div className={`relative flex items-center justify-center ${className} w-[180px] h-[180px]`}>
       {/* Background ambient glow */}
       <div 
         className={`absolute inset-0 rounded-full blur-xl opacity-30 mix-blend-screen bg-current ${style.text}`}

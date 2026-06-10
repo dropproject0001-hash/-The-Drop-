@@ -5,7 +5,7 @@ import { Shield, Crosshair, Zap } from 'lucide-react';
 
 export function MapTest() {
   return (
-    <div className="min-h-screen bg-[--bg-primary] flex flex-col font-mono text-slate-100 overflow-hidden relative">
+    <div className="min-h-screen bg-black flex flex-col font-mono text-slate-100 overflow-hidden relative">
 
       {/* Header Overlay */}
       <div className="relative z-20 px-6 py-6 border-b border-[#106011]/30 bg-black/40 backdrop-blur-md flex items-center justify-between mt-16 sm:mt-0">
