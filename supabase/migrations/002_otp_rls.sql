@@ -15,11 +15,11 @@ FOR ALL
 USING (auth.role() = 'service_role')
 WITH CHECK (auth.role() = 'service_role');
 
--- Users can only read their own OTPs (for verification)
+-- Users can only read their own valid OTPs (for checking status)
 CREATE POLICY "Users can read their own OTPs"
 ON public.otp_codes
 FOR SELECT
-USING (phone = auth.jwt() ->> 'phone');
+USING (phone = auth.jwt() ->> 'phone' AND used = false AND expires_at > now());
 
 -- Prevent normal users from inserting or updating OTPs directly
 CREATE POLICY "No direct insert by users"

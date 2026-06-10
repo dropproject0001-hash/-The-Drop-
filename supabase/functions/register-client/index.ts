@@ -33,22 +33,6 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: "Phone number already registered" }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
-  // Generate 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
-
-  // 1. Store OTP in dedicated table
-  const { error: otpError } = await supabase.from("otp_codes").insert({
-    phone: phone_number,
-    code: otp,
-    purpose: 'registration',
-    expires_at: expiresAt,
-  });
-
-  if (otpError) {
-    return new Response(JSON.stringify({ error: "Failed to create OTP" }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  }
-
   // 2. Create profile skeleton (verified=false)
   const { error: profileError } = await supabase.from("profiles").insert({
     phone: phone_number,
@@ -62,10 +46,8 @@ serve(async (req) => {
     console.warn("Profile creation skipped or failed:", profileError.message);
   }
 
-  // In production: Send OTP via SMS
   return new Response(JSON.stringify({ 
     success: true, 
-    message: "OTP generated", 
-    otp: otp // TEMPORARY: Remove in production
+    message: "Client registered"
   }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 });

@@ -195,31 +195,31 @@ export function BaseLayout() {
                   <div className="space-y-3 overflow-y-auto max-h-[160px] pr-1 custom-scrollbar">
                     {/* Boss/Owner Instructions */}
                     <div className="space-y-1">
-                      <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-amber-600 pl-1.5 font-mono">BOSS / OWNER</p>
-                      <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
-                        <li className="flex gap-1"><span>•</span> <span>Track Droppers in real-time</span></li>
-                        <li className="flex gap-1"><span>•</span> <span>Monitor spatial telemetry updates</span></li>
-                        <li className="flex gap-1"><span>•</span> <span>Verify payment & drop proof</span></li>
+                      <p className="text-[9px] font-bold text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)] border-l-2 border-amber-600 pl-1.5 font-mono">BOSS / OWNER</p>
+                      <ul className="text-[8px] text-[#0ad111]/90 font-mono space-y-1 pl-2">
+                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Track Droppers in real-time</span></li>
+                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Monitor spatial telemetry updates</span></li>
+                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Verify payment & drop proof</span></li>
                       </ul>
                     </div>
 
                     {/* Dropper Instructions */}
                     <div className="space-y-1">
-                      <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-blue-600 pl-1.5 font-mono">ADMIN / DROPPER</p>
-                      <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
-                        <li className="flex gap-1"><span>•</span> <span>Initialize product drop units</span></li>
-                        <li className="flex gap-1"><span>•</span> <span>Pin exact GPS grid coordinates</span></li>
-                        <li className="flex gap-1"><span>•</span> <span>Sync tactical photo evidence</span></li>
+                      <p className="text-[9px] font-bold text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)] border-l-2 border-blue-600 pl-1.5 font-mono">ADMIN / DROPPER</p>
+                      <ul className="text-[8px] text-[#0ad111]/90 font-mono space-y-1 pl-2">
+                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Initialize product drop units</span></li>
+                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Pin exact GPS grid coordinates</span></li>
+                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Sync tactical photo evidence</span></li>
                       </ul>
                     </div>
 
                     {/* Client Instructions */}
                     <div className="space-y-1">
-                      <p className="text-[9px] font-bold text-slate-100/90 border-l-2 border-[#106011] pl-1.5 font-mono">CLIENT / BUYER</p>
-                      <ul className="text-[8px] text-slate-400 font-mono space-y-1 pl-2">
-                        <li className="flex gap-1"><span>•</span> <span>Access real-time sector map</span></li>
-                        <li className="flex gap-1"><span>•</span> <span>View verified drop waypoints</span></li>
-                        <li className="flex gap-1"><span>•</span> <span>Submit payment decryption</span></li>
+                      <p className="text-[9px] font-bold text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)] border-l-2 border-[#106011] pl-1.5 font-mono">CLIENT / BUYER</p>
+                      <ul className="text-[8px] text-[#0ad111]/90 font-mono space-y-1 pl-2">
+                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Access real-time sector map</span></li>
+                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>View verified drop waypoints</span></li>
+                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Submit payment decryption</span></li>
                       </ul>
                     </div>
                   </div>
@@ -442,10 +442,10 @@ function AboutDrawer({ isExpanded }: { isExpanded: boolean }) {
               {/* System Functionality */}
               <div className="space-y-1.5 border-b border-[#106011]/10 pb-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-[#0ad111]" />
-                  <span className="text-[9px] font-black text-slate-100 tracking-wider font-mono">SYSTEM_GUIDES</span>
+                  <div className="w-1 h-1 rounded-full bg-[#106011]" />
+                  <span className="text-[9px] font-black text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)] tracking-wider font-mono">SYSTEM_GUIDES</span>
                 </div>
-                <p className="text-[7px] text-slate-500 font-mono leading-relaxed pl-3">
+                <p className="text-[7px] text-[#0ad111]/90 font-mono leading-relaxed pl-3">
                   This terminal facilitates secure drop tracking via real-time satellite UAV uplinks. Use the sidebar to toggle between map telemetry, secure comms, and inventory locks.
                 </p>
               </div>
@@ -453,10 +453,10 @@ function AboutDrawer({ isExpanded }: { isExpanded: boolean }) {
               {/* Tactical Guilds */}
               <div className="space-y-1.5 border-b border-[#106011]/10 pb-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-blue-500" />
-                  <span className="text-[9px] font-black text-slate-100 tracking-wider font-mono">OPERATIONAL_FLOW</span>
+                  <div className="w-1 h-1 rounded-full bg-[#106011]" />
+                  <span className="text-[9px] font-black text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)] tracking-wider font-mono">OPERATIONAL_FLOW</span>
                 </div>
-                <p className="text-[7px] text-slate-500 font-mono leading-relaxed pl-3">
+                <p className="text-[7px] text-[#0ad111]/90 font-mono leading-relaxed pl-3">
                   Drops follow a strict three-phase protocol: <br/>
                   1. Initialize Grid Location <br/>
                   2. Upload Tactical Evidence <br/>
@@ -468,10 +468,10 @@ function AboutDrawer({ isExpanded }: { isExpanded: boolean }) {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-1 rounded-full bg-red-600 animate-pulse" />
-                  <span className="text-[9px] font-black text-slate-100 tracking-wider font-mono">CREDENTIAL_PROTOCOL</span>
+                  <span className="text-[9px] font-black text-[#0ad111] tracking-wider font-mono">CREDENTIAL_PROTOCOL</span>
                 </div>
                 <div className="bg-red-950/20 border border-red-500/20 p-2 rounded">
-                  <p className="text-[7px] text-red-400 font-mono leading-relaxed italic">
+                  <p className="text-[7px] text-red-500 font-mono leading-relaxed italic drop-shadow-[0_0_2px_rgba(239,68,68,0.8)]">
                     All field credentials are short-lived. Rotate OTP sequences every session. Never share terminal access keys via unencrypted bands.
                   </p>
                 </div>

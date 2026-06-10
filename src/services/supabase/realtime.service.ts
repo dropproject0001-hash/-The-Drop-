@@ -47,7 +47,10 @@ class RealtimeService {
         }
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.error(`[Realtime] ❌ Error on ${channelName}:`, err);
-          if (options.onError) options.onError(err);
+          // Clean up and eject channel from map so a future subscription attempt can start fresh
+          supabase.removeChannel(channel);
+          this.channels.delete(channelName);
+          if (options.onError) options.onError(err || new Error(`Channel error or timeout on ${channelName}`));
         }
       });
 

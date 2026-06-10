@@ -22,8 +22,18 @@ export function useOTP() {
 
     try {
       // Tactical workaround: Use fetch directly for better control
-      const baseUrl = ((supabase as any).supabaseUrl || '').replace(/\/+$/, '');
-      const anonKey = (supabase as any).supabaseKey;
+      const baseUrl = ((import.meta as any).env.VITE_SUPABASE_URL || '').trim().replace(/\/+$/, '');
+      const anonKey = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY || '').trim();
+
+      let appHash = '';
+      if (AndroidSmsRetriever && typeof AndroidSmsRetriever.getHashString === 'function') {
+        try {
+          const { hash } = await AndroidSmsRetriever.getHashString();
+          appHash = hash;
+        } catch (e) {
+          console.warn('[OTP] Could not get app hash string', e);
+        }
+      }
 
       const response = await fetch(`${baseUrl}/functions/v1/send-otp`, {
         method: 'POST',
@@ -32,7 +42,7 @@ export function useOTP() {
           'Authorization': `Bearer ${anonKey}`,
           'apikey': anonKey,
         },
-        body: JSON.stringify({ phone, purpose }),
+        body: JSON.stringify({ phone, purpose, appHash }),
       });
 
       if (!response.ok) {
@@ -106,8 +116,8 @@ export function useOTP() {
 
     try {
       // Tactical workaround: Use fetch directly for better control
-      const baseUrl = ((supabase as any).supabaseUrl || '').replace(/\/+$/, '');
-      const anonKey = (supabase as any).supabaseKey;
+      const baseUrl = ((import.meta as any).env.VITE_SUPABASE_URL || '').trim().replace(/\/+$/, '');
+      const anonKey = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY || '').trim();
 
       const response = await fetch(`${baseUrl}/functions/v1/verify-otp`, {
         method: 'POST',
@@ -116,7 +126,7 @@ export function useOTP() {
           'Authorization': `Bearer ${anonKey}`,
           'apikey': anonKey,
         },
-        body: JSON.stringify({ phone_number: phone, otp_code: code }),
+        body: JSON.stringify({ phone_number: phone, otp_code: code, purpose }),
       });
 
       if (!response.ok) {

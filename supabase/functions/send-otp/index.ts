@@ -11,14 +11,16 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  const { phone, purpose } = await req.json();
+  const { phone, purpose, appHash } = await req.json();
 
   if (!phone) {
     return new Response(JSON.stringify({ error: "Phone number is required" }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
   // 1. Generate a cryptographically secure 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  const otp = (array[0] % 900000 + 100000).toString(); // 6-digit code
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes
 
   const supabase = createClient(
@@ -54,10 +56,15 @@ serve(async (req) => {
   const auth = btoa(`${accountSid}:${authToken}`);
   const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
 
+  let messageBody = `The Drop Security Code: ${otp}. Valid for 5 minutes.`;
+  if (appHash && appHash.trim().length > 0) {
+    messageBody += `\n${appHash}`;
+  }
+
   const body = new URLSearchParams({
     To: phone,
     From: fromPhone,
-    Body: `The Drop Security Code: ${otp}. Valid for 5 minutes.`
+    Body: messageBody
   });
 
   const response = await fetch(url, {

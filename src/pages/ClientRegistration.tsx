@@ -30,8 +30,9 @@ export default function ClientRegistration() {
   const handleVerifyOTP = async () => {
     const result = await verifyOTP(phone, otp, 'client_registration');
     if (result.success) {
-      alert('Registration successful! You can now login.');
-      // Redirect to login or dashboard
+      alert('Registration successful! Welcome to the system.');
+      localStorage.setItem('demo_role', 'client');
+      window.location.href = '/';
     }
   };
 

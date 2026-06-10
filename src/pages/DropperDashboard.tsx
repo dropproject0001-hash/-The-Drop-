@@ -8,7 +8,7 @@ export default function DropperDashboard() {
   const [locationSharing, setLocationSharing] = useState(true);
 
   const { drops } = useLiveDrops();
-  const myDrops = drops.filter(d => d.status === 'active' || d.status === 'executed');
+  const myDrops = drops.filter(d => d.status === 'active');
 
   // Live location sharing
   useLiveLocation(selectedDropId || '', locationSharing);

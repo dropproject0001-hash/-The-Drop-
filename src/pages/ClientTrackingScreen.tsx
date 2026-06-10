@@ -4,12 +4,12 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 
 export default function ClientTrackingScreen({ clientId }: { clientId: string }) {
   const { drops } = useLiveDrops();
-  const myDrops = drops.filter(d => d.client_id === clientId);
+  const myDrops = drops.filter(d => d.assigned_to === clientId);
 
-  const activeDrop = myDrops.find(d => d.status === 'active' || d.status === 'executed');
-  const { locations } = useLiveLocations(activeDrop?.id);
+  const activeDrop = myDrops.find(d => d.status === 'active');
+  const { locations } = useLiveLocations({});
 
-  const latestLocation = activeDrop ? locations[activeDrop.id]?.slice(-1)[0] : null;
+  const latestLocation = activeDrop ? locations[activeDrop.assigned_to]?.slice(-1)[0] : null;
 
   return (
     <div className="p-6 max-w-4xl mx-auto text-white">
@@ -51,7 +51,7 @@ export default function ClientTrackingScreen({ clientId }: { clientId: string })
           )}
 
           {/* Confirmation Action */}
-          {activeDrop.status === 'executed' && (
+          {activeDrop.status === 'claimed' && (
             <button 
               className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-semibold text-lg"
               onClick={() => alert('Confirmation flow with OTP will go here')}

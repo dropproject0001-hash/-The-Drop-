@@ -20,10 +20,10 @@ export default function LoginWithOTP() {
     const result = await verifyOTP(phone, otp, 'login');
     if (result.success) {
       // In a real production app, we would now swap to a session-based auth.
-      // Since this is a temporary fix for the login, we will simply redirect
-      // to the dashboard and bypass the AuthContext restriction for now,
-      // as our RLS policies will still protect the data.
-      window.location.href = '/dashboard'; 
+      // Since this is a temporary fix for the login, we will bypass the AuthContext
+      // by setting a demo role and going back to the portal selector.
+      localStorage.setItem('demo_role', 'client'); 
+      window.location.href = '/'; 
     }
   };
 

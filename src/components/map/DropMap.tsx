@@ -26,6 +26,9 @@ import { EpicModal } from '@/components/ui/EpicModal';
 import { useProfile } from '@/hooks/useProfile';
 import type { Drop, DropStatus } from '@/types/domain';
 import { useDrops } from '@/hooks/useDrops';
+import { useLocationBroadcast } from '@/hooks/useLocationBroadcast';
+import { usePresenceTracking } from '@/hooks/realtime/usePresenceTracking';
+import { useLiveLocations } from '@/hooks/realtime/useLiveLocations';
 import { TelemetryNavigator } from './TelemetryNavigator';
 
 // ── FIX H-3: Leaflet default icon fix for Vite ────────────────────────────────
@@ -77,6 +80,7 @@ export function DropMap({ height = '650px' }: DropMapProps) {
 
   // Tactical waypoint telemetry states
   const [activeWaypoint, setActiveWaypoint] = useState<Drop | null>(null);
+  const [activeDropId, setActiveDropId] = useState<string | null>(null);
   const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null);
 
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -92,51 +96,65 @@ export function DropMap({ height = '650px' }: DropMapProps) {
   const isClientUser = !isSuperAdmin && !isAdmin && !isDropper;
   const [adminLocations, setAdminLocations] = useState<Record<string, AdminLocation>>({});
 
+  const { broadcast } = useLocationBroadcast();
+  const { trackPresence, untrackPresence } = usePresenceTracking();
+  const [recentlyUpdatedUsers, setRecentlyUpdatedUsers] = useState<Set<string>>(new Set());
   const lastBroadcastRef = useRef<number>(0);
 
-  // ── Super Admin: track other admins ────────────────────────────────────────
+  // === REAL-TIME LOCATION UPDATES FOR SUPER ADMIN ===
+  const { locations: liveAdminLocations } = useLiveLocations({});
+
   useEffect(() => {
     if (!isSuperAdmin) return;
 
-    const locChannel = supabase
-      .channel('locations-realtime')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'locations' },
-        (payload) => {
-          const loc = payload.new;
-          setAdminLocations((prev) => ({
-            ...prev,
-            [loc.user_id]: {
-              lat: loc.lat,
-              lng: loc.lng,
-              accuracy: loc.accuracy ?? 0,
-              updatedAt: new Date(),
-            },
-          }));
-        }
-      )
-      .subscribe();
+    // Convert hook data into the AdminLocation format used by the map
+    const formatted: Record<string, AdminLocation> = {};
+    
+    Object.entries(liveAdminLocations).forEach(([userId, locs]) => {
+      if (locs.length > 0) {
+        const latest = locs[0];
+        formatted[userId] = {
+          lat: latest.lat,
+          lng: latest.lng,
+          accuracy: latest.accuracy ?? 0,
+          updatedAt: new Date(latest.recorded_at),
+        };
+      }
+    });
 
-    // Prune stale locations every minute
-    const staleInterval = setInterval(() => {
-      const now = Date.now();
-      setAdminLocations((prev) => {
-        const next = { ...prev };
-        for (const uid of Object.keys(next)) {
-          if (now - next[uid].updatedAt.getTime() > STALE_LOCATION_MS) {
-            delete next[uid];
-          }
-        }
-        return next;
-      });
-    }, 60_000);
+    setAdminLocations(formatted);
+  }, [liveAdminLocations, isSuperAdmin]);
 
-    return () => {
-      supabase.removeChannel(locChannel);
-      clearInterval(staleInterval);
-    };
-  }, [isSuperAdmin]);
+  // === LIVE PULSING INDICATOR ===
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+
+    const updatedUsers = new Set<string>();
+
+    Object.keys(liveAdminLocations).forEach((userId) => {
+      const locs = liveAdminLocations[userId];
+      if (locs.length > 0) {
+        const latest = locs[0];
+        const age = Date.now() - new Date(latest.recorded_at).getTime();
+        
+        // If updated in last 8 seconds → show pulsing
+        if (age < 8000) {
+          updatedUsers.add(userId);
+        }
+      }
+    });
+
+    if (updatedUsers.size > 0) {
+      setRecentlyUpdatedUsers(updatedUsers);
+
+      // Clear pulsing after 6 seconds
+      const timer = setTimeout(() => {
+        setRecentlyUpdatedUsers(new Set());
+      }, 6000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [liveAdminLocations, isSuperAdmin]);
 
   // ── FIX H-4: Memoised icon factories ───────────────────────────────────────
   const createIcon = useCallback((status: DropStatus) =>
@@ -193,23 +211,35 @@ export function DropMap({ height = '650px' }: DropMapProps) {
   const handleMarkerClick = useCallback((drop: Drop) => {
     setSelectedDrop(drop);
     setActiveWaypoint(drop);
+    setActiveDropId(drop.id);
     setIsModalOpen(true);
   }, []);
 
   // ── Live tracking ───────────────────────────────────────────────────────────
-  const toggleLiveTracking = useCallback(() => {
+  const toggleLiveTracking = useCallback(async () => {
     if (isTracking && watchId !== null) {
       navigator.geolocation.clearWatch(watchId);
       setIsTracking(false);
       setWatchId(null);
       setUserLocation(null);
       setAccuracy(null);
+      await untrackPresence();
       return;
     }
 
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser');
       return;
+    }
+
+    if (!isTracking) {
+      if (profile) {
+        await trackPresence({
+          user_id: profile.id,
+          username: profile.username || profile.alias,
+          role: profile.role,
+        });
+      }
     }
 
     const id = navigator.geolocation.watchPosition(
@@ -227,12 +257,19 @@ export function DropMap({ height = '650px' }: DropMapProps) {
           now - lastBroadcastRef.current > BROADCAST_THROTTLE_MS
         ) {
           lastBroadcastRef.current = now;
-          await (supabase.from('locations') as any).insert({
-            user_id: profile.id,
-            lat: latitude,
-            lng: longitude,
-            accuracy: acc,
-          });
+          try {
+            await broadcast({
+              lat: latitude,
+              lng: longitude,
+              accuracy: acc,
+              heading: position.coords.heading,
+              speed: position.coords.speed,
+              altitude: position.coords.altitude,
+              drop_id: activeDropId,
+            });
+          } catch (broadcastErr) {
+            console.error('Location broadcast failed:', broadcastErr);
+          }
         }
       },
       (err) => {
@@ -243,7 +280,7 @@ export function DropMap({ height = '650px' }: DropMapProps) {
     );
 
     setWatchId(id);
-  }, [isTracking, watchId, profile]);
+  }, [isTracking, watchId, profile, activeDropId, broadcast]);
 
   // ── Offline tile download ───────────────────────────────────────────────────
   const downloadMamburaoTiles = useCallback(async () => {
@@ -486,23 +523,31 @@ export function DropMap({ height = '650px' }: DropMapProps) {
  
           {/* FIX H-2: <Marker> is now a direct child — no invalid <div> wrapper */}
           {isSuperAdmin &&
-            Object.entries(adminLocations).map(([uid, loc]) => (
-              <Marker
-                key={uid}
-                position={[loc.lat, loc.lng]}
-                icon={superAdminUserIcon}
-              >
-                <Popup>
-                  <div className="text-center text-slate-900">
-                    <strong>Admin Active</strong>
-                    <br />
-                    <span className="text-xs text-gray-500">
-                      ±{Math.round(loc.accuracy)}m · live
-                    </span>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+            Object.entries(adminLocations).map(([uid, loc]) => {
+              const isLive = recentlyUpdatedUsers.has(uid);
+              
+              return (
+                <Marker
+                  key={uid}
+                  position={[loc.lat, loc.lng]}
+                  icon={superAdminUserIcon}
+                >
+                  <Popup>
+                    <div className="text-center text-slate-900">
+                      <div className="flex items-center justify-center gap-2">
+                        <strong>Agent Live</strong>
+                        {isLive && (
+                          <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"></span>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        ±{Math.round(loc.accuracy)}m · {isLive ? 'Just updated' : 'live'}
+                      </span>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
  
           <MarkerClusterGroup>
             {filteredDrops.map((drop) => (

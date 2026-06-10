@@ -1,38 +1,133 @@
-import { useEffect, useState } from 'react';
+/**
+ * @file src/hooks/realtime/useLiveLocations.ts
+ *
+ * FIXED:
+ * - Now subscribes to the real 'locations' table (not non-existent 'drop_locations')
+ * - Added initial data load on mount (critical for monitoring)
+ * - Proper shape mapping from DB row
+ * - Keyed by user_id (agent presence model)
+ * - Supports optional user filter
+ * - Better error handling + cleanup
+ */
+import { useEffect, useState, useCallback } from 'react';
 import { realtimeService } from '../../services/supabase/realtime.service';
+import { supabase } from '../../lib/supabase';
 
-interface LocationUpdate {
-  drop_id: string;
+export interface LiveLocation {
+  id: number;
+  user_id: string;
   lat: number;
   lng: number;
-  timestamp: string;
+  accuracy: number | null;
+  heading: number | null;
+  speed: number | null;
+  altitude: number | null;
+  recorded_at: string;
 }
 
-export function useLiveLocations(dropId?: string) {
-  const [locations, setLocations] = useState<Record<string, LocationUpdate[]>>({});
+interface UseLiveLocationsOptions {
+  userId?: string;
+  limit?: number;
+}
+
+export function useLiveLocations(options: UseLiveLocationsOptions = {}) {
+  const [locations, setLocations] = useState<Record<string, LiveLocation[]>>({});
+  const [allLocations, setAllLocations] = useState<LiveLocation[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [useFallbackPolling, setUseFallbackPolling] = useState(false);
+
+  const { userId, limit = 50 } = options;
+
+  const loadInitial = useCallback(async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
+    try {
+      let query = supabase
+        .from('locations')
+        .select('*')
+        .order('recorded_at', { ascending: false })
+        .limit(limit);
+
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+
+      const { data, error: fetchError } = await query;
+
+      if (fetchError) throw fetchError;
+
+      const grouped: Record<string, LiveLocation[]> = {};
+      (data || []).forEach((loc: any) => {
+        if (!grouped[loc.user_id]) grouped[loc.user_id] = [];
+        grouped[loc.user_id].push(loc as LiveLocation);
+      });
+
+      setLocations(grouped);
+      setAllLocations(data as LiveLocation[] || []);
+    } catch (err: any) {
+      console.error('[useLiveLocations] Initial load failed:', err);
+      setError(err.message);
+    } finally {
+      if (!isSilent) setLoading(false);
+    }
+  }, [userId, limit]);
 
   useEffect(() => {
-    const filter = dropId ? `drop_id=eq.${dropId}` : undefined;
+    loadInitial();
 
-    const unsubscribe = realtimeService.subscribeToTable<LocationUpdate>(
-      'drop_locations',
+    const filter = userId ? `user_id=eq.${userId}` : undefined;
+
+    const unsubscribe = realtimeService.subscribeToTable<LiveLocation>(
+      'locations',
       'INSERT',
       (payload) => {
-        const newLoc = payload.new as LocationUpdate;
-        setLocations(prev => ({
-          ...prev,
-          [newLoc.drop_id]: [...(prev[newLoc.drop_id] || []), newLoc]
-        }));
+        const newLoc = payload.new as LiveLocation;
+        
+        setLocations(prev => {
+          const userLocs = [...(prev[newLoc.user_id] || []), newLoc]
+            .sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())
+            .slice(0, 20); // keep last 20 per user
+          
+          return { ...prev, [newLoc.user_id]: userLocs };
+        });
+
+        setAllLocations(prev => [newLoc, ...prev].slice(0, limit));
       },
       filter,
       {
-        onError: (err) => setError(err?.message || 'Location realtime error')
+        onError: (err) => {
+          console.warn('[useLiveLocations] Realtime channel transport failure or error occurred. Triggering background polling fallback:', err);
+          setError(err?.message || 'Location realtime error');
+          setUseFallbackPolling(true);
+        }
       }
     );
 
     return () => unsubscribe();
-  }, [dropId]);
+  }, [userId, limit, loadInitial]);
 
-  return { locations, setLocations, error };
+  // Backup polling fallback when websocket transport is failing
+  useEffect(() => {
+    if (!useFallbackPolling) return;
+
+    const interval = setInterval(() => {
+      loadInitial(true); // Silent refresh
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [useFallbackPolling, loadInitial]);
+
+  const getLatestForUser = useCallback((uid: string) => {
+    const userLocs = locations[uid];
+    return userLocs && userLocs.length > 0 ? userLocs[0] : null;
+  }, [locations]);
+
+  return { 
+    locations, 
+    allLocations, 
+    getLatestForUser,
+    error, 
+    loading,
+    refresh: loadInitial 
+  };
 }

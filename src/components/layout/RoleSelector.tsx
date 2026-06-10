@@ -336,22 +336,39 @@ function BulletinDrawer() {
         <div className="absolute inset-2 border pointer-events-none rounded-md z-20 border-[#106011]/20 group-hover:border-[#106011]/40 transition-colors"></div>
 
 
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#0ad111] bg-black shrink-0 shadow-[0_0_10px_rgba(10,209,17,0.4)] flex items-center justify-center p-0.5 group-hover:shadow-[0_0_15px_#0ad111]">
-            <img src="/Appicon.png" alt="App Icon" className="w-full h-full object-cover rounded-full" />
-          </div>
-          <div className="text-left">
-            <h3 className="text-xs font-black text-[#0ad111] tracking-[0.2em] font-mono uppercase">Announcements & Free Drops Update</h3>
-            <p className="text-[8px] text-slate-500 font-mono tracking-widest mt-0.5">FROM: BOSS / SUPER ADMIN CONSOLE</p>
-          </div>
-        </div>
+        <div className="flex flex-col items-center justify-center gap-2 w-full text-center">
+          <div className="flex items-center gap-3 w-full overflow-hidden">
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-[#0ad111] bg-black shrink-0 shadow-[0_0_8px_rgba(10,209,17,0.4)] flex items-center justify-center p-0.5 group-hover:shadow-[0_0_12px_#0ad111] relative z-10">
+              <img src="/Appicon.png" alt="App Icon" className="w-full h-full object-cover rounded-full" />
+            </div>
+            
+            <div className="flex-1 overflow-hidden relative h-6 flex items-center">
+              <motion.div 
+                animate={{ x: ["100%", "-100%"] }}
+                transition={{ duration: 25, ease: "linear", repeat: Infinity }}
+                className="absolute whitespace-nowrap left-0"
+              >
+                <h3 className="text-sm font-black text-[#0ad111] tracking-[0.25em] font-mono uppercase drop-shadow-[0_0_4px_rgba(10,209,17,0.6)]">
+                  ANNOUCEMENTS AND ALL UPDATES WILL BE POSTED HER ALWAYS CHECK THE UPDATES FORR  FREE DROPS, PROMO ,EVENTS ✅
+                </h3>
+              </motion.div>
+            </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-2 py-1 bg-[#106011]/5 border border-[#106011]/20 rounded font-mono text-[7px] text-[#0ad111]">
-            <span className="w-1 h-1 rounded-full bg-[#0ad111] animate-ping" />
-            LIVE_LINK
+            <div className="hidden sm:flex items-center gap-2 px-2 py-1 bg-[#106011]/10 border border-[#106011]/30 rounded font-mono text-[8px] text-[#0ad111] shrink-0 relative z-10">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-ping" />
+              LIVE_LINK
+            </div>
           </div>
-          {isOpen ? <ChevronUp className="text-[#0ad111]" /> : <ChevronDown className="text-[#0ad111]" />}
+          
+          <div className="flex items-center justify-center gap-4 w-full px-8">
+            <div className="h-px bg-gradient-to-r from-transparent via-[#106011]/50 to-transparent flex-1" />
+            <p className="text-[9px] text-[#0ad111]/80 font-mono tracking-widest uppercase">
+              Update stream from: Boss / Super Admin Console
+            </p>
+            <div className="h-px bg-gradient-to-r from-transparent via-[#106011]/50 to-transparent flex-1" />
+            
+            {isOpen ? <ChevronUp className="text-[#0ad111] w-4 h-4 shrink-0" /> : <ChevronDown className="text-[#0ad111] w-4 h-4 shrink-0" />}
+          </div>
         </div>
       </button>
 

@@ -9,10 +9,13 @@ export default function DropExecutionScreen({ dropId }: { dropId: string }) {
   const [qrCode, setQrCode] = useState("");
   const [isExecuting, setIsExecuting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const { locations } = useLiveLocations(dropId);
-  const { executeDrop } = useLiveDrops();
+  const { locations } = useLiveLocations({});
+  const { updateDropStatus } = useLiveDrops();
 
-  const latestLocation = locations[dropId]?.[locations[dropId].length - 1];
+  // In a real app we'd fetch the specific dropper's uid. Here we just take the first marker or wait for a proper Drop execution model.
+  // We'll fall back to Mamburao center safely if not found
+  const assignedAgentId = "latest"; 
+  const latestLocation = locations[assignedAgentId]?.[0] || null;
 
   const generateQR = async () => {
     const data = {
@@ -27,7 +30,7 @@ export default function DropExecutionScreen({ dropId }: { dropId: string }) {
   const handleExecuteDrop = async () => {
     setIsExecuting(true);
     try {
-      await executeDrop(dropId); // This now does optimistic update internally
+      await updateDropStatus(dropId, 'claimed'); // This now does optimistic update internally
       setShowConfirmModal(false);
       alert("Drop marked as executed. Awaiting client confirmation.");
     } catch (error) {

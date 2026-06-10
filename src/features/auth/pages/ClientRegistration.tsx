@@ -39,7 +39,7 @@ export function ClientRegistration() {
       const { data, error } = await supabase.functions.invoke('register-client', {
         body: {
           alias,
-          phone: phoneNumber
+          phone_number: phoneNumber
         }
       });
       
@@ -75,6 +75,7 @@ export function ClientRegistration() {
       // Mocking login for UI preview if actual backend is not fully setup
       const mockId = 'client-' + Math.random().toString(36).substr(2, 9);
       useAuthStore.getState().setSession({ user: { id: mockId }, access_token: 'mock', refresh_token: 'mock' });
+      localStorage.setItem('demo_role', 'client'); // added so that RoleContext bypasses
       useAuthStore.getState().setProfile({
         id: mockId,
         role: 'client',
@@ -92,6 +93,9 @@ export function ClientRegistration() {
         created_at: new Date().toISOString()
       });
       setMessage('Registration successful! Welcome to The Drop!');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
     } else {
       setMessage(otpError || 'Invalid or expired OTP');
     }

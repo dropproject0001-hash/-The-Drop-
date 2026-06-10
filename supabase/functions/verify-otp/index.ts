@@ -11,7 +11,7 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  const { phone_number, otp_code } = await req.json();
+  const { phone_number, otp_code, purpose } = await req.json();
 
   if (!phone_number || !otp_code) {
     return new Response(JSON.stringify({ error: "Phone number and OTP are required" }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -23,14 +23,19 @@ serve(async (req) => {
   );
 
   // 1. Find valid OTP
-  const { data: otpRecord, error: otpError } = await supabase
+  let query = supabase
     .from("otp_codes")
     .select("*")
     .eq("phone", phone_number)
     .eq("code", otp_code)
     .eq("used", false)
-    .gt("expires_at", new Date().toISOString())
-    .single();
+    .gt("expires_at", new Date().toISOString());
+
+  if (purpose) {
+    query = query.eq("purpose", purpose);
+  }
+
+  const { data: otpRecord, error: otpError } = await query.single();
 
   if (otpError || !otpRecord) {
     return new Response(JSON.stringify({ error: "Invalid or expired OTP" }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
