@@ -1,40 +1,13 @@
-/**
- * @file src/components/map/DropMap.tsx
- *
- * FIXES:
- *  H-2  : Removed <div> wrapper around <Marker> — bare divs are invalid
- *         React-Leaflet children and silently break marker rendering.
- *  H-3  : Applied the standard Vite/webpack Leaflet default icon fix so the
- *         user-location marker no longer shows a broken image.
- *  H-4  : createIcon() wrapped in useCallback; superAdminUserIcon memoised
- *         with useMemo to prevent marker re-renders on every component render.
- *  C-5  : Location broadcast now checks profile.role before inserting.
- *  M-4  : Removed @ts-ignore suppressions; position typed correctly.
- *  M-5  : handleMarkerClick wrapped in useCallback.
- *  C-3  : DropStatus enum aligned to DB values ('active'|'claimed'|'expired').
- */
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, LayerGroup, Polyline, useMap } from 'react-leaflet';
-import { Navigation, Download, Layers, Globe } from 'lucide-react';
+// src/components/map/DropMap.tsx
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import MarkerClusterGroup from 'react-leaflet-cluster';
-import 'leaflet/dist/leaflet.css';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { supabase } from '@/lib/supabase';
-import { EpicModal } from '@/components/ui/EpicModal';
-import { ErrorBoundary } from '@/components/common/ErrorBoundary';
-import { DropperTrackingControl } from '@/components/dropper/DropperTrackingControl';
-import { useProfile } from '@/hooks/useProfile';
-import { useDropperDrops } from '@/hooks/useDropperDrops';
-import type { Drop, DropStatus } from '@/types/domain';
-import { useDrops } from '@/hooks/useDrops';
-import { locationBroadcastService } from '@/services/LocationBroadcastService';
-import { usePresenceTracking } from '@/hooks/realtime/usePresenceTracking';
+import { useAuthStore } from '@/stores';
 import { useLiveLocations } from '@/hooks/realtime/useLiveLocations';
-import { TelemetryNavigator } from './TelemetryNavigator';
+import { DropperTrackingControl } from '@/components/dropper/DropperTrackingControl';
+import type { Drop } from '@/types/domain';
 
-// ── FIX H-3: Leaflet default icon fix for Vite ────────────────────────────────
+// Leaflet default icon fix
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -42,582 +15,107 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-// ── FIX C-3: Status colours aligned to DB enum ────────────────────────────────
-const STATUS_COLORS: Record<DropStatus, string> = {
-  active: '#10B981',
-  claimed: '#3B82F6',
-  expired: '#EF4444',
-};
-
-// Map controller to coordinate center/recentering flyTo animations smoothly inside Leaflet context
-function MapController({ flyToTarget }: { flyToTarget: [number, number] | null }) {
-  const map = useMap();
-  useEffect(() => {
-    if (flyToTarget) {
-      map.flyTo(flyToTarget, 16, { animate: true, duration: 1.5 });
-    }
-  }, [flyToTarget, map]);
-  return null;
-}
-
 interface DropMapProps {
-  height?: string;
+  drops?: Drop[];
 }
 
-interface AdminLocation {
-  lat: number;
-  lng: number;
-  accuracy: number;
-  updatedAt: Date;
-}
+export default function DropMap({ drops = [] }: DropMapProps) {
+  const { profile } = useAuthStore();
 
-const MAMBURAO_CENTER: [number, number] = [13.226, 120.596];
-const BROADCAST_THROTTLE_MS = 5_000;
-const STALE_LOCATION_MS = 5 * 60 * 1_000;
+  // === ALL HOOKS AT TOP LEVEL (FIX) ===
+  const isSuperAdmin = profile?.role === 'super_admin';
+  const isDropper = profile?.role === 'dropper';
+  const isAdmin = profile?.role === 'admin';
 
-export function DropMap({ height = '650px' }: DropMapProps) {
-  const { drops } = useDrops();
-  const { profile, loading: profileLoading, isSuperAdmin, isAdmin, isDropper } = useProfile();
-  const { drops: assignedDrops } = useDropperDrops(profile?.id);
-  const [filteredStatus, setFilteredStatus] = useState<DropStatus | 'all'>('all');
+  // Always call this hook unconditionally
+  const { locations: liveLocations, status: liveStatus } = useLiveLocations();
+
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
-  const [selectedDropForTracking, setSelectedDropForTracking] = useState<Drop | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Tactical waypoint telemetry states
-  const [activeWaypoint, setActiveWaypoint] = useState<Drop | null>(null);
-  const [activeDropId, setActiveDropId] = useState<string | null>(null);
-  const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null);
-
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [accuracy, setAccuracy] = useState<number | null>(null);
-  const [isTracking, setIsTracking] = useState(false);
-
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [mapStyle, setMapStyle] = useState<'tactical' | 'satellite'>('tactical');
-
-  if (profileLoading) return <div className="h-full flex items-center justify-center text-zinc-500 font-mono">Loading Map...</div>;
-
-  const isClientUser = !isSuperAdmin && !isAdmin && !isDropper;
-  const [adminLocations, setAdminLocations] = useState<Record<string, AdminLocation>>({});
-
-  const [recentlyUpdatedUsers, setRecentlyUpdatedUsers] = useState<Set<string>>(new Set());
-
-  // === REAL-TIME LOCATION UPDATES FOR SUPER ADMIN ===
-  const { locations: liveAdminLocations } = useLiveLocations({});
+  // Optional: Get user's current position
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
 
   useEffect(() => {
-    if (!isSuperAdmin) return;
-
-    // Convert hook data into the AdminLocation format used by the map
-    const formatted: Record<string, AdminLocation> = {};
-    
-    Object.entries(liveAdminLocations).forEach(([userId, locs]) => {
-      if (locs.length > 0) {
-        const latest = locs[0];
-        formatted[userId] = {
-          lat: latest.lat,
-          lng: latest.lng,
-          accuracy: latest.accuracy ?? 0,
-          updatedAt: new Date(latest.recorded_at),
-        };
-      }
-    });
-
-    setAdminLocations(formatted);
-  }, [liveAdminLocations, isSuperAdmin]);
-
-  // === LIVE PULSING INDICATOR ===
-  useEffect(() => {
-    if (!isSuperAdmin) return;
-
-    const updatedUsers = new Set<string>();
-
-    Object.keys(liveAdminLocations).forEach((userId) => {
-      const locs = liveAdminLocations[userId];
-      if (locs.length > 0) {
-        const latest = locs[0];
-        const age = Date.now() - new Date(latest.recorded_at).getTime();
-        
-        // If updated in last 8 seconds → show pulsing
-        if (age < 8000) {
-          updatedUsers.add(userId);
-        }
-      }
-    });
-
-    if (updatedUsers.size > 0) {
-      setRecentlyUpdatedUsers(updatedUsers);
-
-      // Clear pulsing after 6 seconds
-      const timer = setTimeout(() => {
-        setRecentlyUpdatedUsers(new Set());
-      }, 6000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [liveAdminLocations, isSuperAdmin]);
-
-  // Cleanup tracking on unmount
-  useEffect(() => {
-    return () => {
-      locationBroadcastService.stopTracking();
-    };
-  }, []);
-
-  // ── FIX H-4: Memoised icon factories ───────────────────────────────────────
-  const createIcon = useCallback((status: DropStatus) =>
-    L.divIcon({
-      className: 'custom-marker bg-transparent border-none shadow-none',
-      html: `
-        <div style="
-          background-color:${STATUS_COLORS[status]};
-          width:32px;height:32px;border-radius:9999px;
-          display:flex;align-items:center;justify-content:center;
-          border:3px solid white;box-shadow:0 3px 8px rgba(0,0,0,.3);">
-          <span style="color:white;font-size:16px;">●</span>
-        </div>`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-    }),
-  []);
-
-  const getSuperAdminUserIcon = useCallback((isLive: boolean) => {
-    return L.divIcon({
-      className: 'custom-marker bg-transparent border-none shadow-none',
-      html: `
-        <div class="${isLive ? 'live-marker' : ''}" style="
-          background-color:#ef4444;
-          width:24px;height:24px;border-radius:9999px;
-          display:flex;align-items:center;justify-content:center;
-          border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);">
-          <span style="color:white;font-size:10px;font-weight:bold;">A</span>
-        </div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
-    });
-  }, []);
-
-  const userLocationIcon = useMemo(
-    () =>
-      L.divIcon({
-        className: 'custom-marker bg-transparent border-none shadow-none',
-        html: `
-          <div style="
-            background-color:#3B82F6;
-            width:20px;height:20px;border-radius:9999px;
-            border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,.4);">
-          </div>`,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-      }),
-    []
-  );
-
-  // ── FIX M-5: Memoised click handler ────────────────────────────────────────
-  const handleMarkerClick = useCallback((drop: Drop) => {
-    setSelectedDrop(drop);
-    setActiveWaypoint(drop);
-    setActiveDropId(drop.id);
-    setIsModalOpen(true);
-  }, []);
-
-  // ── Live tracking ───────────────────────────────────────────────────────────
-  const toggleLiveTracking = useCallback(async () => {
-    if (isTracking) {
-      locationBroadcastService.stopTracking();
-      setIsTracking(false);
-      setUserLocation(null);
-      setAccuracy(null);
-      return;
-    }
-
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
-      return;
-    }
-
-    setIsTracking(true);
-    try {
-      await locationBroadcastService.startTracking({
-        dropId: activeDropId,
-        onUpdate: (loc) => {
-          setUserLocation([loc.lat, loc.lng]);
-          setAccuracy(loc.accuracy);
-        },
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setUserPosition([pos.coords.latitude, pos.coords.longitude]);
       });
-    } catch (err) {
-      console.error('[DropMap] LocationBroadcastService start failed:', err);
-      setIsTracking(false);
     }
-  }, [isTracking, activeDropId]);
-
-  // ── Offline tile download ───────────────────────────────────────────────────
-  const downloadMamburaoTiles = useCallback(async () => {
-    setIsDownloading(true);
-    setDownloadProgress(0);
-
-    const cache = await caches.open('mamburao-map-tiles-v1');
-    const tileUrls: string[] = [];
-    const bounds = { minLat: 13.18, maxLat: 13.28, minLng: 120.55, maxLng: 120.65 };
-    const zooms = [12, 13, 14, 15];
-
-    for (const z of zooms) {
-      const n = Math.pow(2, z);
-      const minX = Math.floor(((bounds.minLng + 180) / 360) * n);
-      const maxX = Math.floor(((bounds.maxLng + 180) / 360) * n);
-      const latToY = (lat: number) =>
-        Math.floor(
-          ((1 - Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) / Math.PI) / 2) * n
-        );
-      const minY = latToY(bounds.maxLat);
-      const maxY = latToY(bounds.minLat);
-
-      for (let x = minX; x <= maxX; x++) {
-        for (let y = minY; y <= maxY; y++) {
-          tileUrls.push(`https://tile.openstreetmap.org/${z}/${x}/${y}.png`);
-        }
-      }
-    }
-
-    let done = 0;
-    for (const url of tileUrls) {
-      try {
-        const res = await fetch(url);
-        if (res.ok) await cache.put(url, res.clone());
-      } catch (_) { /* swallow individual tile errors */ }
-      done++;
-      setDownloadProgress(Math.round((done / tileUrls.length) * 100));
-    }
-
-    setIsDownloading(false);
-    alert('Map tiles for Mamburao downloaded successfully!');
   }, []);
 
-  const filteredDrops = filteredStatus === 'all'
-    ? drops
-    : drops.filter((d) => d.status === filteredStatus);
+  // === Handlers ===
+  const handleTrackingToggle = (isTracking: boolean, drop?: Drop) => {
+    if (isTracking && drop) {
+      setSelectedDrop(drop);
+    } else {
+      setSelectedDrop(null);
+    }
+  };
 
   return (
-    <div className="relative h-full flex flex-col">
-      {/* Real-time Telemetry & Waypoint Vector Calculator */}
-      <TelemetryNavigator
-        userLocation={userLocation}
-        accuracy={accuracy}
-        drops={drops}
-        activeDrop={activeWaypoint}
-        onSelectDrop={setActiveWaypoint}
-        onFlyTo={setFlyToTarget}
-        isTracking={isTracking}
-        onToggleTracking={toggleLiveTracking}
-        className={`absolute left-4 z-[400] w-72 sm:w-80 select-none transition-all duration-300 ${
-          isClientUser ? 'top-[96px]' : 'top-[80px]'
-        }`}
-      />
-
-      {/* Map Style Selector */}
-      <div className={`absolute top-4 z-[400] flex flex-col gap-1.5 transition-all duration-300 ${
-        isClientUser ? 'left-[200px]' : 'left-4'
-      }`}>
-        <span className="text-[7.5px] font-mono text-[#0ad111]/70 tracking-[0.35em] uppercase font-bold pl-1">
-          MAP_LAYER_SELECT
-        </span>
-        <div className="bg-black/95 border-2 border-[#106011]/30 rounded-lg p-1 flex items-center gap-1 shadow-[0_0_20px_rgba(16,96,17,0.25)] relative overflow-hidden">
-          {/* Corner accents for style select */}
-          <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-[#106011] pointer-events-none" />
-          <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-[#106011] pointer-events-none" />
-          
-          <button
-            onClick={() => setMapStyle('tactical')}
-            className={`relative px-3 py-1.5 text-[9px] font-mono tracking-widest uppercase transition-all select-none duration-300 rounded flex items-center gap-1.5 ${
-              mapStyle === 'tactical'
-                ? 'bg-[#106011]/20 border border-[#106011]/85 text-[#0ad111] font-bold drop-shadow-[0_0_5px_#0ad111]'
-                : 'border border-transparent text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            <Layers size={11} className={mapStyle === 'tactical' ? "text-[#0ad111]" : "text-slate-500"} />
-            TACTICAL
-          </button>
-          
-          <button
-            onClick={() => setMapStyle('satellite')}
-            className={`relative px-3 py-1.5 text-[9px] font-mono tracking-widest uppercase transition-all select-none duration-300 rounded flex items-center gap-1.5 ${
-              mapStyle === 'satellite'
-                ? 'bg-[#106011]/20 border border-[#106011]/85 text-[#0ad111] font-bold drop-shadow-[0_0_5px_#0ad111]'
-                : 'border border-transparent text-slate-500 hover:text-[#0ad111]'
-            }`}
-          >
-            <Globe size={11} className={mapStyle === 'satellite' ? "text-[#0ad111]" : "text-slate-500"} />
-            SATELLITE
-          </button>
-        </div>
-      </div>
-
-      {/* Status Filters */}
-      <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
-        <button
-          onClick={() => setFilteredStatus('all')}
-          className={`relative px-4 py-2 bg-black/95 border text-xs font-mono tracking-widest uppercase transition-all select-none overflow-hidden duration-300 rounded ${
-            filteredStatus === 'all'
-              ? 'border-[#106011]/90 text-[#106011] font-bold drop-shadow-[0_0_8px_rgba(16,96,17,0.85)] shadow-[0_0_15px_rgba(16,96,17,0.35)]'
-              : 'border-[#106011]/30 text-slate-400 hover:border-[#106011] hover:text-[#106011] hover:shadow-[0_0_10px_rgba(16,96,17,0.2)]'
-          }`}
-        >
-          {/* Active indicator borders inside the button for tactical HUD nested style */}
-          <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-[#106011] pointer-events-none"></div>
-          <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-[#106011] pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-[#106011] pointer-events-none"></div>
-          <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-[#106011] pointer-events-none"></div>
-          
-          <div className="absolute inset-[2px] border border-dashed border-[#106011]/25 pointer-events-none rounded sm:scale-95"></div>
-          <span className="relative z-10 flex items-center justify-center gap-1.5">
-            ALL PINS
-          </span>
-        </button>
-        {/* FIX C-3: status values from DB enum */}
-        {(Object.keys(STATUS_COLORS) as DropStatus[]).map((status) => {
-          const isActive = filteredStatus === status;
-          return (
-            <button
-              key={status}
-              onClick={() => setFilteredStatus(status)}
-              className={`relative px-4 py-2 bg-black/95 border text-xs font-mono tracking-widest uppercase transition-all select-none overflow-hidden duration-300 rounded ${
-                isActive
-                  ? 'border-[#106011]/90 text-[#106011] font-bold drop-shadow-[0_0_8px_rgba(16,96,17,0.85)] shadow-[0_0_15px_rgba(16,96,17,0.35)]'
-                  : 'border-[#106011]/30 text-slate-400 hover:border-[#106011] hover:text-[#106011] hover:shadow-[0_0_10px_rgba(16,96,17,0.2)]'
-              }`}
-            >
-              {/* Active indicator borders inside the button for tactical HUD nested style */}
-              <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-[#106011] pointer-events-none"></div>
-              <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-[#106011] pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-[#106011] pointer-events-none"></div>
-              <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-[#106011] pointer-events-none"></div>
- 
-              <div className="absolute inset-[2px] border border-dashed border-[#106011]/25 pointer-events-none rounded sm:scale-95"></div>
-              <span className="relative z-10 flex items-center justify-center gap-1.5">
-                <span 
-                  className="w-1.5 h-1.5 rounded-full inline-block" 
-                  style={{ backgroundColor: STATUS_COLORS[status] }} 
-                />
-                {status}
-              </span>
-            </button>
-          )
-        })}
-      </div>
- 
-      {/* Map Container */}
-      <div
-        style={{ height: height === '100%' ? '100%' : height, width: '100%' }}
-        className="flex-1 w-full overflow-hidden relative z-0 border border-[#106011]/50 shadow-[0_0_30px_rgba(16,96,17,0.3)] rounded-2xl"
+    <div className="relative h-[600px] w-full rounded-2xl overflow-hidden border border-zinc-800">
+      <MapContainer
+        center={[13.226, 120.596]}
+        zoom={13}
+        className="h-full w-full"
       >
-        {isDropper && selectedDropForTracking && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[500] bg-black/80 text-emerald-400 px-4 py-1 rounded-full text-xs font-mono tracking-widest border border-emerald-500">
-            BROADCASTING FOR: {selectedDropForTracking.title}
-          </div>
-        )}
-        {/* Floating tactical HUD overlays on top of map container margins */}
-        <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-[#106011] rounded-tl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
-        <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-[#106011] rounded-tr pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
-        <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-[#106011] rounded-bl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
-        <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-[#106011] rounded-br pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
- 
-        {/* Double-Nested Rectangle Lines around map layer edges */}
-        <div className="absolute inset-4 border border-dashed border-[#106011]/25 pointer-events-none rounded-xl z-[900]"></div>
-        <div className="absolute inset-5 border border-[#106011]/15 pointer-events-none rounded-lg z-[900]"></div>
-        <div className="absolute inset-6 border border-[#106011]/10 pointer-events-none rounded-md z-[900]"></div>
- 
-        <ErrorBoundary fallbackTitle="Map Grid Initialization Failure">
-          <MapContainer center={MAMBURAO_CENTER} zoom={14} style={{ height: '100%', width: '100%' }}>
-          {mapStyle === 'tactical' ? (
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
-          ) : (
-            <TileLayer
-              attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-            />
-          )}
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap'
+        />
 
-          {/* Real-time laser line of sight telemetry vector */}
-          {userLocation && activeWaypoint && (
-            <Polyline
-              positions={[
-                userLocation,
-                [
-                  activeWaypoint.lat ?? (activeWaypoint as any).location?.lat,
-                  activeWaypoint.lng ?? (activeWaypoint as any).location?.lng
-                ]
-              ]}
-              pathOptions={{
-                color: '#0ad111',
-                weight: 2.5,
-                dashArray: '5, 8',
-                lineCap: 'round',
-                lineJoin: 'round',
-                opacity: 0.85,
-              }}
-            />
-          )}
-
-          {/* Map recentering controller */}
-          <MapController flyToTarget={flyToTarget} />
- 
-          {/* User's own live location */}
-          {userLocation && (
-            <LayerGroup>
-              {/* FIX M-4: position typed correctly — no @ts-ignore needed */}
-              <Marker position={userLocation} icon={userLocationIcon}>
+        {/* Droppers: Show assigned drops + tracking control */}
+        {isDropper &&
+          drops
+            .filter((d) => d.assigned_to === profile?.id && d.status === 'active')
+            .map((drop) => (
+              <Marker key={drop.id} position={[drop.lat, drop.lng]}>
                 <Popup>
-                  <div className="text-center text-slate-900">
-                    <strong>Your Location</strong>
-                    <br />
-                    {accuracy != null && (
-                      <span className="text-xs text-gray-500">
-                        ±{Math.round(accuracy)}m accuracy
-                      </span>
-                    )}
-                  </div>
-                </Popup>
-              </Marker>
-              {accuracy != null && (
-                <Circle
-                  center={userLocation}
-                  radius={accuracy}
-                  pathOptions={{
-                    color: '#3B82F6',
-                    fillColor: '#3B82F6',
-                    fillOpacity: 0.15,
-                    stroke: false,
-                  }}
-                />
-              )}
-            </LayerGroup>
-          )}
- 
-          {/* FIX H-2: <Marker> is now a direct child — no invalid <div> wrapper */}
-          {isSuperAdmin &&
-            Object.entries(adminLocations).map(([uid, loc]) => {
-              const isLive = recentlyUpdatedUsers.has(uid);
-              
-              return (
-                <Marker
-                  key={uid}
-                  position={[loc.lat, loc.lng]}
-                  icon={getSuperAdminUserIcon(isLive)}
-                >
-                  <Popup>
-                    <div className="text-center text-slate-900">
-                      <div className="flex items-center justify-center gap-2">
-                        <strong>Agent Live</strong>
-                        {isLive && (
-                          <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"></span>
-                        )}
-                      </div>
-                      <span className="text-xs text-gray-500">
-                        ±{Math.round(loc.accuracy)}m · {isLive ? 'Just updated' : 'live'}
-                      </span>
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
- 
-          <MarkerClusterGroup>
-            {filteredDrops.map((drop) => (
-              <Marker
-                key={drop.id}
-                position={[drop.lat, drop.lng]}
-                icon={createIcon(drop.status)}
-                eventHandlers={{ click: () => handleMarkerClick(drop) }}
-              >
-                <Popup>
-                  <div className="text-slate-900 min-w-[220px]">
+                  <div className="text-black min-w-[260px]">
                     <div className="font-bold mb-1">{drop.title}</div>
-                    
-                    {isDropper && assignedDrops.some(d => d.id === drop.id) && (
-                      <div className="mt-3">
-                        <DropperTrackingControl
-                          drop={drop}
-                          onTrackingChange={(tracking) => {
-                            setSelectedDropForTracking(tracking ? drop : null);
-                          }}
-                        />
-                      </div>
-                    )}
+                    <div className="text-xs text-zinc-600 mb-3">Status: {drop.status}</div>
+
+                    <DropperTrackingControl
+                      drop={drop}
+                      onTrackingChange={(tracking) => handleTrackingToggle(tracking, drop)}
+                    />
                   </div>
                 </Popup>
               </Marker>
             ))}
-          </MarkerClusterGroup>
-        </MapContainer>
-        </ErrorBoundary>
- 
-        {/* Floating: Live Tracking Button */}
-        <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
-          {(isAdmin || isSuperAdmin || isDropper) && (
-            <button
-              onClick={toggleLiveTracking}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium transition-all ${
-                isTracking
-                  ? 'bg-red-500 text-white hover:bg-red-600 border border-red-400'
-                  : 'bg-slate-900 border border-slate-700 text-white hover:bg-slate-800'
-              }`}
-            >
-              <Navigation size={18} />
-              {isTracking ? 'Stop Tracking' : 'Track My Location'}
-            </button>
-          )}
+
+        {/* Super Admin: Live agent locations */}
+        {isSuperAdmin &&
+          Object.entries(liveLocations).map(([userId, locs]) => {
+            if (!locs || locs.length === 0) return null;
+            const latest = locs[0];
+
+            return (
+              <Marker key={userId} position={[latest.lat, latest.lng]}>
+                <Popup>
+                  <div className="text-black">
+                    <strong>AGENT LIVE</strong><br />
+                    User: {userId.slice(0, 8)}...<br />
+                    Accuracy: ±{Math.round(latest.accuracy || 0)}m
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+      </MapContainer>
+
+      {/* Status indicators */}
+      {isSuperAdmin && liveStatus.mode === 'polling' && (
+        <div className="absolute top-4 left-4 bg-black/80 text-amber-400 px-3 py-1 rounded text-xs font-mono z-[500]">
+          FALLBACK MODE (Polling)
         </div>
+      )}
 
-        {/* Floating: Offline Download Button */}
-        <button
-          onClick={downloadMamburaoTiles}
-          disabled={isDownloading}
-          className="absolute bottom-4 left-4 z-[1000] flex items-center gap-2 bg-slate-900 shadow-lg border border-slate-700 text-white px-4 py-2.5 rounded-full text-sm font-medium hover:bg-slate-800 disabled:opacity-70 transition-all"
-        >
-          <Download size={18} className={isDownloading ? 'animate-bounce' : ''} />
-          {isDownloading ? `Downloading… ${downloadProgress}%` : 'Download Map Offline'}
-        </button>
-      </div>
-
-      {/* Drop Detail Modal */}
-      <EpicModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={selectedDrop?.title ?? 'Drop Details'}
-        size="lg"
-      >
-        {selectedDrop && (
-          <div className="space-y-4 text-slate-100">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: STATUS_COLORS[selectedDrop.status] }}
-              />
-              <span className="font-semibold capitalize">{selectedDrop.status}</span>
-            </div>
-            {selectedDrop.assigned_to && (
-              <p>
-                <strong>Assigned to:</strong> {selectedDrop.assigned_to}
-              </p>
-            )}
-            <div className="pt-4 border-t border-slate-700 flex gap-3">
-              <button className="flex-1 py-3 rounded-xl border border-slate-700 hover:bg-slate-800 transition">
-                Update Status
-              </button>
-              <button className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary/90 transition text-white">
-                Confirm via QR
-              </button>
-            </div>
-          </div>
-        )}
-      </EpicModal>
+      {isDropper && selectedDrop && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 text-emerald-400 px-4 py-1 rounded-full text-xs font-mono tracking-widest z-[500] border border-emerald-500">
+          BROADCASTING • {selectedDrop.title}
+        </div>
+      )}
     </div>
   );
 }
-
-export default DropMap;
