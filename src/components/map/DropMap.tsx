@@ -5,6 +5,8 @@ import L from 'leaflet';
 import { useAuthStore } from '@/stores';
 import { useLiveLocations } from '@/hooks/realtime/useLiveLocations';
 import { DropperTrackingControl } from '@/components/dropper/DropperTrackingControl';
+import { DropStatusBadge } from '@/components/drops/DropStatusBadge';
+import { useNavigate } from 'react-router-dom';
 import type { Drop } from '@/types/domain';
 
 // Leaflet default icon fix
@@ -102,6 +104,32 @@ export default function DropMap({ drops = [] }: DropMapProps) {
               </Marker>
             );
           })}
+
+        {/* Clients: Show assigned drops */}
+        {!isSuperAdmin && !isDropper && drops.length > 0 && (
+          drops
+            .filter(d => d.assigned_to === profile?.id)
+            .map((drop) => (
+              <Marker key={drop.id} position={[drop.lat, drop.lng]}>
+                <Popup>
+                  <div className="text-black min-w-[240px]">
+                    <div className="font-bold text-lg mb-1">{drop.title}</div>
+                    <div className="mb-3">
+                      <DropStatusBadge status={drop.status} />
+                    </div>
+                    {drop.status === 'active' && (
+                      <button
+                        onClick={() => navigate(`/claim/${drop.id}`)}
+                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-black rounded-xl font-mono text-sm tracking-widest"
+                      >
+                        VIEW & CLAIM DROP
+                      </button>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            ))
+        )}
       </MapContainer>
 
       {/* Status indicators */}

@@ -57,7 +57,7 @@ export default function QRConfirmationScreen() {
 
       showToast('Drop claimed successfully!', { type: 'success' });
 
-      setTimeout(() => navigate('/drops'), 1200);
+      setTimeout(() => navigate('/client'), 1200);
     } catch (err: any) {
       showToast(err.message || 'Failed to claim drop', { type: 'error' });
     } finally {
