@@ -52,13 +52,9 @@ export function ClientRegistration() {
     }
 
     // Now request OTP
-    const result = await requestOTP(phoneNumber, 'login');
+    const result = await requestOTP(phoneNumber);
     if (result.success) {
-      if (result.mock) {
-        setMessage('OTP sent successfully! Enter 123456 as code.');
-      } else {
-        setMessage('OTP sent successfully! Checking for incoming SMS...');
-      }
+      setMessage('OTP sent successfully! Checking for incoming SMS...');
       setStep('otp');
     } else {
       setMessage(otpError || 'Failed to send OTP');
@@ -70,7 +66,7 @@ export function ClientRegistration() {
     if (!otp) return;
 
     setMessage('');
-    const result = await verifyOTP(phoneNumber, otp, 'login');
+    const result = await verifyOTP(phoneNumber, otp);
     if (result.success) {
       // Mocking login for UI preview if actual backend is not fully setup
       const mockId = 'client-' + Math.random().toString(36).substr(2, 9);

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRole } from '../context/RoleContext';
+import { useToast } from '@/components/ui/ToastContainer';
 
 export default function CreateDropper() {
   const { isSuperAdmin } = useRole();
+  const { showToast } = useToast();
   const [form, setForm] = useState({
     username: '',
     password: '',
@@ -31,10 +33,10 @@ export default function CreateDropper() {
 
       if (error) throw error;
 
-      alert('Dropper account created successfully!');
+      showToast('Dropper account created successfully!', { type: 'success' });
       setForm({ username: '', password: '', phone: '' });
     } catch (err: any) {
-      alert(err.message || 'Failed to create Dropper');
+      showToast(err.message || 'Failed to create Dropper', { type: 'error' });
     } finally {
       setLoading(false);
     }

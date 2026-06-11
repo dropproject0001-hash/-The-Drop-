@@ -1,23 +1,70 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Radio, Target, Leaf, Satellite, MessageSquare, AlertCircle, Terminal, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { Radio, Target, Leaf, Satellite, MessageSquare, AlertCircle, Terminal, Info, ChevronDown, ChevronUp, Activity, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NeonIcon } from '../ui/NeonIcons';
 import { BannerSlider } from '../ui/BannerSlider';
 
 export function RoleSelector() {
   return (
-    <div className="relative flex flex-col items-center justify-start min-h-[calc(100vh-80px)] gap-6 pt-4 pb-12 px-6 text-center overflow-y-auto custom-scrollbar">
-      {/* Background Cover Photo */}
-      <div 
-        className="absolute inset-0 w-full h-full opacity-20 pointer-events-none mix-blend-luminosity bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url('/Backgroundimage.png')` }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-[--bg-primary]/30 via-[--bg-primary]/80 to-[--bg-primary] pointer-events-none" />
+    <div 
+      style={{ borderColor: '#309313' }}
+      className="relative flex flex-col items-center justify-start min-h-[calc(100vh-80px)] gap-8 pt-6 pb-16 px-6 text-center overflow-y-auto custom-scrollbar"
+    >
+      {/* Enhanced Tactical Background Layers */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Layer 1: High-Fidelity Primary Background */}
+        <div 
+          className="absolute inset-0 w-full h-full opacity-60 mix-blend-luminosity bg-cover bg-center bg-no-repeat grayscale-[0.5] brightness-75 transition-opacity duration-1000"
+          style={{ backgroundImage: `url('/regenerated_image_1781027109738.jpg')` }}
+        />
+        
+        {/* Layer 2: Subtle Mission Depth (Optional, reduced for clarity) */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/90 pointer-events-none" />
 
+        {/* Layer 3: Tactical Grid Overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.1]" 
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(16, 96, 17, 0.3) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(16, 96, 17, 0.3) 1px, transparent 1px)
+            `,
+            backgroundSize: '80px 80px'
+          }}
+        />
 
+        {/* Layer 4: Global Scanning HUD Line */}
+        <motion.div 
+          animate={{ y: ['-100%', '300%'] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#106011]/40 to-transparent blur-[1px] z-10"
+        />
+
+        {/* CRT Scanlines and Vignette */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.05)_50%)] bg-[length:100%_4px] pointer-events-none opacity-20" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,black_100%)]" />
+      </div>
+
+      {/* Mission Selection Title Panel */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 flex flex-col items-center gap-1 mt-4"
+      >
+        <div className="flex items-center gap-4 mb-2">
+          <div className="w-12 h-[1px] bg-gradient-to-r from-transparent to-[#106011]" />
+          <span className="text-[10px] font-mono font-black text-[#0ad111] tracking-[0.5em] uppercase drop-shadow-[0_0_5px_rgba(10,209,17,0.5)]">
+            Mission Deployment Terminal
+          </span>
+          <div className="w-12 h-[1px] bg-gradient-to-l from-transparent to-[#106011]" />
+        </div>
+        <h1 className="text-4xl font-display font-black text-white tracking-tighter uppercase italic">
+          Select <span className="text-[#0ad111] drop-shadow-[0_0_10px_rgba(10,209,17,0.6)]">Operational</span> Role
+        </h1>
+      </motion.div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full relative z-10">
          <RoleCard 
            to="/super-admin" 
            icon={<NeonIcon imageSrc="/Appicon.png" color="green" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
@@ -103,7 +150,7 @@ export function RoleSelector() {
              "View approved dropped product location",
              "GPS route/pathway to dropped product",
              "Product pin marker",
-             "Distance calculation",
+             "Getto 💲",
              "PRIVATE CHAT:",
              "Private order messaging with Admin",
              "Upload proof/payment screenshots",
@@ -132,176 +179,218 @@ export function RoleSelector() {
 function RoleCard({ to, icon, title, description, features, color }: { to: string, icon: React.ReactNode, title: string, description?: string, features?: string[], color: string }) {
   const themes = {
     red: { // Boss / Owner (Crimson & Solar Amber)
-      border: "border-red-950/50 hover:border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.05)] hover:shadow-[0_0_30px_rgba(239,68,68,0.3)]",
-      text: "text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.6)]",
-      hoverText: "group-hover:text-red-400 group-hover:drop-shadow-[0_0_12px_rgba(239,68,68,0.85)]",
-      iconBg: "border-red-950/40 group-hover:border-red-500/70",
-      iconGlow: "group-hover:shadow-[0_0_20px_rgba(239,68,68,0.25)]",
-      titleBorder: "border-red-500/40 group-hover:border-red-500 group-hover:shadow-[0_0_22px_rgba(239,68,68,0.7)] group-hover:drop-shadow-[0_0_15px_rgba(239,68,68,0.9)] bg-black/95",
-      subBorder: "border-red-500/30 group-hover:border-red-500/60 group-hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]",
-      headingText: "text-red-500",
-      lineBorder: "border-red-500/10 group-hover:border-red-500/25",
-      cornerBorder: "border-red-500/30 group-hover:border-red-500/80",
-      bulletBg: "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.85)]",
-      sigDot: "bg-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.95)] animate-pulse",
-      sigText: "text-red-500/90 font-black drop-shadow-[0_0_4px_rgba(239,68,68,0.55)]",
+      border: "border-red-950/60 hover:border-red-500 shadow-[0_0_20px_rgba(220,25,25,0.1)] hover:shadow-[0_0_40px_rgba(220,25,25,0.4)]",
+      text: "text-red-500 drop-shadow-[0_0_8px_rgba(220,25,25,0.6)]",
+      hoverText: "group-hover:text-red-400 group-hover:drop-shadow-[0_0_15px_rgba(220,25,25,0.9)]",
+      iconBg: "border-red-900/40 group-hover:border-red-500/80 bg-red-950/20",
+      iconGlow: "group-hover:shadow-[0_0_25px_rgba(220,25,25,0.3)]",
+      titleBorder: "border-red-500/50 group-hover:border-red-400 group-hover:shadow-[0_0_25px_rgba(220,25,25,0.8)] bg-black/95",
+      subBorder: "border-red-500/40 group-hover:border-red-400/70 group-hover:shadow-[0_0_20px_rgba(220,25,25,0.5)]",
+      headingText: "text-red-400",
+      lineBorder: "border-red-500/20 group-hover:border-red-500/40",
+      cornerBorder: "border-red-500/40 group-hover:border-red-400",
+      bulletBg: "bg-red-500 shadow-[0_0_8px_rgba(220,25,25,0.9)]",
+      sigDot: "bg-red-500 drop-shadow-[0_0_6px_rgba(220,25,25,1)] animate-pulse",
+      sigText: "text-red-500 font-black tracking-widest",
       sigLabel: "SECTOR_ALPHA_01",
-      bgOverlay: "from-red-950/5 via-transparent to-red-950/10",
-      accentTitleText: "text-red-500/80 group-hover:text-red-400",
-      bulletSubheaderText: "text-red-400 font-black uppercase tracking-[0.15em] border-l-2 border-red-500 pl-2"
+      bgOverlay: "from-red-950/10 via-transparent to-red-950/20",
+      accentTitleText: "text-red-500/90 group-hover:text-red-400",
+      bulletSubheaderText: "text-red-400 font-black uppercase tracking-[0.2em] border-l-4 border-red-500 pl-3 py-0.5 bg-red-500/5"
     },
-    blue: { // Dropper (Deep Sat-Blue & Tactical Cyan)
-      border: "border-blue-950/50 hover:border-blue-500/80 shadow-[0_0_15px_rgba(59,130,246,0.05)] hover:shadow-[0_0_30px_rgba(59,130,246,0.3)]",
-      text: "text-blue-500 drop-shadow-[0_0_5px_rgba(59,130,246,0.6)]",
-      hoverText: "group-hover:text-blue-400 group-hover:drop-shadow-[0_0_12px_rgba(59,130,246,0.85)]",
-      iconBg: "border-blue-950/40 group-hover:border-blue-500/70",
-      iconGlow: "group-hover:shadow-[0_0_20px_rgba(59,130,246,0.25)]",
-      titleBorder: "border-blue-500/40 group-hover:border-blue-500 group-hover:shadow-[0_0_22px_rgba(59,130,246,0.7)] group-hover:drop-shadow-[0_0_15px_rgba(59,130,246,0.9)] bg-black/95",
-      subBorder: "border-blue-500/30 group-hover:border-blue-500/60 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.4)]",
-      headingText: "text-blue-500",
-      lineBorder: "border-blue-500/10 group-hover:border-blue-500/25",
-      cornerBorder: "border-blue-500/30 group-hover:border-blue-500/80",
-      bulletBg: "bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.85)]",
-      sigDot: "bg-blue-500 drop-shadow-[0_0_5px_rgba(59,130,246,0.95)] animate-pulse",
-      sigText: "text-blue-500/90 font-black drop-shadow-[0_0_4px_rgba(59,130,246,0.55)]",
+    blue: { // Dropper (Tactical Cobalt & Cyan)
+      border: "border-blue-950/60 hover:border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.1)] hover:shadow-[0_0_40px_rgba(59,130,246,0.4)]",
+      text: "text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]",
+      hoverText: "group-hover:text-blue-400 group-hover:drop-shadow-[0_0_15px_rgba(59,130,246,0.9)]",
+      iconBg: "border-blue-900/40 group-hover:border-blue-500/80 bg-blue-950/20",
+      iconGlow: "group-hover:shadow-[0_0_25px_rgba(59,130,246,0.3)]",
+      titleBorder: "border-blue-500/50 group-hover:border-blue-400 group-hover:shadow-[0_0_25px_rgba(59,130,246,0.8)] bg-black/95",
+      subBorder: "border-blue-500/40 group-hover:border-blue-400/70 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.5)]",
+      headingText: "text-blue-400",
+      lineBorder: "border-blue-500/20 group-hover:border-blue-500/40",
+      cornerBorder: "border-blue-500/40 group-hover:border-blue-400",
+      bulletBg: "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.9)]",
+      sigDot: "bg-blue-500 drop-shadow-[0_0_6px_rgba(59,130,246,1)] animate-pulse",
+      sigText: "text-blue-500 font-black tracking-widest",
       sigLabel: "SECTOR_BETA_09",
-      bgOverlay: "from-blue-950/5 via-transparent to-blue-950/10",
-      accentTitleText: "text-blue-500/80 group-hover:text-blue-400",
-      bulletSubheaderText: "text-blue-400 font-black uppercase tracking-[0.15em] border-l-2 border-blue-500 pl-2"
+      bgOverlay: "from-blue-950/10 via-transparent to-blue-950/20",
+      accentTitleText: "text-blue-500/90 group-hover:text-blue-400",
+      bulletSubheaderText: "text-blue-400 font-black uppercase tracking-[0.2em] border-l-4 border-blue-500 pl-3 py-0.5 bg-blue-500/5"
     },
-    green: { // Client (Cyber Emerald & Volt Lime)
-      border: "border-[#106011]/30 hover:border-[#106011]/85 shadow-[0_0_15px_rgba(16,96,17,0.1)] hover:shadow-[0_0_30px_rgba(16,96,17,0.3)]",
-      text: "text-[#106011] drop-shadow-[0_0_5px_rgba(16,96,17,0.5)]",
-      hoverText: "group-hover:text-[#0ad111] group-hover:drop-shadow-[0_0_12px_rgba(10,209,17,0.85)]",
-      iconBg: "border-[#106011]/30 group-hover:border-[#106011]",
-      iconGlow: "group-hover:shadow-[0_0_20px_rgba(16,96,17,0.4)]",
-      titleBorder: "border-[#106011] group-hover:shadow-[0_0_22px_rgba(16,96,17,0.85)] group-hover:drop-shadow-[0_0_15px_rgba(16,96,17,1)] bg-black/95",
-      subBorder: "border-[#106011]/45 group-hover:border-[#106011]/80 group-hover:shadow-[0_0_15px_rgba(16,96,17,0.5)]",
-      headingText: "text-[#106011]",
-      lineBorder: "border-[#106011]/20 group-hover:border-[#106011]/45",
-      cornerBorder: "border-[#106011] opacity-50 group-hover:opacity-100",
-      bulletBg: "bg-[#0ad111] shadow-[0_0_6px_rgba(10,209,17,0.85)]",
-      sigDot: "bg-[#0ad111] drop-shadow-[0_0_5px_rgba(10,209,17,0.95)] animate-pulse",
-      sigText: "text-[#0ad111]/90 font-black drop-shadow-[0_0_4px_rgba(10,209,17,0.55)]",
+    green: { // Boss / Owner (Cyber Emerald & Volt Lime)
+      border: "border-[#106011]/40 hover:border-[#106011] shadow-[0_0_25px_rgba(16,96,17,0.15)] hover:shadow-[0_0_50px_rgba(16,96,17,0.4)]",
+      text: "text-[#106011] drop-shadow-[0_0_8px_rgba(16,96,17,0.6)]",
+      hoverText: "group-hover:text-[#0ad111] group-hover:drop-shadow-[0_0_18px_rgba(10,209,17,0.9)]",
+      iconBg: "border-[#106011]/40 group-hover:border-[#106011] bg-[#106011]/10",
+      iconGlow: "group-hover:shadow-[0_0_30px_rgba(16,96,17,0.4)]",
+      titleBorder: "border-[#106011]/70 group-hover:border-[#0ad111] group-hover:shadow-[0_0_30px_rgba(16,96,17,0.9)] bg-black/95",
+      subBorder: "border-[#106011]/60 group-hover:border-[#0ad111]/80 group-hover:shadow-[0_0_25px_rgba(16,96,17,0.6)]",
+      headingText: "text-[#0ad111]",
+      lineBorder: "border-[#106011]/30 group-hover:border-[#106011]/60",
+      cornerBorder: "border-[#106011] group-hover:border-[#0ad111] drop-shadow-[0_0_5px_rgba(10,209,17,0.5)]",
+      bulletBg: "bg-[#0ad111] shadow-[0_0_8px_rgba(10,209,17,0.9)]",
+      sigDot: "bg-[#0ad111] drop-shadow-[0_0_8px_rgba(10,209,17,1)] animate-pulse",
+      sigText: "text-[#0ad111] font-black tracking-widest",
       sigLabel: "106.011 MHz",
-      bgOverlay: "from-emerald-950/5 via-transparent to-emerald-950/10",
-      accentTitleText: "text-[#106011] group-hover:text-[#0ad111]",
-      bulletSubheaderText: "text-[#0ad111]/90 font-black uppercase tracking-[0.15em] border-l-2 border-[#106011] pl-2"
+      bgOverlay: "from-emerald-950/15 via-transparent to-emerald-950/25",
+      accentTitleText: "text-[#0ad111] group-hover:text-emerald-400",
+      bulletSubheaderText: "text-[#0ad111] font-black uppercase tracking-[0.2em] border-l-4 border-[#106011] pl-3 py-0.5 bg-[#106011]/15"
     },
     gold: { // Client (Tactical Gold / Solar Amber)
-      border: "border-[#e2c80f]/30 hover:border-[#fdb804]/85 shadow-[0_0_15px_rgba(226,200,15,0.1)] hover:shadow-[0_0_30px_rgba(253,184,4,0.35)]",
-      text: "text-[#e2c80f] drop-shadow-[0_0_5px_rgba(226,200,15,0.5)]",
-      hoverText: "group-hover:text-[#fdb804] group-hover:drop-shadow-[0_0_12px_rgba(253,184,4,0.85)]",
-      iconBg: "border-[#e2c80f]/30 group-hover:border-[#fdb804]",
-      iconGlow: "group-hover:shadow-[0_0_20px_rgba(253,184,4,0.4)]",
-      titleBorder: "border-[#e2c80f] group-hover:shadow-[0_0_22px_rgba(253,184,4,0.85)] group-hover:drop-shadow-[0_0_15px_rgba(253,184,4,1)] bg-black/95",
-      subBorder: "border-[#e2c80f]/45 group-hover:border-[#fdb804]/80 group-hover:shadow-[0_0_15px_rgba(253,184,4,0.5)]",
-      headingText: "text-[#e2c80f]",
-      lineBorder: "border-[#e2c80f]/20 group-hover:border-[#fdb804]/45",
-      cornerBorder: "border-[#e2c80f] opacity-50 group-hover:opacity-100",
-      bulletBg: "bg-[#e2c80f] shadow-[0_0_6px_rgba(226,200,15,0.85)]",
-      sigDot: "bg-[#f8b206] drop-shadow-[0_0_5px_rgba(248,178,6,0.95)] animate-pulse",
-      sigText: "text-[#f5b616] font-black drop-shadow-[0_0_4px_rgba(245,182,22,0.55)]",
+      border: "border-[#e2c80f]/40 hover:border-[#fdb804] shadow-[0_0_20px_rgba(226,200,15,0.15)] hover:shadow-[0_0_40px_rgba(253,184,4,0.45)]",
+      text: "text-[#e2c80f] drop-shadow-[0_0_8px_rgba(226,200,15,0.6)]",
+      hoverText: "group-hover:text-[#fdb804] group-hover:drop-shadow-[0_0_15px_rgba(253,184,4,0.9)]",
+      iconBg: "border-[#e2c80f]/40 group-hover:border-[#fdb804]/80 bg-amber-950/20",
+      iconGlow: "group-hover:shadow-[0_0_25px_rgba(253,184,4,0.35)]",
+      titleBorder: "border-[#e2c80f]/50 group-hover:border-[#f8b206] group-hover:shadow-[0_0_25px_rgba(248,178,6,0.8)] bg-black/95",
+      subBorder: "border-[#e2c80f]/40 group-hover:border-[#f8b206]/70 group-hover:shadow-[0_0_20px_rgba(248,178,6,0.5)]",
+      headingText: "text-[#f8b206]",
+      lineBorder: "border-[#e2c80f]/20 group-hover:border-[#fdb804]/40",
+      cornerBorder: "border-[#e2c80f]/40 group-hover:border-[#fdb804]",
+      bulletBg: "bg-[#e2c80f] shadow-[0_0_8px_rgba(226,200,15,0.9)]",
+      sigDot: "bg-[#f8b206] drop-shadow-[0_0_6px_rgba(248,178,6,1)] animate-pulse",
+      sigText: "text-[#f5b616] font-black tracking-widest",
       sigLabel: "217.180 MHz",
-      bgOverlay: "from-amber-950/5 via-transparent to-amber-950/10",
-      accentTitleText: "text-[#e2c80f] group-hover:text-[#fdb804]",
-      bulletSubheaderText: "text-[#fdb804]/90 font-black uppercase tracking-[0.15em] border-l-2 border-[#e2c80f] pl-2"
+      bgOverlay: "from-amber-950/10 via-transparent to-amber-950/20",
+      accentTitleText: "text-[#f8b206] group-hover:text-amber-400",
+      bulletSubheaderText: "text-[#fdb804] font-black uppercase tracking-[0.2em] border-l-4 border-[#e2c80f] pl-3 py-0.5 bg-amber-500/10"
     }
   };
 
   const theme = themes[color as keyof typeof themes] || themes.green;
 
   return (
-    <Link to={to} className={`group flex flex-col items-center gap-6 p-8 rounded-2xl bg-black/95 transition-all duration-500 border ${theme.border} hover:-translate-y-2 relative overflow-hidden select-none h-[550px]`}>
-      {/* Background Cover Photo Overlay */}
-      <div 
-        className="absolute inset-0 w-full h-full opacity-10 pointer-events-none mix-blend-overlay bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
-        style={{ backgroundImage: `url('/Backgroundimage.png')` }}
-      />
-      <div className={`absolute inset-0 bg-gradient-to-b ${theme.bgOverlay} pointer-events-none`} />
-
-      {/* Tactical HUD Corner Brackets */}
-      <div className={`absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 ${theme.cornerBorder} rounded-tl-xl pointer-events-none transition-all duration-300 group-hover:scale-105`}></div>
-      <div className={`absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 ${theme.cornerBorder} rounded-tr-xl pointer-events-none transition-all duration-300 group-hover:scale-105`}></div>
-      <div className={`absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 ${theme.cornerBorder} rounded-bl-xl pointer-events-none transition-all duration-300 group-hover:scale-105`}></div>
-      <div className={`absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 ${theme.cornerBorder} rounded-br-xl pointer-events-none transition-all duration-300 group-hover:scale-105`}></div>
-
-      {/* Inner Nested High-Contrast Tactical HUD Lines */}
-      <div className={`absolute inset-1.5 border border-dashed ${theme.lineBorder} rounded-xl pointer-events-none transition-colors duration-300`}></div>
-      <div className={`absolute inset-2.5 border border-dashed opacity-30 ${theme.lineBorder} rounded-lg pointer-events-none transition-colors duration-300`}></div>
-
-      {/* Decorative vertical target/measurement rails */}
-      <div className={`absolute top-6 bottom-6 left-1.5 w-px border-l border-dotted ${theme.lineBorder} transition-colors duration-300`}></div>
-      <div className={`absolute top-6 bottom-6 right-1.5 w-px border-r border-dotted ${theme.lineBorder} transition-colors duration-300`}></div>
-
-      <div className={`p-4 rounded-full bg-black/40 border ${theme.iconBg} shadow-[0_0_10px_rgba(16,96,17,0.15)] relative z-10 transition-all duration-300 ${theme.iconGlow}`}>
-        {icon}
-      </div>
+    <Link to={to} className={`group flex flex-col items-center gap-6 p-8 rounded-[2rem] bg-black/95 transition-all duration-700 border-2 ${theme.border} hover:-translate-y-4 relative overflow-hidden select-none h-[600px] shadow-[0_0_40px_rgba(0,0,0,0.5)]`}>
+      {/* 1. Tactical Ambient Core Layer */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${theme.bgOverlay} opacity-30 group-hover:opacity-60 transition-opacity duration-1000 pointer-events-none`} />
       
-      <div className="flex flex-col gap-3 items-center w-full relative z-10">
-        <h2 className={`relative px-6 py-2.5 font-display font-black uppercase tracking-[0.25em] text-xs text-center border-2 rounded overflow-hidden select-none transition-all duration-300 ${theme.titleBorder}`}>
-          {/* Tactical HUD Corner Brackets inside */}
-          <div className={`absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 ${theme.cornerBorder} pointer-events-none`}></div>
-          <div className={`absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 ${theme.cornerBorder} pointer-events-none`}></div>
-          <div className={`absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 ${theme.cornerBorder} pointer-events-none`}></div>
-          <div className={`absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 ${theme.cornerBorder} pointer-events-none`}></div>
+      {/* 2. Precision Scanning Matrix Mask */}
+      <motion.div 
+        animate={{ y: ['-20%', '120%'] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+        className={`absolute inset-x-0 h-40 bg-gradient-to-b from-transparent via-current to-transparent opacity-0 group-hover:opacity-[0.08] blur-2xl z-20 pointer-events-none ${theme.text}`}
+      />
 
-          {/* Double Nested Rectangle dashed/solid HUD lines */}
-          <div className={`absolute inset-0.5 border border-dashed ${theme.lineBorder} rounded pointer-events-none`}></div>
-          <div className={`absolute inset-1 border ${theme.lineBorder} opacity-30 rounded pointer-events-none`}></div>
+      {/* 3. Horizontal Scanning HUD Line */}
+      <motion.div 
+        animate={{ y: ['-100%', '300%'] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+        className={`absolute inset-x-0 h-0.5 bg-current opacity-0 group-hover:opacity-30 blur-[1px] z-30 pointer-events-none ${theme.text}`}
+      />
 
-          <span className={`relative z-10 ${theme.hoverText}`}>{title}</span>
+      {/* 4. Global HUD Precision Brackets */}
+      <div className={`absolute top-4 left-4 w-10 h-10 border-t-2 border-l-2 ${theme.cornerBorder} rounded-tl-2xl pointer-events-none transition-all duration-500 group-hover:scale-110 group-hover:-translate-x-1 group-hover:-translate-y-1`}></div>
+      <div className={`absolute top-4 right-4 w-10 h-10 border-t-2 border-r-2 ${theme.cornerBorder} rounded-tr-2xl pointer-events-none transition-all duration-500 group-hover:scale-110 group-hover:translate-x-1 group-hover:-translate-y-1`}></div>
+      <div className={`absolute bottom-4 left-4 w-10 h-10 border-b-2 border-l-2 ${theme.cornerBorder} rounded-bl-2xl pointer-events-none transition-all duration-500 group-hover:scale-110 group-hover:-translate-x-1 group-hover:translate-y-1`}></div>
+      <div className={`absolute bottom-4 right-4 w-10 h-10 border-b-2 border-r-2 ${theme.cornerBorder} rounded-br-2xl pointer-events-none transition-all duration-500 group-hover:scale-110 group-hover:translate-x-1 group-hover:translate-y-1`}></div>
+
+      {/* 5. Concentric Nested Tactical HUD Lines */}
+      <div className={`absolute inset-3 border border-dashed ${theme.lineBorder} rounded-[1.75rem] pointer-events-none transition-all duration-500 group-hover:border-current group-hover:opacity-40`}></div>
+      <div className={`absolute inset-5 border border-dotted opacity-20 ${theme.lineBorder} rounded-[1.5rem] pointer-events-none transition-all duration-500 group-hover:opacity-30`}></div>
+
+      {/* 6. Measurement Side Rails (Ticks) */}
+      <div className="absolute left-2.5 top-20 bottom-20 flex flex-col justify-between items-center z-20 opacity-20 group-hover:opacity-40 transition-opacity">
+        {[...Array(12)].map((_, i) => (
+          <div key={i} className={`w-2 h-[1px] bg-current ${i % 3 === 0 ? 'w-4 h-[1.5px]' : 'w-2'} ${theme.text}`} />
+        ))}
+      </div>
+      <div className="absolute right-2.5 top-20 bottom-20 flex flex-col justify-between items-center z-20 opacity-20 group-hover:opacity-40 transition-opacity">
+        {[...Array(12)].map((_, i) => (
+          <div key={i} className={`w-2 h-[1px] bg-current ${i % 3 === 0 ? 'w-4 h-[1.5px]' : 'w-2'} ${theme.text}`} />
+        ))}
+      </div>
+
+      {/* 7. Animated Icon Module */}
+      <motion.div 
+        whileHover={{ scale: 1.05, rotate: [0, -2, 2, 0] }}
+        className={`p-6 rounded-full bg-black/60 border-2 ${theme.iconBg} shadow-[0_0_30px_rgba(0,0,0,0.4)] relative z-10 transition-all duration-500 ${theme.iconGlow}`}
+      >
+        {icon}
+      </motion.div>
+      
+      {/* 8. Content Container */}
+      <div className="flex flex-col gap-6 items-center w-full relative z-10">
+        <h2 className={`relative px-8 py-3.5 font-display font-black uppercase tracking-[0.35em] text-sm text-center border-2 rounded-xl overflow-hidden select-none transition-all duration-500 ${theme.titleBorder} shadow-lg`}>
+          {/* Tactical HUD Corner Brackets inside Title */}
+          <div className={`absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 ${theme.cornerBorder} pointer-events-none`}></div>
+          <div className={`absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 ${theme.cornerBorder} pointer-events-none`}></div>
+          <div className={`absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 ${theme.cornerBorder} pointer-events-none`}></div>
+          <div className={`absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 ${theme.cornerBorder} pointer-events-none`}></div>
+
+          <span className={`relative z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] ${theme.hoverText}`}>{title}</span>
         </h2>
         
-        <div className={`relative w-32 h-5 flex items-center justify-center overflow-hidden border bg-black/80 rounded transition-all duration-300 select-none ${theme.subBorder}`}>
-          {/* Tactical HUD Corner Brackets */}
-          <div className={`absolute top-0 left-0 w-1.5 h-1.5 border-t border-l ${theme.cornerBorder} pointer-events-none`}></div>
-          <div className={`absolute top-0 right-0 w-1.5 h-1.5 border-t border-r ${theme.cornerBorder} pointer-events-none`}></div>
-          <div className={`absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l ${theme.cornerBorder} pointer-events-none`}></div>
-          <div className={`absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r ${theme.cornerBorder} pointer-events-none`}></div>
-
-          {/* Double Nested Rectangle dashed/solid borders */}
-          <div className={`absolute inset-[1px] border border-dashed ${theme.lineBorder} rounded pointer-events-none`}></div>
-
-          {/* Frequency & tactical metadata */}
-          <div className="flex items-center gap-1.5 relative z-10">
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${theme.sigDot}`}></span>
-            <span className={`text-[7.5px] font-mono tracking-[0.2em] uppercase ${theme.sigText}`}>
+        {/* Signal/Metadata Badge */}
+        <div className={`relative px-6 py-2 flex items-center justify-center overflow-hidden border-2 bg-black/90 rounded-full transition-all duration-500 select-none ${theme.subBorder} shadow-md`}>
+          <div className="flex items-center gap-2.5 relative z-10">
+            <motion.div 
+              animate={{ opacity: [1, 0.4, 1], scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className={`w-2 h-2 rounded-full shrink-0 ${theme.sigDot}`}
+            />
+            <span className={`text-[9px] font-mono font-black tracking-[0.25em] uppercase ${theme.sigText}`}>
               {theme.sigLabel}
             </span>
           </div>
         </div>
         
         {description && (
-          <p className="text-[11px] font-mono text-[--text-secondary] text-center leading-relaxed max-w-[200px]">
+          <p className="text-[12px] font-mono text-slate-400 group-hover:text-slate-100 transition-colors text-center leading-relaxed max-w-[240px] px-2 opacity-80 group-hover:opacity-100">
             {description}
           </p>
         )}
         
+        {/* Features Matrix */}
         {features && features.length > 0 && (
-          <div className="text-[10px] font-mono flex flex-col items-start w-full mt-2 space-y-1.5 pl-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="text-[11px] font-mono flex flex-col items-start w-full mt-4 space-y-2 pl-4 max-h-[180px] overflow-y-auto pr-4 custom-scrollbar-thin">
             {features.map((feature, i) => {
               if (feature.endsWith(':')) {
                 return (
-                  <div key={i} className={`mt-3 mb-1 text-[9px] ${theme.bulletSubheaderText}`}>
+                  <motion.div 
+                    key={i} 
+                    initial={{ x: -10, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    className={`mt-4 mb-1 text-[10px] w-full ${theme.bulletSubheaderText}`}
+                  >
                     {feature.replace(':', '')}
-                  </div>
+                  </motion.div>
                 );
               }
               return (
-                <div key={i} className="flex items-start gap-2 text-left text-slate-300 opacity-80 group-hover:opacity-100 transition-opacity">
-                  <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${theme.bulletBg}`}></span> 
-                  <span>{feature}</span>
-                </div>
+                <motion.div 
+                  key={i} 
+                  initial={{ x: -10, opacity: 0 }}
+                  animate={{ x: 0, opacity: 0.8 }}
+                  whileHover={{ x: 5, opacity: 1 }}
+                  className="flex items-start gap-3 text-left text-slate-300 transition-all duration-300"
+                >
+                  <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${theme.bulletBg}`}></span> 
+                  {feature === "Getto 💲" ? (
+                    <motion.span 
+                      animate={{ opacity: [1, 0.5, 1], scale: [1, 1.05, 1] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                      className="text-[#fdb804] font-black drop-shadow-[0_0_12px_rgba(253,184,4,0.8)]"
+                    >
+                      {feature}
+                    </motion.span>
+                  ) : (
+                    <span className="leading-tight group-hover:text-white transition-colors">{feature}</span>
+                  )}
+                </motion.div>
               )
             })}
           </div>
         )}
       </div>
       
-      <div className={`mt-auto text-[10px] font-mono uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 ${theme.hoverText}`}>
-        Initialize Sequence →
-      </div>
+      {/* Footer / Initialize Button Action */}
+      <motion.div 
+        whileHover={{ x: 10 }}
+        className={`mt-auto pt-6 w-full flex items-center justify-center gap-3 text-[11px] font-mono font-black uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 ${theme.hoverText}`}
+      >
+        <span className="animate-pulse">Initialize Sequence</span>
+        <Terminal className="w-4 h-4" />
+      </motion.div>
     </Link>
   );
 }
@@ -323,17 +412,44 @@ function BulletinDrawer() {
 
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-black/90 border-2 border-[#106011]/60 hover:border-[#106011] rounded-xl p-4 flex items-center justify-between shadow-[0_0_20px_rgba(16,96,17,0.2)] hover:shadow-[0_0_30px_rgba(16,96,17,0.4)] transition-all group overflow-hidden relative"
+        className="w-full bg-black/95 border-2 border-[#106011]/70 hover:border-[#0ad111] rounded-2xl p-5 flex items-center justify-between shadow-[0_0_35px_rgba(16,96,17,0.3)] hover:shadow-[0_0_50px_rgba(16,96,17,0.5)] transition-all group overflow-hidden relative"
       >
-        {/* Universal Tactical HUD Corner Brackets */}
-        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] group-hover:scale-110 transition-transform"></div>
-        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] group-hover:scale-110 transition-transform"></div>
-        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] group-hover:scale-110 transition-transform"></div>
-        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)] group-hover:scale-110 transition-transform"></div>
+        {/* Advanced Tactical HUD Layer */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#106011]/5 via-transparent to-[#106011]/5 pointer-events-none" />
+        
+        {/* Dynamic Scanning Line */}
+        <motion.div 
+          animate={{ x: ['-100%', '200%'] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-y-0 w-24 bg-gradient-to-r from-transparent via-[#106011]/20 to-transparent blur-[2px] skew-x-12 z-0"
+        />
 
-        {/* Nested Rectangle Tactical HUD borders */}
-        <div className="absolute inset-1 border-[1.5px] border-dashed pointer-events-none rounded-lg z-20 border-[#106011]/40 group-hover:border-[#106011]/60 transition-colors"></div>
-        <div className="absolute inset-2 border pointer-events-none rounded-md z-20 border-[#106011]/20 group-hover:border-[#106011]/40 transition-colors"></div>
+        {/* Global HUD Brackets */}
+        <motion.div 
+          animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
+          transition={{ duration: 3, repeat: Infinity }}
+          className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 z-20 border-[#0ad111] drop-shadow-[0_0_8px_#0ad111]" 
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
+          transition={{ duration: 3, repeat: Infinity }}
+          className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 z-20 border-[#0ad111] drop-shadow-[0_0_8px_#0ad111]" 
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
+          transition={{ duration: 3, repeat: Infinity }}
+          className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 z-20 border-[#0ad111] drop-shadow-[0_0_8px_#0ad111]" 
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
+          transition={{ duration: 3, repeat: Infinity }}
+          className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 z-20 border-[#0ad111] drop-shadow-[0_0_8px_#0ad111]" 
+        />
+
+        {/* Triple Nested HUD Outlines */}
+        <div className="absolute inset-1 border-[2px] border-dashed pointer-events-none rounded-xl z-20 border-[#106011]/50 group-hover:border-[#0ad111]/70 transition-colors" />
+        <div className="absolute inset-2 border-[1px] border-dotted pointer-events-none rounded-lg z-20 border-[#106011]/30 group-hover:border-[#0ad111]/50 transition-colors" />
+        <div className="absolute inset-3 border-[0.5px] pointer-events-none rounded-md z-20 border-[#106011]/10 group-hover:border-[#0ad111]/30 transition-colors" />
 
 
         <div className="flex flex-col items-center justify-center gap-2 w-full text-center">
@@ -342,15 +458,31 @@ function BulletinDrawer() {
               <img src="/Appicon.png" alt="App Icon" className="w-full h-full object-cover rounded-full" />
             </div>
             
-            <div className="flex-1 overflow-hidden relative h-6 flex items-center">
+            <div 
+              style={{ backgroundColor: '#1a1515' }}
+              className="flex-1 overflow-hidden relative h-6 flex items-center"
+            >
               <motion.div 
-                animate={{ x: ["100%", "-100%"] }}
-                transition={{ duration: 25, ease: "linear", repeat: Infinity }}
-                className="absolute whitespace-nowrap left-0"
+                animate={{ x: [0, "-50%"] }}
+                transition={{ duration: 30, ease: "linear", repeat: Infinity }}
+                className="flex items-center whitespace-nowrap gap-12"
               >
-                <h3 className="text-sm font-black text-[#0ad111] tracking-[0.25em] font-mono uppercase drop-shadow-[0_0_4px_rgba(10,209,17,0.6)]">
-                  ANNOUCEMENTS AND ALL UPDATES WILL BE POSTED HER ALWAYS CHECK THE UPDATES FORR  FREE DROPS, PROMO ,EVENTS ✅
-                </h3>
+                {[1, 2].map((i) => (
+                  <h3 
+                    key={i}
+                    style={{ 
+                      borderColor: '#148f23', 
+                      textDecorationLine: 'underline', 
+                      textAlign: 'left', 
+                      fontFamily: 'Times New Roman', 
+                      color: '#219f12', 
+                      backgroundColor: '#6a0f0f' 
+                    }}
+                    className="text-sm font-black tracking-[0.25em] font-mono uppercase drop-shadow-[0_0_4px_rgba(10,209,17,0.6)] border px-4"
+                  >
+                    ANNOUNCEMENTS AND ALL UPDATES WILL BE POSTED HERE. ALWAYS CHECK THE UPDATES FOR FREE DROPS, PROMOS, EVENTS ✅
+                  </h3>
+                ))}
               </motion.div>
             </div>
 
@@ -380,42 +512,123 @@ function BulletinDrawer() {
             exit={{ height: 0, opacity: 0, y: -20 }}
             className="overflow-hidden"
           >
-            <div className="mt-4 bg-black/95 border-2 border-[#106011]/30 rounded-2xl p-6 shadow-[inset_0_0_50px_rgba(16,96,17,0.1)] relative text-left overflow-hidden">
-              {/* Background Cover Photo Overlay */}
+            <div className="mt-4 bg-black/98 border-2 border-[#106011]/60 rounded-3xl p-10 shadow-[inset_0_0_120px_rgba(16,96,17,0.2),0_0_40px_rgba(16,96,17,0.1)] relative text-left overflow-hidden group/panel">
+              {/* Ultra-High Contrast Background Core */}
               <div 
-                className="absolute inset-0 w-full h-full opacity-15 pointer-events-none mix-blend-luminosity bg-cover bg-center bg-no-repeat"
-                style={{ backgroundImage: `url('/coverphoto2.jpg')` }}
+                className="absolute inset-0 w-full h-full opacity-40 pointer-events-none mix-blend-screen bg-cover bg-center bg-no-repeat grayscale-[0.2] brightness-110 contrast-150 scale-105 transition-transform duration-1000 group-hover/panel:scale-110"
+                style={{ backgroundImage: `url('/regenerated_image_1781027109738.jpg')` }}
               />
 
-              {/* Nested HUD Lines */}
-              <div className="absolute inset-1 border border-dashed border-[#106011]/10 rounded-xl pointer-events-none" />
+              {/* Tactical Flux Overlays */}
+              <div className="absolute inset-0 bg-gradient-to-br from-black via-transparent to-[#106011]/10 pointer-events-none z-0" />
               
-              <div className="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+              {/* Complex Tactical Precision Grid */}
+              <div 
+                className="absolute inset-0 opacity-[0.08] pointer-events-none z-10"
+                style={{
+                  backgroundImage: `
+                    linear-gradient(#106011 1.5px, transparent 1.5px), 
+                    linear-gradient(90deg, #106011 1.5px, transparent 1.5px),
+                    linear-gradient(#0ad111 0.5px, transparent 0.5px), 
+                    linear-gradient(90deg, #0ad111 0.5px, transparent 0.5px)
+                  `,
+                  backgroundSize: '80px 80px, 80px 80px, 20px 20px, 20px 20px'
+                }}
+              />
+
+              {/* Geometric HUD Accents */}
+              <div className="absolute top-8 left-8 w-12 h-12 border-t-2 border-l-2 border-[#0ad111] opacity-60 z-20" />
+              <div className="absolute top-8 right-8 w-12 h-12 border-t-2 border-r-2 border-[#0ad111] opacity-60 z-20" />
+              <div className="absolute bottom-8 left-8 w-12 h-12 border-b-2 border-l-2 border-[#0ad111] opacity-60 z-20" />
+              <div className="absolute bottom-8 right-8 w-12 h-12 border-b-2 border-r-2 border-[#0ad111] opacity-60 z-20" />
+
+              {/* CRT Lens Distortion & Noise */}
+              <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.15] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat" />
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(10,209,17,0.05)_50%)] bg-[length:100%_2px] pointer-events-none z-20 opacity-40" />
+
+              {/* Dynamic Scanning Matrix Mask */}
+              <motion.div 
+                animate={{ y: ['-20%', '120%'] }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-x-0 h-32 bg-gradient-to-b from-transparent via-[#0ad111]/10 to-transparent blur-xl z-20 pointer-events-none"
+              />
+
+              {/* Precision HUD Measurement Ticks (Static Sidebar Decoration) */}
+              <div className="absolute left-3 top-20 bottom-20 flex flex-col justify-between items-center z-20 opacity-30">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className={`w-3 h-[1px] bg-[#0ad111] ${i % 2 === 0 ? 'w-5' : 'w-3'}`} />
+                ))}
+              </div>
+
+              {/* Hyper-Detailed HUD Frame */}
+              <div className="absolute inset-2 border-[1.5px] border-dashed border-[#106011]/40 rounded-[2rem] pointer-events-none z-20" />
+              <div className="absolute inset-5 border border-[#106011]/20 rounded-[1.5rem] pointer-events-none z-20 shadow-[0_0_40px_rgba(16,96,17,0.1)]" />
+              
+              <div className="relative z-30 space-y-6 max-h-[450px] overflow-y-auto custom-scrollbar pr-6 pl-8">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#106011]/20">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#0ad111] animate-pulse shadow-[0_0_12px_#0ad111]" />
+                      <span className="text-sm font-mono font-black text-[#0ad111] tracking-[0.4em] uppercase drop-shadow-[0_0_8px_rgba(10,209,17,0.6)]">Bulletin_Manifest_v2.5</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[8px] font-mono text-[#106011]/60 uppercase tracking-widest pl-5">
+                      <Terminal className="w-2 h-2" />
+                      Stream_Source: HQ_COMMAND_UPLINK
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="px-3 py-1 bg-[#106011]/20 rounded-md border border-[#106011]/40 text-[9px] font-mono text-[#0ad111] tracking-tighter uppercase font-black">AUTH_VERIFIED</div>
+                    <div className="text-[7px] font-mono text-[#106011]/40 select-none">SEQ_ID: {Math.random().toString(16).slice(2, 8).toUpperCase()}</div>
+                  </div>
+                </div>
+
                 {bulletins.map((item, idx) => (
                   <motion.div 
                     key={item.id}
-                    initial={{ x: -20, opacity: 0 }}
+                    initial={{ x: -30, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border-l-2 border-[#106011]/40 bg-white/[0.02] hover:bg-white/[0.05] transition-colors gap-2"
+                    transition={{ delay: idx * 0.1, type: "spring", stiffness: 100 }}
+                    whileHover={{ x: 10, backgroundColor: 'rgba(10, 209, 17, 0.05)' }}
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 border-l-4 rounded-r-xl transition-all duration-300 gap-4 group/item relative overflow-hidden bg-black/40 ${
+                      item.type === 'CRITICAL' ? 'border-red-600 shadow-[inset_0_0_20px_rgba(220,25,25,0.05)]' : 
+                      item.type === 'SUPER_ADMIN' ? 'border-blue-500 shadow-[inset_0_0_20px_rgba(59,130,246,0.05)]' : 
+                      'border-[#106011] shadow-[inset_0_0_20px_rgba(16,96,17,0.05)]'
+                    }`}
                   >
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[7px] font-mono px-1.5 py-0.5 rounded border ${
-                          item.type === 'CRITICAL' ? 'border-red-900/50 text-red-500 bg-red-950/20' : 
-                          item.type === 'SUPER_ADMIN' ? 'border-blue-900/50 text-blue-400 bg-blue-950/20' : 
-                          'border-[#106011]/30 text-[#0ad111] bg-[#106011]/10'
+                    {/* Item HUD Brackets */}
+                    <div className={`absolute top-0 right-0 w-4 h-4 border-t border-r opacity-0 group-hover/item:opacity-40 transition-opacity ${
+                      item.type === 'CRITICAL' ? 'border-red-500' : item.type === 'SUPER_ADMIN' ? 'border-blue-400' : 'border-[#0ad111]'
+                    }`} />
+                    <div className={`absolute bottom-0 right-0 w-4 h-4 border-b border-r opacity-0 group-hover/item:opacity-40 transition-opacity ${
+                      item.type === 'CRITICAL' ? 'border-red-500' : item.type === 'SUPER_ADMIN' ? 'border-blue-400' : 'border-[#0ad111]'
+                    }`} />
+
+                    <div className="flex flex-col gap-2 relative z-10">
+                      <div className="flex items-center gap-3">
+                        <span className={`text-[8px] font-mono font-black px-2 py-0.5 rounded-sm border uppercase shadow-sm ${
+                          item.type === 'CRITICAL' ? 'border-red-800 text-red-400 bg-red-950/40' : 
+                          item.type === 'SUPER_ADMIN' ? 'border-blue-800 text-blue-300 bg-blue-950/40' : 
+                          'border-[#106011]/60 text-[#0ad111] bg-[#106011]/30'
                         }`}>
                           {item.type}
                         </span>
-                        <span className="text-[7px] text-slate-600 font-mono">STAMP: {item.time}</span>
+                        <div className="flex items-center gap-1.5 text-[8px] text-slate-500 font-mono tracking-tighter">
+                          <Satellite className="w-2.5 h-2.5" />
+                          STAMP: {item.time}
+                        </div>
                       </div>
-                      <p className="text-[9px] text-slate-100 font-mono leading-relaxed tracking-wider">
+                      <p className={`text-[11px] font-mono leading-relaxed tracking-wider transition-colors ${
+                         item.type === 'CRITICAL' ? 'text-red-100/90' : 'text-slate-100'
+                      }`}>
                         {item.text}
                       </p>
                     </div>
-                    <div className="shrink-0 opacity-20 hover:opacity-100 transition-opacity">
-                       <Info className="w-3 h-3 text-[#106011]" />
+                    <div className="shrink-0 opacity-40 group-hover/item:opacity-100 transition-all group-hover/item:scale-110">
+                       <Radio className={`w-4 h-4 ${
+                         item.type === 'CRITICAL' ? 'text-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 
+                         item.type === 'SUPER_ADMIN' ? 'text-blue-400' : 
+                         'text-[#0ad111] shadow-[0_0_8px_rgba(10,209,17,0.4)]'
+                       }`} />
                     </div>
                   </motion.div>
                 ))}
@@ -427,10 +640,39 @@ function BulletinDrawer() {
                 )}
               </div>
 
-              {/* Maintenance Data */}
-              <div className="mt-4 pt-4 border-t border-[#106011]/10 flex justify-between items-center text-[7px] text-[#106011] font-mono opacity-40">
-                <span>TERMINAL_ID: BN-9981</span>
-                <span className="animate-pulse">ENCRYPTION: AES_256_ACTIVE</span>
+              {/* Maintenance & Connectivity Diagnostics */}
+              <div className="mt-8 pt-6 border-t border-[#106011]/20 flex flex-wrap justify-between items-center gap-4 relative z-30">
+                <div className="flex items-center gap-6">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[6px] font-mono text-[#106011]/60 uppercase tracking-widest">Device_Signature</span>
+                    <span className="bg-[#1c1c1c] border border-[#dc1919]/60 text-[#dc1919] px-2 py-0.5 rounded-sm text-[8px] font-black font-mono shadow-[0_0_10px_rgba(220,25,25,0.15)]">TERMINAL_ID: BN-9981</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[6px] font-mono text-[#106011]/60 uppercase tracking-widest">Security_Protocol</span>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-ping" />
+                      <span className="text-[8px] font-mono text-[#0ad111] font-bold uppercase tracking-tighter">AES_256_ACTIVE</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-[6px] font-mono text-[#106011]/60 uppercase tracking-widest">Signal_Latency</span>
+                    <div className="flex items-center gap-1">
+                      <Activity className="w-2.5 h-2.5 text-[#0ad111]" />
+                      <span className="text-[8px] font-mono text-[#0ad111] font-bold">14.2ms</span>
+                    </div>
+                  </div>
+                  <div className="h-6 w-[1px] bg-[#106011]/20" />
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-[6px] font-mono text-[#106011]/60 uppercase tracking-widest">Uplink_Node</span>
+                    <div className="flex items-center gap-1">
+                      <ShieldCheck className="w-2.5 h-2.5 text-[#0ad111]" />
+                      <span className="text-[8px] font-mono text-[#0ad111] font-bold">SECURE_ALPHA_IX</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>

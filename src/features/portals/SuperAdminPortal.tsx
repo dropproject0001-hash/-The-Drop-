@@ -1,5 +1,5 @@
 import { ShieldAlert } from 'lucide-react';
-import { DropMap } from '@/components/map/DropMap';
+import DropMap from '@/components/map/DropMap';
 import { SuperAdminAccountManagement } from '@/features/admin/SuperAdminAccountManagement';
 import { TransactionHistoryList } from '@/features/transactions/TransactionHistoryList';
 import { PortalNavbar } from '@/components/layout/PortalNavbar';

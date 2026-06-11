@@ -6,10 +6,14 @@ type SubscriptionCallback<T = any> = (payload: RealtimePostgresChangesPayload<T>
 interface SubscriptionOptions {
   optimisticUpdate?: boolean;
   onError?: (error: any) => void;
+  maxRetries?: number;
 }
 
 class RealtimeService {
-  private channels: Map<string, RealtimeChannel> = new Map();
+  private channels: Map<string, {
+    channel: RealtimeChannel;
+    callbacks: Set<SubscriptionCallback>;
+  }> = new Map();
 
   /**
    * Subscribe to table changes
@@ -23,55 +27,81 @@ class RealtimeService {
   ): () => void {
     const channelName = `${table}-${event}-${filter || 'all'}`;
 
-    // Reuse existing channel if already subscribed
-    if (this.channels.has(channelName)) {
-      const existingChannel = this.channels.get(channelName)!;
-      existingChannel.on('postgres_changes', { event, schema: 'public', table, filter }, callback as any);
-      return () => this.unsubscribe(channelName);
+    // If channel exists, just add the callback
+    const existing = this.channels.get(channelName);
+    if (existing) {
+      existing.callbacks.add(callback);
+      return () => {
+        existing.callbacks.delete(callback);
+        if (existing.callbacks.size === 0) {
+          this.unsubscribe(channelName);
+        }
+      };
     }
 
+    // Create a new entry immediately to prevent race conditions during synchronous setup
+    const callbacks = new Set<SubscriptionCallback>();
+    callbacks.add(callback);
+    
     const channel = supabase.channel(channelName);
+    this.channels.set(channelName, { channel, callbacks });
 
     channel
       .on('postgres_changes', { event, schema: 'public', table, filter }, (payload) => {
         try {
-          callback(payload as RealtimePostgresChangesPayload<T>);
+          const currentEntry = this.channels.get(channelName);
+          if (currentEntry) {
+            // Use a unique set to prevents potential duplicates if multiple .on calls somehow occurred
+            currentEntry.callbacks.forEach(cb => {
+              try {
+                cb(payload as RealtimePostgresChangesPayload<T>);
+              } catch (e) {
+                console.error(`[Realtime] Error in shared callback for ${channelName}:`, e);
+              }
+            });
+          }
         } catch (error) {
-          console.error(`[Realtime] Error in callback for ${channelName}:`, error);
-          if (options.onError) options.onError(error);
+          console.error(`[Realtime] Fatal error in callback dispatcher for ${channelName}:`, error);
         }
       })
       .subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
           console.log(`[Realtime] ✅ Subscribed to ${channelName}`);
         }
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.error(`[Realtime] ❌ Error on ${channelName}:`, err);
-          // Clean up and eject channel from map so a future subscription attempt can start fresh
-          supabase.removeChannel(channel);
-          this.channels.delete(channelName);
-          if (options.onError) options.onError(err || new Error(`Channel error or timeout on ${channelName}`));
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.error(`[Realtime] ❌ ${status} on ${channelName}:`, err);
+          // Only unsubscribe if it's still the same entry
+          const current = this.channels.get(channelName);
+          if (current && current.channel === channel) {
+            this.unsubscribe(channelName);
+          }
+          if (options.onError) options.onError(err || new Error(`${status} on ${channelName}`));
         }
       });
 
-    this.channels.set(channelName, channel);
-
-    return () => this.unsubscribe(channelName);
+    return () => {
+      const entry = this.channels.get(channelName);
+      if (entry) {
+        entry.callbacks.delete(callback);
+        if (entry.callbacks.size === 0) {
+          this.unsubscribe(channelName);
+        }
+      }
+    };
   }
 
   private unsubscribe(channelName: string) {
-    const channel = this.channels.get(channelName);
-    if (channel) {
-      supabase.removeChannel(channel);
+    const entry = this.channels.get(channelName);
+    if (entry) {
+      supabase.removeChannel(entry.channel);
       this.channels.delete(channelName);
       console.log(`[Realtime] Unsubscribed from ${channelName}`);
     }
   }
 
   unsubscribeAll() {
-    this.channels.forEach((channel, name) => {
-      supabase.removeChannel(channel);
-      console.log(`[Realtime] Unsubscribed from ${name}`);
+    this.channels.forEach((_entry, name) => {
+      this.unsubscribe(name);
     });
     this.channels.clear();
   }

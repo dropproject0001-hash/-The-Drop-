@@ -120,141 +120,159 @@ export function BaseLayout() {
           )}
         </nav>
         
-        {/* Bottom Actions */}
-        <div className="w-full flex flex-col gap-3 z-10 pt-4 border-t border-[#106011]/20">
-          <NavItem icon={<Settings className="w-5 h-5 animate-spin-slow" />} active={activeTab === 'settings'} tooltip="Control Settings" label="CONTROL SETTINGS" isExpanded={isExpanded} onClick={() => setActiveTab('settings')} />
+        {/* Bottom Actions - Tactical Control Panel */}
+        <div className="w-full flex flex-col gap-3 z-10 pt-5 mt-auto border-t border-[#106011]/30 relative group/bottom">
+          {/* Subtle scanning glow background for the control area */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#106011]/5 to-transparent pointer-events-none opacity-0 group-hover/bottom:opacity-100 transition-opacity duration-700" />
           
-          {/* Latch Lock Switch */}
+          <NavItem 
+            icon={<Settings className="w-5 h-5 animate-spin-[10s_linear_infinite]" />} 
+            active={activeTab === 'settings'} 
+            tooltip="Control Settings" 
+            label="SYSTEM CONFIG" 
+            isExpanded={isExpanded} 
+            onClick={() => setActiveTab('settings')} 
+          />
+          
+          {/* Latch Lock Switch - Enhanced HUD Action */}
           <button 
+            id="sidebar-lock-toggle"
             onClick={() => setIsLocked(!isLocked)}
-            className="w-full h-10 rounded-xl flex items-center justify-center text-[#106011] bg-black/95 hover:bg-[#106011]/20 border-2 border-[#106011] shadow-[0_0_15px_rgba(16,96,17,0.45)] hover:shadow-[0_0_22px_rgba(16,96,17,0.7)] transition-all duration-300 cursor-pointer relative gap-3 px-3 overflow-hidden select-none font-bold group"
+            className="w-full h-10 rounded-xl flex items-center justify-center text-[#106011] bg-black/95 hover:bg-[#106011]/25 border-2 border-[#106011]/80 shadow-[0_0_15px_rgba(16,96,17,0.35)] hover:shadow-[0_0_25px_rgba(16,96,17,0.6)] transition-all duration-300 cursor-pointer relative gap-3 px-3 overflow-hidden select-none font-bold group/lock"
           >
             {/* Tactical HUD Corner Brackets */}
-            <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)] z-20"></div>
-            <div className="absolute top-0 right-0 w-2.5 h-2.5 border-t-2 border-r-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)] z-20"></div>
-            <div className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)] z-20"></div>
-            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)] z-20"></div>
+            <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)] z-20 transition-transform group-hover/lock:-translate-x-0.5 group-hover/lock:-translate-y-0.5"></div>
+            <div className="absolute top-0 right-0 w-2.5 h-2.5 border-t-2 border-r-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)] z-20 transition-transform group-hover/lock:translate-x-0.5 group-hover/lock:-translate-y-0.5"></div>
+            <div className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)] z-20 transition-transform group-hover/lock:-translate-x-0.5 group-hover/lock:translate-y-0.5"></div>
+            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.9)] z-20 transition-transform group-hover/lock:translate-x-0.5 group-hover/lock:translate-y-0.5"></div>
             
-            {/* Inner Nested Rectangle Lines */}
-            <div className="absolute inset-0.5 border border-dashed border-[#106011]/30 pointer-events-none rounded-[10px] z-10"></div>
+            {/* Inner Nested HUD Overlay */}
+            <div className="absolute inset-0.5 border border-dashed border-[#106011]/30 pointer-events-none rounded-[10px] z-10 group-hover/lock:border-[#106011]/50 transition-colors"></div>
             <div className="absolute inset-1 border border-[#106011]/15 pointer-events-none rounded-[8px] z-10"></div>
 
-            <div className="shrink-0 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform duration-300">
+            {/* Glowing Scanline */}
+            <motion.div 
+              animate={{ y: ['-100%', '200%'] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-x-0 h-px bg-[#106011]/40 blur-[1px] pointer-events-none z-10"
+            />
+
+            <div className="shrink-0 flex items-center justify-center relative z-10 group-hover/lock:scale-110 transition-transform duration-300">
               {isLocked ? (
-                <Lock className="w-4 h-4 text-[#106011] drop-shadow-[0_0_6px_rgba(16,96,17,0.85)]" />
+                <Lock className="w-4 h-4 text-[#106011] drop-shadow-[0_0_8px_rgba(10,209,17,0.9)]" />
               ) : (
-                <Unlock className="w-4 h-4 text-[#106011] drop-shadow-[0_0_4px_rgba(16,96,17,0.5)] animate-pulse" />
+                <Unlock className="w-4 h-4 text-[#106011] drop-shadow-[0_0_5px_rgba(16,96,17,0.5)] animate-pulse" />
               )}
             </div>
             
-            <AnimatePresence>
-              {isExpanded && (
+            <AnimatePresence mode="wait">
+              {isExpanded ? (
                 <motion.span 
+                  key={isLocked ? 'locked' : 'unlocked'}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
-                  className="text-[9px] font-mono text-[#106011] font-black uppercase tracking-[0.18em] whitespace-nowrap bg-black/40 px-2.5 py-0.5 rounded border border-[#106011]/45 relative z-10 drop-shadow-[0_0_5px_rgba(16,96,17,0.7)]"
+                  className="text-[9px] font-mono text-[#0ad111] font-black uppercase tracking-[0.18em] whitespace-nowrap bg-black/60 px-2.5 py-0.5 rounded border border-[#106011]/45 relative z-10 shadow-[0_0_10px_rgba(16,96,17,0.2)]"
                 >
-                  {isLocked ? "LOCK ON" : "LOCK OFF"}
+                  {isLocked ? "LOCK ENGAGED" : "AUTO-EXPAND"}
                 </motion.span>
-              )}
+              ) : null}
             </AnimatePresence>
           </button>
-
-          {/* Mission Protocol / Instructions Drawer */}
-          <AnimatePresence>
+<AnimatePresence>
             {isExpanded && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="w-full bg-[#050f05]/95 border-2 border-[#106011]/60 rounded-xl overflow-hidden p-3 shadow-[inset_0_0_20px_rgba(16,96,17,0.15)] mb-1 relative"
+                className="w-full bg-[#050f05]/95 border-2 border-[#106011]/60 rounded-xl overflow-hidden p-3 shadow-[inset_0_0_20px_rgba(16,96,17,0.2)] mb-1 relative"
               >
-                {/* Background Cover Photo Overlay */}
+                {/* Mission Protocol Contents */}
                 <div 
-                  className="absolute inset-0 w-full h-full opacity-15 pointer-events-none mix-blend-luminosity bg-cover bg-center bg-no-repeat"
+                  className="absolute inset-0 w-full h-full opacity-10 pointer-events-none mix-blend-luminosity bg-cover bg-center bg-no-repeat grayscale"
                   style={{ backgroundImage: `url('/coverphoto3.jpg')` }}
                 />
-
-                {/* Universal Tactical HUD Corner Brackets */}
-                <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
-                <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
-                <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
-                <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
-
-                {/* Nested Rectangle Tactical HUD borders */}
-                <div className="absolute inset-0.5 border border-dashed pointer-events-none rounded-[10px] z-20 border-[#106011]/30"></div>
-                <div className="absolute inset-1 border pointer-events-none rounded-[8px] z-20 border-[#106011]/15"></div>
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] pointer-events-none" />
 
                 <div className="relative z-10 space-y-3">
-                  <div className="flex items-center gap-2 border-b border-[#106011]/30 pb-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-pulse" />
-                    <span className="text-[10px] font-mono font-black text-[#0ad111] tracking-widest uppercase">Mission Protocol</span>
+                  <div className="flex items-center gap-2 border-b border-[#106011]/40 pb-2">
+                    <div className="w-2 h-2 rounded-full bg-[#0ad111] animate-pulse shadow-[0_0_8px_#0ad111]" />
+                    <span className="text-[10px] font-mono font-black text-[#0ad111] tracking-widest uppercase drop-shadow-[0_0_5px_rgba(10,209,17,0.5)]">Mission Protocol</span>
                   </div>
                   
-                  <div className="space-y-3 overflow-y-auto max-h-[160px] pr-1 custom-scrollbar">
-                    {/* Boss/Owner Instructions */}
-                    <div className="space-y-1">
-                      <p className="text-[9px] font-bold text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)] border-l-2 border-amber-600 pl-1.5 font-mono">BOSS / OWNER</p>
-                      <ul className="text-[8px] text-[#0ad111]/90 font-mono space-y-1 pl-2">
-                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Track Droppers in real-time</span></li>
-                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Monitor spatial telemetry updates</span></li>
-                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Verify payment & drop proof</span></li>
-                      </ul>
-                    </div>
-
-                    {/* Dropper Instructions */}
-                    <div className="space-y-1">
-                      <p className="text-[9px] font-bold text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)] border-l-2 border-blue-600 pl-1.5 font-mono">ADMIN / DROPPER</p>
-                      <ul className="text-[8px] text-[#0ad111]/90 font-mono space-y-1 pl-2">
-                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Initialize product drop units</span></li>
-                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Pin exact GPS grid coordinates</span></li>
-                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Sync tactical photo evidence</span></li>
-                      </ul>
-                    </div>
-
-                    {/* Client Instructions */}
-                    <div className="space-y-1">
-                      <p className="text-[9px] font-bold text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)] border-l-2 border-[#106011] pl-1.5 font-mono">CLIENT / BUYER</p>
-                      <ul className="text-[8px] text-[#0ad111]/90 font-mono space-y-1 pl-2">
-                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Access real-time sector map</span></li>
-                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>View verified drop waypoints</span></li>
-                        <li className="flex gap-1"><span className="text-[#0ad111] drop-shadow-[0_0_2px_rgba(10,209,17,0.8)]">•</span> <span>Submit payment decryption</span></li>
-                      </ul>
-                    </div>
+                  <div className="space-y-4 overflow-y-auto max-h-[160px] pr-1 custom-scrollbar">
+                    {/* User Role Quick Reference */}
+                    {[
+                      { role: 'BOSS / OWNER', color: 'border-amber-600', text: 'amber-500', items: ['Track Real-time GPS', 'Monitor Telemetry', 'Verify Proofs'] },
+                      { role: 'ADMIN / DROPPER', color: 'border-blue-600', text: 'blue-500', items: ['Pin Grid Coordinates', 'Initialize Drop Units', 'Sync Photo Evidence'] },
+                      { role: 'CLIENT / BUYER', color: 'border-green-600', text: 'green-500', items: ['Access Sector Map', 'View Verified Waypoints', 'Submit Payment Hash'] }
+                    ].map((item) => (
+                      <div key={item.role} className="space-y-1.5 p-1.5 rounded bg-black/40 border border-[#106011]/10">
+                        <p className={`text-[9px] font-bold text-[#0ad111] border-l-2 ${item.color} pl-2 font-mono drop-shadow-[0_0_3px_rgba(10,209,17,0.6)]`}>{item.role}</p>
+                        <ul className="text-[8px] text-[#0ad111]/80 font-mono space-y-1 pl-3">
+                          {item.items.map(subItem => (
+                            <li key={subItem} className="flex gap-2">
+                              <span className="text-[#0ad111]/60">»</span> 
+                              <span>{subItem}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* About System / Guides Drawer */}
           <AboutDrawer isExpanded={isExpanded} />
 
-          {/* Logout / Terminate Session Button */}
+          {/* Logout Button - Critical Action HUD */}
           <button 
+            id="sidebar-logout-button"
             onClick={handleLogout}
-            className="w-full h-8 bg-red-950/40 border border-red-900/60 hover:border-red-600 rounded-lg text-red-500 hover:text-red-400 font-mono text-[8px] font-black tracking-[0.25em] transition-all uppercase flex items-center justify-center gap-2 group cursor-pointer shadow-[0_0_10px_rgba(220,38,38,0.1)] relative"
+            className="w-full h-9 bg-red-950/30 border-2 border-red-900/40 hover:border-red-500/80 rounded-xl text-red-500 hover:text-red-400 font-mono text-[9px] font-black tracking-[0.3em] transition-all uppercase flex items-center justify-center gap-3 group/logout cursor-pointer shadow-[0_0_12px_rgba(220,38,38,0.05)] hover:shadow-[0_0_20px_rgba(220,38,38,0.3)] relative overflow-hidden"
           >
-            <LogOut className={`w-3 h-3 group-hover:scale-110 transition-transform ${isExpanded ? '' : 'drop-shadow-[0_0_5px_rgba(220,38,38,0.8)]'}`} />
+            {/* Red Pulsing Underglow */}
+            <div className="absolute inset-0 bg-red-600/5 opacity-0 group-hover/logout:opacity-100 animate-pulse transition-opacity duration-500" />
+            
+            <LogOut className={`w-3.5 h-3.5 z-10 transition-all duration-300 ${isExpanded ? 'group-hover:translate-x-1' : 'drop-shadow-[0_0_8px_rgba(239,68,68,0.9)] group-hover:scale-125'}`} />
             
             <AnimatePresence>
               {isExpanded && (
                 <motion.span 
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="whitespace-nowrap overflow-hidden"
+                  initial={{ opacity: 0, x: -5 }}
+                  animate={{ 
+                    opacity: [1, 0.2, 1], // Blinking effect
+                    x: 0 
+                  }}
+                  transition={{ 
+                    opacity: { repeat: Infinity, duration: 1, ease: "easeInOut" },
+                    x: { duration: 0.3 }
+                  }}
+                  exit={{ opacity: 0, x: -5 }}
+                  className="whitespace-nowrap z-10 drop-shadow-[0_0_5px_rgba(239,68,68,0.4)] flex items-center gap-1"
                 >
-                  LOG OUT
+                  LOGOUT
+                  <motion.span 
+                    animate={{ opacity: [1, 0, 1], y: [0, 2, 0] }}
+                    transition={{ duration: 0.8, repeat: Infinity }}
+                    className="text-[10px]"
+                  >
+                    ↓
+                  </motion.span>
                 </motion.span>
               )}
             </AnimatePresence>
 
+            {/* Tactical HUD Corner Elements */}
+            <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-red-500/30 group-hover/logout:border-red-500 z-10 transition-colors" />
+            <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-red-500/30 group-hover/logout:border-red-500 z-10 transition-colors" />
+
             {/* Tooltip for collapsed state */}
             {!isExpanded && (
-              <span className="absolute left-full ml-4 px-2.5 py-1 bg-black/95 border-2 text-[9px] font-mono rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 tracking-widest border-red-900 text-red-500 shadow-[0_0_10px_rgba(220,38,38,0.3)]">
-                LOG OUT
+              <span className="absolute left-full ml-4 px-3 py-1.5 bg-black border-2 border-red-900/80 text-[10px] font-mono font-bold text-red-500 rounded-lg opacity-0 group-hover/logout:opacity-100 transition-all duration-300 translate-x-[-10px] group-hover:translate-x-0 pointer-events-none whitespace-nowrap z-[100] tracking-[0.3em] shadow-[0_0_25px_rgba(220,38,38,0.4)] animate-pulse">
+                LOGOUT
               </span>
             )}
           </button>
@@ -282,8 +300,12 @@ export function BaseLayout() {
             NODE.LAT: 13.4348° N // LON: 120.5721° E
           </div>
 
-          <div className="flex items-center gap-4 relative z-10 pl-2">
-            <ShoppingCart className="w-6 h-6 text-[#106011] shrink-0 drop-shadow-[0_0_8px_rgba(16,96,17,0.8)]" />
+          <motion.div 
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-4 relative z-10 pl-2 cursor-pointer"
+          >
+            <ShoppingCart className="w-6 h-6 text-[#106011] shrink-0 drop-shadow-[0_0_12px_rgba(16,96,17,1)]" />
             <div className="w-44 sm:w-64 md:w-[400px] lg:w-[500px] overflow-hidden relative flex shrink-0 mask-image-fade">
               <motion.h1 
                 initial={{ x: "0%" }}
@@ -295,16 +317,23 @@ export function BaseLayout() {
                 {"Message 📩- Payment💲 - Confirmation ✅- Approval 💯-Pin Dropped product loc📍- Legitimate transactions🫱🏻🫲🏽 • Message 📩- Payment💲 - Confirmation ✅- Approval 💯-Pin Dropped product loc📍- Legitimate transactions🫱🏻🫲🏽 • "}
               </motion.h1>
             </div>
-            <div className="hidden md:flex items-center gap-2 pl-4 border-l border-[#106011]/30">
-              <span className="w-2 h-2 rounded-full bg-[#106011] animate-ping"></span>
+            <div className="hidden md:flex items-center gap-2 pl-4 border-l border-[#106011]/30 group/status">
+              <motion.span 
+                animate={{ 
+                  scale: [1, 1.5, 1],
+                  opacity: [1, 0.5, 1]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-2.5 h-2.5 rounded-full bg-[#0ad111] shadow-[0_0_10px_#0ad111]"
+              />
               <span 
-                className="text-xs font-mono uppercase tracking-widest font-semibold drop-shadow-[0_0_5px_rgba(16,96,17,0.6)]"
-                style={{ color: '#2fe731' }}
+                className="text-xs font-mono uppercase tracking-[0.2em] font-black drop-shadow-[0_0_8px_rgba(10,209,17,0.8)]"
+                style={{ color: '#0ad111' }}
               >
                 CONNECTION ESTABLISHED
               </span>
             </div>
-          </div>
+          </motion.div>
           
           <div className="flex items-center gap-4 relative z-10 pr-2">
             
@@ -339,61 +368,112 @@ interface NavItemProps {
 }
 
 function NavItem({ icon, active, tooltip, label, isExpanded, onClick, badge, badgeStyle }: NavItemProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  
   const buttonStyle = active
-    ? "bg-[#106011]/25 text-[#106011] shadow-[inset_0_0_12px_rgba(16,96,17,0.4)] border border-[#106011] font-bold drop-shadow-[0_0_6px_rgba(16,96,17,0.7)] cursor-default"
-    : "text-slate-400 hover:text-[#106011] bg-black/40 border border-[#106011]/30 hover:border-[#106011] hover:shadow-[0_0_12px_rgba(16,96,17,0.3)] transition-all cursor-pointer";
+    ? "bg-[#106011]/25 text-[#106011] shadow-[inset_0_0_15px_rgba(16,96,17,0.5)] border border-[#106011] font-bold drop-shadow-[0_0_8px_rgba(16,96,17,0.8)] cursor-default"
+    : "text-slate-400 hover:text-[#0ad111] bg-black/40 border border-[#106011]/30 hover:border-[#106011]/80 hover:shadow-[0_0_15px_rgba(16,96,17,0.4)] transition-all cursor-pointer";
 
   return (
     <button 
       onClick={onClick}
-      className={`relative group w-full h-11 rounded-xl flex items-center ${isExpanded ? 'px-3 gap-3 justify-start' : 'justify-center'} transition-all duration-300 overflow-hidden ${buttonStyle}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`relative group w-full h-12 rounded-xl flex items-center ${isExpanded ? 'px-3 gap-3 justify-start' : 'justify-center'} transition-all duration-500 overflow-hidden ${buttonStyle}`}
     >
-      {/* Universal Tactical HUD Corner Brackets */}
-      <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 pointer-events-none z-20 group-hover:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
-      <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 pointer-events-none z-20 group-hover:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
-      <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 pointer-events-none z-20 group-hover:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
-      <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 pointer-events-none z-20 group-hover:scale-105 transition-transform duration-300 border-[#106011] drop-shadow-[0_0_3px_rgba(16,96,17,0.8)]"></div>
+      {/* Dynamic Tactical HUD Corner Brackets */}
+      <motion.div 
+        animate={{ scale: isHovered || active ? 1.1 : 1, opacity: isHovered || active ? 1 : 0.6 }}
+        className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_4px_rgba(16,96,17,0.9)]" 
+      />
+      <motion.div 
+        animate={{ scale: isHovered || active ? 1.1 : 1, opacity: isHovered || active ? 1 : 0.6 }}
+        className="absolute top-0 right-0 w-2.5 h-2.5 border-t-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_4px_rgba(16,96,17,0.9)]" 
+      />
+      <motion.div 
+        animate={{ scale: isHovered || active ? 1.1 : 1, opacity: isHovered || active ? 1 : 0.6 }}
+        className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_4px_rgba(16,96,17,0.9)]" 
+      />
+      <motion.div 
+        animate={{ scale: isHovered || active ? 1.1 : 1, opacity: isHovered || active ? 1 : 0.6 }}
+        className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 pointer-events-none z-20 border-[#106011] drop-shadow-[0_0_4px_rgba(16,96,17,0.9)]" 
+      />
       
-      {/* Inner Nested Rectangle Lines */}
-      <div className="absolute inset-0.5 border border-dashed pointer-events-none rounded-[10px] z-10 border-[#106011]/30 group-hover:border-[#106011]/50 transition-colors"></div>
-      <div className="absolute inset-1 border pointer-events-none rounded-[8px] z-10 border-[#106011]/15 group-hover:border-[#106011]/30 transition-colors"></div>
+      {/* Scanning Line Animation */}
+      {(isHovered || active) && (
+        <motion.div 
+          initial={{ y: "-100%" }}
+          animate={{ y: "200%" }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-x-0 h-1 bg-[#106011]/20 blur-[2px] pointer-events-none z-0"
+        />
+      )}
 
-      <div className={`${isExpanded ? 'shrink-0' : 'mx-auto'} relative z-10 ${active ? 'text-[#106011] drop-shadow-[0_0_5px_rgba(16,96,17,0.85)]' : 'group-hover:scale-110 group-hover:text-[#106011] transition-all duration-300'}`}>
+      {/* Inner Nested Rectangle Lines */}
+      <div className={`absolute inset-0.5 border border-dashed pointer-events-none rounded-[10px] z-10 transition-colors duration-500 ${isHovered || active ? 'border-[#106011]/60' : 'border-[#106011]/30'}`} />
+      <div className={`absolute inset-1 border pointer-events-none rounded-[8px] z-10 transition-colors duration-500 ${isHovered || active ? 'border-[#106011]/40' : 'border-[#106011]/15'}`} />
+
+      {/* Icon Container with interactive animations */}
+      <motion.div 
+        animate={{ 
+          scale: active ? 1.15 : (isHovered ? 1.25 : 1),
+          rotate: active ? 0 : (isHovered ? [0, -5, 5, 0] : 0),
+          filter: active || isHovered ? "drop-shadow(0 0 8px rgba(10,209,17,0.8))" : "none"
+        }}
+        transition={{ 
+          type: "spring", 
+          stiffness: 400, 
+          damping: 15,
+          rotate: isHovered ? { duration: 0.5, repeat: Infinity, repeatType: "mirror" } : { duration: 0.2 }
+        }}
+        className={`${isExpanded ? 'shrink-0' : 'mx-auto'} relative z-10 ${active ? 'text-[#0ad111]' : 'group-hover:text-[#0ad111] transition-colors duration-300'}`}
+      >
         {icon}
-      </div>
+      </motion.div>
       
       <AnimatePresence>
         {isExpanded && (
           <motion.div 
-            initial={{ opacity: 0, x: -10 }}
+            initial={{ opacity: 0, x: -15 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
+            exit={{ opacity: 0, x: -15 }}
             className="flex-1 flex items-center justify-between min-w-0"
           >
             <span 
-              className={`text-[10px] font-display font-black tracking-widest uppercase truncate relative z-10 ${active ? 'text-[#106011] drop-shadow-[0_0_6px_rgba(16,96,17,0.7)]' : 'text-slate-200 group-hover:text-[#106011] transition-colors'}`}
+              className={`text-[10px] font-display font-black tracking-[0.2em] uppercase truncate relative z-10 ${active ? 'text-[#0ad111] drop-shadow-[0_0_8px_rgba(10,209,17,0.6)]' : 'text-slate-300 group-hover:text-[#0ad111] transition-colors duration-300'}`}
             >
               {label || tooltip}
             </span>
             {badge && (
-              <span className={`text-[8px] font-mono leading-none px-1.5 py-0.5 rounded border select-none h-fit shrink-0 tracking-wider font-extrabold max-w-[85px] truncate flex items-center justify-center min-w-[50px] ${badgeStyle || 'border-[#106011] bg-black text-[#106011]'}`}>
+              <motion.span 
+                animate={{ 
+                  backgroundColor: active ? "rgba(16,96,17,0.3)" : "rgba(0,0,0,0.6)",
+                  borderColor: active ? "rgba(16,96,17,0.8)" : "rgba(16,96,17,0.4)"
+                }}
+                className={`text-[8px] font-mono leading-none px-2 py-0.5 rounded-sm border select-none h-fit shrink-0 tracking-widest font-black max-w-[85px] truncate flex items-center justify-center min-w-[50px] shadow-[0_0_10px_rgba(0,0,0,0.5)] ${badgeStyle || 'border-[#106011] text-[#106011]'}`}
+              >
                 {badge}
-              </span>
+              </motion.span>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* When collapsed, show tiny glowing badge pill or notification dot */}
-      {!isExpanded && badge && (
-        <span className={`absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full border border-black z-20 ${badge.includes('ACTIVE') || badge.includes('ON') ? 'bg-red-500 animate-pulse shadow-[0_0_6px_rgba(220,38,38,0.9)]' : 'bg-green-500 animate-pulse shadow-[0_0_6px_rgba(34,197,94,0.9)]'}`}></span>
-      )}
-
-      {/* Tooltip Link */}
+      {/* Tooltip for collapsed state */}
       {!isExpanded && (
-        <span className="absolute left-full ml-4 px-2.5 py-1 bg-black/95 border-2 text-[9px] font-mono rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 tracking-widest border-[#106011] text-[#106011] drop-shadow-[0_0_5px_rgba(16,96,17,0.5)] shadow-[0_0_10px_rgba(16,96,17,0.3)]">
-          {tooltip}
-        </span>
+        <AnimatePresence>
+          {isHovered && (
+            <motion.span 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="absolute left-[calc(100%+16px)] px-3 py-1.5 bg-black border-2 border-[#106011] text-[#106011] text-[10px] font-mono font-bold rounded-lg whitespace-nowrap z-[100] tracking-widest shadow-[0_0_20px_rgba(16,96,17,0.5)] flex items-center gap-2"
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-pulse" />
+              {tooltip}
+            </motion.span>
+          )}
+        </AnimatePresence>
       )}
     </button>
   );

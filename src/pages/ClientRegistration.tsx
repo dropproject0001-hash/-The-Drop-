@@ -1,76 +1,61 @@
+// src/pages/ClientRegistration.tsx
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { useOTP } from '../hooks/useOTP';
+import { useOTP } from '@/hooks/useOTP';
+import { useToast } from '@/components/ui/ToastContainer';
+import { useNavigate } from 'react-router-dom';
 
 export default function ClientRegistration() {
-  const [alias, setAlias] = useState('');
-  const [phone, setPhone] = useState('');
-  const [step, setStep] = useState<'details' | 'otp'>('details');
+  const navigate = useNavigate();
+  const { showToast } = useToast();
   const { otp, setOtp, loading, error, requestOTP, verifyOTP } = useOTP();
 
-  const handleRegister = async () => {
-    if (!alias || !phone) return;
+  const [phone, setPhone] = useState('');
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
 
-    try {
-      // Call Edge Function to register client
-      const { data, error } = await supabase.functions.invoke('register-client', {
-        body: { alias, phone },
-      });
-
-      if (error) throw error;
-
-      // Send OTP
-      await requestOTP(phone, 'client_registration');
+  const handleSendOTP = async () => {
+    if (!phone) return;
+    const result = await requestOTP(phone);
+    if (result.success) {
       setStep('otp');
-    } catch (err: any) {
-      alert(err.message || 'Registration failed');
+      showToast('OTP sent successfully', { type: 'success' });
+    } else {
+      showToast(error || 'Failed to send OTP', { type: 'error' });
     }
   };
 
   const handleVerifyOTP = async () => {
-    const result = await verifyOTP(phone, otp, 'client_registration');
+    const result = await verifyOTP(phone, otp);
     if (result.success) {
-      alert('Registration successful! Welcome to the system.');
-      localStorage.setItem('demo_role', 'client');
-      window.location.href = '/';
+      showToast('Registration successful!', { type: 'success' });
+      navigate('/auth');
+    } else {
+      showToast(error || 'Invalid OTP', { type: 'error' });
     }
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6 text-white">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-zinc-950 text-white">
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
         <h1 className="text-2xl font-bold mb-6 text-center">Client Registration</h1>
 
-        {step === 'details' && (
+        {step === 'phone' && (
           <div className="space-y-5">
-            <div>
-              <label className="text-sm text-zinc-400">Alias / Codename</label>
-              <input
-                type="text"
-                value={alias}
-                onChange={(e) => setAlias(e.target.value)}
-                className="w-full mt-1 bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3"
-                placeholder="Ghost"
-              />
-            </div>
-
             <div>
               <label className="text-sm text-zinc-400">Mobile Number</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full mt-1 bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3"
                 placeholder="+639171234567"
+                className="w-full mt-1 bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3"
               />
             </div>
-
             <button
-              onClick={handleRegister}
-              disabled={loading || !alias || !phone}
-              className="w-full py-3 bg-emerald-600 rounded-xl font-medium disabled:bg-zinc-700"
+              onClick={handleSendOTP}
+              disabled={loading || !phone}
+              className="w-full py-3 bg-emerald-600 rounded-xl font-medium disabled:bg-zinc-700 font-mono tracking-widest text-black"
             >
-              Register & Send OTP
+              {loading ? 'Sending...' : 'Send OTP'}
             </button>
           </div>
         )}
@@ -78,7 +63,7 @@ export default function ClientRegistration() {
         {step === 'otp' && (
           <div className="space-y-5">
             <div>
-              <label className="text-sm text-zinc-400">Enter OTP sent to {phone}</label>
+              <label className="text-sm text-zinc-400">Enter 6-digit OTP</label>
               <input
                 type="text"
                 value={otp}
@@ -87,18 +72,17 @@ export default function ClientRegistration() {
                 className="w-full mt-1 bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-center text-2xl tracking-[8px]"
               />
             </div>
-
             <button
               onClick={handleVerifyOTP}
               disabled={loading || otp.length !== 6}
-              className="w-full py-3 bg-emerald-600 rounded-xl font-medium disabled:bg-zinc-700"
+              className="w-full py-3 bg-emerald-600 rounded-xl font-medium disabled:bg-zinc-700 font-mono tracking-widest text-black"
             >
-              Verify & Complete Registration
+              {loading ? 'Verifying...' : 'Verify & Register'}
             </button>
           </div>
         )}
 
-        {error && <p className="text-red-400 text-sm mt-4">{error}</p>}
+        {error && <p className="text-red-400 text-sm mt-4 text-center">{error}</p>}
       </div>
     </div>
   );

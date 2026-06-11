@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ErrorBoundary } from './providers/ErrorBoundary';
+import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { EnvChecker } from './providers/EnvChecker';
 import { AuthProvider } from './providers/AuthContext';
 import { AppRouter } from './router/AppRouter';

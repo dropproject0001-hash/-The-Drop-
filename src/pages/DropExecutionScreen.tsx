@@ -3,9 +3,11 @@ import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import QRCode from "qrcode";
 import { useLiveLocations } from "../hooks/realtime/useLiveLocations";
 import { useLiveDrops } from "../hooks/realtime/useLiveDrops";
+import { useToast } from "@/components/ui/ToastContainer";
 import DropConfirmationModal from "../components/DropConfirmationModal";
 
 export default function DropExecutionScreen({ dropId }: { dropId: string }) {
+  const { showToast } = useToast();
   const [qrCode, setQrCode] = useState("");
   const [isExecuting, setIsExecuting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -13,7 +15,6 @@ export default function DropExecutionScreen({ dropId }: { dropId: string }) {
   const { updateDropStatus } = useLiveDrops();
 
   // In a real app we'd fetch the specific dropper's uid. Here we just take the first marker or wait for a proper Drop execution model.
-  // We'll fall back to Mamburao center safely if not found
   const assignedAgentId = "latest"; 
   const latestLocation = locations[assignedAgentId]?.[0] || null;
 
@@ -32,10 +33,10 @@ export default function DropExecutionScreen({ dropId }: { dropId: string }) {
     try {
       await updateDropStatus(dropId, 'claimed'); // This now does optimistic update internally
       setShowConfirmModal(false);
-      alert("Drop marked as executed. Awaiting client confirmation.");
+      showToast("Drop marked as executed. Awaiting client confirmation.", { type: 'success' });
     } catch (error) {
       console.error("Failed to execute drop");
-      alert("Failed to execute drop.");
+      showToast("Failed to execute drop.", { type: 'error' });
     } finally {
       setIsExecuting(false);
     }

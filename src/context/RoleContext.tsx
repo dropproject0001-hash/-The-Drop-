@@ -1,12 +1,13 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-type Role = 'super_admin' | 'dropper' | 'client' | null;
+type Role = 'super_admin' | 'admin' | 'dropper' | 'client' | null;
 
 interface RoleContextType {
   role: Role;
   loading: boolean;
   isSuperAdmin: boolean;
+  isAdmin: boolean;
   isDropper: boolean;
   isClient: boolean;
   refreshRole: () => Promise<Role>;
@@ -16,6 +17,7 @@ const RoleContext = createContext<RoleContextType>({
   role: null,
   loading: true,
   isSuperAdmin: false,
+  isAdmin: false,
   isDropper: false,
   isClient: false,
   refreshRole: async () => null,
@@ -28,8 +30,10 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const fetchRole = async () => {
     setLoading(true);
     
-    // Check for demo bypass first
-    const demoRole = localStorage.getItem('demo_role') as Role;
+    // Check for demo bypass first (DEV only)
+    const demoRole = import.meta.env.DEV 
+      ? (localStorage.getItem('demo_role') as Role)
+      : null;
     if (demoRole) {
       setRole(demoRole);
       setLoading(false);
@@ -70,6 +74,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     role,
     loading,
     isSuperAdmin: role === 'super_admin',
+    isAdmin: role === 'admin',
     isDropper: role === 'dropper',
     isClient: role === 'client',
     refreshRole: fetchRole,

@@ -42,7 +42,7 @@ export function DropReassignControl({ drop, availableDroppers, onReassigned }: D
       <option value="">Reassign to...</option>
       {availableDroppers.map((dropper) => (
         <option key={dropper.id} value={dropper.id}>
-          {dropper.email}
+          {dropper.display_name || dropper.username || dropper.id.slice(0, 8)}
         </option>
       ))}
     </select>

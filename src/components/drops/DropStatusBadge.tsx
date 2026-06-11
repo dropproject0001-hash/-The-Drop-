@@ -16,7 +16,7 @@ export function DropStatusBadge({ status, size = 'md' }: DropStatusBadgeProps) {
       case 'expired':
         return { label: 'EXPIRED', color: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30' };
       default:
-        return { label: status.toUpperCase(), color: 'bg-zinc-800 text-zinc-400' };
+        return { label: (status as any).toUpperCase(), color: 'bg-zinc-800 text-zinc-400' };
     }
   };
 

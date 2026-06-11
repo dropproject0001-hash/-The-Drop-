@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { PackageSearch, MapPin, User, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
+import { useToast } from '@/components/ui/ToastContainer';
 
 export function CreateDropPanel({ onClose }: { onClose: () => void }) {
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -29,10 +31,11 @@ export function CreateDropPanel({ onClose }: { onClose: () => void }) {
       });
 
       if (error) throw error;
+      showToast('Drop initialized successfully', { type: 'success' });
       onClose();
     } catch (err) {
       console.error(err);
-      alert('Failed to create drop');
+      showToast('Failed to create drop', { type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -70,7 +73,7 @@ export function CreateDropPanel({ onClose }: { onClose: () => void }) {
             <span className="text-[10px] uppercase font-mono text-slate-400">Longitude</span>
             <input 
               type="number" 
-              step="any"
+              step="any" 
               required 
               className="bg-[#106011]/10 border border-[#106011]/30 rounded p-2 text-sm font-mono focus:border-[#106011] outline-none"
               value={formData.lng}

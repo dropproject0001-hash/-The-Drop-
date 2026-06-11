@@ -29,6 +29,9 @@ class LocationBroadcastService {
   public queueSize = 0;
   public isOnline = navigator.onLine;
 
+  private lastBroadcastTime = 0;
+  private readonly THROTTLE_MS = 5000; // Minimum 5 seconds between broadcasts
+
   constructor() {
     this.setupNetworkListeners();
     this.startQueueFlusher();
@@ -57,7 +60,13 @@ class LocationBroadcastService {
     speed?: number;
     altitude?: number;
     drop_id?: string | null;
-  }) {
+  }, force = false) {
+    const now = Date.now();
+    if (!force && now - this.lastBroadcastTime < this.THROTTLE_MS) {
+      return { success: true, throttled: true };
+    }
+
+    this.lastBroadcastTime = now;
     try {
       const { error } = await supabase.functions.invoke('broadcast-location', {
         body: payload,

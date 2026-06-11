@@ -4,7 +4,7 @@ import { useRole } from '../context/RoleContext';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  allowedRoles?: Array<'super_admin' | 'dropper' | 'client'>;
+  allowedRoles?: Array<'super_admin' | 'admin' | 'dropper' | 'client'>;
 }
 
 export default function ProtectedRoute({ 

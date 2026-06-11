@@ -13,6 +13,8 @@ import { MapTest } from '@/pages/MapTest';
 import CreateDropper from '@/pages/CreateDropper';
 import SuperAdminSetup from '@/pages/SuperAdminSetup';
 import Unauthorized from '@/pages/Unauthorized';
+import QRConfirmationScreen from '@/features/drops/QRConfirmationScreen';
+import AdminPortal from '@/features/portals/AdminPortal';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 export function AppRouter() {
@@ -37,8 +39,16 @@ export function AppRouter() {
           <Route 
             path="super-admin" 
             element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
                 <SuperAdminPanel />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="admin" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                <AdminPortal />
               </ProtectedRoute>
             } 
           />
@@ -59,9 +69,17 @@ export function AppRouter() {
             } 
           />
           <Route 
+            path="claim/:dropId" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <QRConfirmationScreen />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="create-dropper" 
             element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
                 <CreateDropper />
               </ProtectedRoute>
             } 

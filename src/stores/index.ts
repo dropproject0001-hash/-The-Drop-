@@ -25,12 +25,23 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       session: null,
       profile: null,
-      setSession: (session) => set({ session }),
-      setProfile: (profile) => set({ profile }),
-      clear: () => set({ session: null, profile: null }),
+      setSession: (session) => set({ session }, false, 'setSession'),
+      setProfile: (profile) => set({ profile }, false, 'setProfile'),
+      clear: () => set({ session: null, profile: null }, false, 'clear'),
     }),
-    // FIX H-1: import.meta.env.DEV is the correct Vite way
-    { enabled: !!(import.meta as any).env?.DEV, name: 'AuthStore' }
+    { 
+      enabled: !!(import.meta as any).env?.DEV, 
+      name: 'AuthStore',
+      // Explicitly serialize state for devtools to avoid call stack errors with complex objects
+      serialize: { 
+        options: { 
+          map: true,
+          set: true,
+          // Deep objects can be truncated
+          depth: 3
+        } 
+      }
+    }
   )
 );
 

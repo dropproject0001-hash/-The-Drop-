@@ -1,5 +1,5 @@
 import { User } from 'lucide-react';
-import { DropMap } from '@/components/map/DropMap';
+import DropMap from '@/components/map/DropMap';
 import { PortalNavbar } from '@/components/layout/PortalNavbar';
 
 export function ClientPortal() {

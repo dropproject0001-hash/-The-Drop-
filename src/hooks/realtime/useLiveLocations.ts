@@ -95,8 +95,9 @@ export function useLiveLocations(options: UseLiveLocationsOptions = {}) {
       },
       filter,
       {
+        maxRetries: 5,
         onError: (err) => {
-          console.warn('[useLiveLocations] Realtime channel transport failure or error occurred. Triggering background polling fallback:', err);
+          console.warn('[useLiveLocations] Realtime total failure after retries. Fallback to polling:', err);
           setError(err?.message || 'Location realtime error');
           setUseFallbackPolling(true);
         }
@@ -128,6 +129,7 @@ export function useLiveLocations(options: UseLiveLocationsOptions = {}) {
     getLatestForUser,
     error, 
     loading,
-    refresh: loadInitial 
+    refresh: loadInitial,
+    status: { mode: useFallbackPolling ? 'polling' : 'realtime' }
   };
 }

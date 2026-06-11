@@ -10,19 +10,21 @@ export default function LoginWithOTP() {
 
   const handleSendOTP = async () => {
     if (!phone) return;
-    const result = await requestOTP(phone, 'login');
+    const result = await requestOTP(phone);
     if (result.success) {
       setStep('otp');
     }
   };
 
   const handleVerify = async () => {
-    const result = await verifyOTP(phone, otp, 'login');
+    const result = await verifyOTP(phone, otp);
     if (result.success) {
       // In a real production app, we would now swap to a session-based auth.
       // Since this is a temporary fix for the login, we will bypass the AuthContext
-      // by setting a demo role and going back to the portal selector.
-      localStorage.setItem('demo_role', 'client'); 
+      // by setting a demo role and going back to the portal selector (DEV only).
+      if (import.meta.env.DEV) {
+        localStorage.setItem('demo_role', 'client'); 
+      }
       window.location.href = '/'; 
     }
   };

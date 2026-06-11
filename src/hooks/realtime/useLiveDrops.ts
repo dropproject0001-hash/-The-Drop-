@@ -54,8 +54,9 @@ export function useLiveDrops() {
       },
       undefined,
       {
+        maxRetries: 5,
         onError: (err) => {
-          console.warn('[useLiveDrops] Realtime channel transport failure or error occurred. Triggering background polling fallback:', err);
+          console.warn('[useLiveDrops] Realtime total failure after retries. Fallback to polling:', err);
           setError(err?.message || "Realtime error");
           setUseFallbackPolling(true);
         },

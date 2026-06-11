@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
-import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { realtimeService } from '@/services/supabase/realtime.service';
 
 interface UseRealtimeOptions<T = any> {
   table: string;
@@ -21,56 +20,37 @@ export function useRealtime<T = any>({
   onDelete,
   enabled = true,
 }: UseRealtimeOptions<T>) {
-  const channelRef = useRef<RealtimeChannel | null>(null);
+  // Use refs for callbacks to avoid re-subscription loops when anonymous functions are passed
+  const onInsertRef = useRef(onInsert);
+  const onUpdateRef = useRef(onUpdate);
+  const onDeleteRef = useRef(onDelete);
+
+  useEffect(() => {
+    onInsertRef.current = onInsert;
+    onUpdateRef.current = onUpdate;
+    onDeleteRef.current = onDelete;
+  }, [onInsert, onUpdate, onDelete]);
 
   useEffect(() => {
     if (!enabled) return;
 
-    const channelName = `realtime:${table}:${filter || 'all'}`;
+    const unsubscribe = realtimeService.subscribeToTable<T>(
+      table,
+      event as any,
+      (payload) => {
+        const newRecord = (payload.new ?? payload.old) as T;
 
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event,
-          schema: 'public',
-          table,
-          filter,
-        },
-        (payload: RealtimePostgresChangesPayload<T>) => {
-          const newRecord = (payload.new ?? payload.old) as T;
+        if (payload.eventType === 'INSERT' && onInsertRef.current) onInsertRef.current(newRecord);
+        if (payload.eventType === 'UPDATE' && onUpdateRef.current) onUpdateRef.current(newRecord);
+        if (payload.eventType === 'DELETE' && onDeleteRef.current) onDeleteRef.current(newRecord);
+      },
+      filter
+    );
 
-          if (payload.eventType === 'INSERT' && onInsert) onInsert(newRecord);
-          if (payload.eventType === 'UPDATE' && onUpdate) onUpdate(newRecord);
-          if (payload.eventType === 'DELETE' && onDelete) onDelete(newRecord);
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log(`[Realtime] Subscribed to ${channelName}`);
-        }
-        if (status === 'CHANNEL_ERROR') {
-          console.error(`[Realtime] Error on ${channelName}`);
-        }
-      });
-
-    channelRef.current = channel;
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
-  }, [table, event, filter, enabled, onInsert, onUpdate, onDelete]);
+    return () => unsubscribe();
+  }, [table, event, filter, enabled]);
 
   return {
-    unsubscribe: () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    },
+    // Unsubscribe is handled by useEffect cleanup, but we can expose it if needed
   };
 }

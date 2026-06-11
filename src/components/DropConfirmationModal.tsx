@@ -15,14 +15,14 @@ export default function DropConfirmationModal({ dropId, onConfirm, onClose }: Dr
 
   const handleSendOTP = async () => {
     if (!phone) return;
-    const result = await requestOTP(phone, 'drop_confirmation');
+    const result = await requestOTP(phone);
     if (result.success) {
       setStep('otp');
     }
   };
 
   const handleVerifyAndConfirm = async () => {
-    const result = await verifyOTP(phone, otp, 'drop_confirmation');
+    const result = await verifyOTP(phone, otp);
     if (result.success) {
       onConfirm(); // Proceed with drop confirmation
       onClose();
