@@ -19,6 +19,8 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useOTP } from '../hooks/useOTP';
 import { useRole } from '../context/RoleContext';
 import { BannerSlider } from '../components/ui/BannerSlider';
+import { PinVerification } from '../components/auth/PinVerification';
+import { useToast } from '@/components/ui/ToastContainer';
 
 type LoginMode = 'client' | 'staff';
 
@@ -30,6 +32,10 @@ export default function AuthFlow() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [step, setStep] = useState<'input' | 'otp'>('input');
+  
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [selectedRole, setSelectedRole] = useState('');
+  const { showToast } = useToast();
   
   const featureGridRef = useRef<HTMLDivElement>(null);
 
@@ -165,7 +171,7 @@ export default function AuthFlow() {
       await handleSuccessfulLogin();
     } catch (err: any) {
       setSystemLogs(prev => [`AUTH FAILURE: ${err.message || 'DECLINED'}`, ...prev].slice(0, 3));
-      if (!demoRole) alert(err.message || 'Login failed');
+      if (!demoRole) showToast(err.message || 'Login failed', { type: 'error' });
     }
   };
 
@@ -706,7 +712,10 @@ export default function AuthFlow() {
 
           <div className="grid grid-cols-3 gap-3">
             <button
-              onClick={() => handleStaffLogin('super_admin')}
+              onClick={() => {
+                setSelectedRole('super_admin');
+                setShowPinModal(true);
+              }}
               className="group flex flex-col items-center justify-center gap-2 p-3 bg-black border border-[#106011]/50 rounded-xl hover:bg-[#106011]/20 hover:border-[#0ad111] transition-all shadow-inner active:scale-95"
             >
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#106011]/20 border border-[#106011]/40 group-hover:bg-[#0ad111]/20 group-hover:border-[#0ad111] transition-colors">
@@ -716,7 +725,10 @@ export default function AuthFlow() {
             </button>
 
             <button
-              onClick={() => handleStaffLogin('dropper')}
+              onClick={() => {
+                setSelectedRole('dropper');
+                setShowPinModal(true);
+              }}
               className="group flex flex-col items-center justify-center gap-2 p-3 bg-black border border-[#106011]/50 rounded-xl hover:bg-[#106011]/20 hover:border-[#0ad111] transition-all shadow-inner active:scale-95"
             >
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#106011]/20 border border-[#106011]/40 group-hover:bg-[#0ad111]/20 group-hover:border-[#0ad111] transition-colors">

@@ -93,8 +93,21 @@ class LocationBroadcastService {
   }
 
   // ── Start Live Tracking (GPS + Presence) ───────────────────
+  private async getBatteryLevel(): Promise<number | null> {
+    if ('getBattery' in navigator) {
+      try {
+        const battery: any = await (navigator as any).getBattery();
+        return battery.level;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
   async startTracking(options: {
     onUpdate?: (location: LiveLocation) => void;
+    onError?: (error: any) => void;
     dropId?: string | null;
   } = {}) {
     if (this.watchId !== null) return; // already tracking
@@ -103,6 +116,9 @@ class LocationBroadcastService {
 
     // Start presence
     await this.trackPresence(options.dropId);
+
+    const batteryLevel = await this.getBatteryLevel();
+    const highAccuracy = batteryLevel === null || batteryLevel > 0.2; // Throttle if < 20%
 
     this.watchId = navigator.geolocation.watchPosition(
       async (position) => {
@@ -137,8 +153,15 @@ class LocationBroadcastService {
           console.error('[LocationBroadcastService] Uncaught error during telemetry tracking execution:', err);
         }
       },
-      (error) => console.error('[LocationBroadcastService] GPS error:', error),
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+      (error) => {
+        console.error('[LocationBroadcastService] GPS error:', error);
+        if (options.onError) options.onError(error);
+      },
+      { 
+        enableHighAccuracy: highAccuracy,
+        maximumAge: highAccuracy ? 10000 : 30000,
+        timeout: 15000,
+      }
     );
   }
 

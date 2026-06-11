@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores';
+import { useToast } from '@/components/ui/ToastContainer';
 
 interface Analytics {
   totalUsers: number;
@@ -41,6 +42,7 @@ export default function SuperAdminDashboard() {
   const [createLoading, setCreateLoading] = useState(false);
   
   const currentProfile = useAuthStore(state => state.profile);
+  const { showToast } = useToast();
 
   const fetchAnalytics = async () => {
     setLoading(true);
@@ -85,18 +87,18 @@ export default function SuperAdminDashboard() {
       .eq('id', selectedUser.id);
 
     if (!error) {
-      alert(`Role updated to ${newRole}`);
+      showToast('Role updated to ' + newRole, { type: 'success' });
       fetchUsers();
       setSelectedUser(null);
     } else {
-      alert('Failed to update role');
+      showToast('Failed to update role', { type: 'error' });
     }
   };
 
   const handleCreateDropper = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentProfile) {
-      alert('You must be logged in as Super Admin.');
+      showToast('You must be logged in as Super Admin.', { type: 'error' });
       return;
     }
     setCreateLoading(true);
@@ -113,7 +115,7 @@ export default function SuperAdminDashboard() {
       
       if (error) throw error;
       
-      alert('Dropper account created successfully!');
+      showToast('Dropper account created successfully!', { type: 'success' });
       setShowCreateDropper(false);
       setNewDropperUsername('');
       setNewDropperPassword('');
@@ -122,7 +124,7 @@ export default function SuperAdminDashboard() {
       fetchAnalytics();
     } catch (err: any) {
       console.error(err);
-      alert(err.message || 'Failed to create dropper');
+      showToast(err.message || 'Failed to create dropper', { type: 'error' });
     } finally {
       setCreateLoading(false);
     }

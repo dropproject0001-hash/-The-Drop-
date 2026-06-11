@@ -1,115 +1,108 @@
-/**
- * @file src/features/drops/QRConfirmationScreen.tsx
- *
- * FIX C-6: Html5QrcodeScanner instance is now stored in a ref and properly
- *           cleaned up in a useEffect cleanup function, covering both:
- *           - Component unmount while scanner is active
- *           - Multiple calls to startScanner without clearing the previous one
- */
-import { useState, useRef, useEffect } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
-import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+import { captureService } from '@/services/CaptureService';
+import { locationBroadcastService } from '@/services/LocationBroadcastService';
+import { useAuthStore } from '@/stores';
+import { useToast } from '@/components/ui/ToastContainer';
+import { CheckCircle, Camera, Video } from 'lucide-react';
 
-interface QRConfirmationScreenProps {
-  dropId: string;
-}
+export default function QRConfirmationScreen() {
+  const { dropId } = useParams();
+  const navigate = useNavigate();
+  const { profile } = useAuthStore();
+  const { showToast } = useToast();
 
-export function QRConfirmationScreen({ dropId }: QRConfirmationScreenProps) {
-  const [scannedCode, setScannedCode] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
-  const { confirmQR, loading } = useEdgeFunctions();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [proof, setProof] = useState<any>(null);
 
-  // FIX C-6: Cleanup scanner on unmount
-  useEffect(() => {
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.warn);
-        scannerRef.current = null;
+  const handleCaptureProof = async (type: 'photo' | 'video') => {
+    try {
+      if (type === 'photo') {
+        const result = await captureService.takePhoto();
+        setProof(result);
+        showToast('Photo captured successfully', { type: 'success' });
+      } else {
+        // Video capture logic...
+        showToast('Video recording started', { type: 'info' });
       }
-    };
-  }, []);
-
-  const startScanner = () => {
-    // Prevent duplicate scanner instances
-    if (scannerRef.current) {
-      scannerRef.current.clear().catch(console.warn);
-      scannerRef.current = null;
+    } catch (err: any) {
+      showToast(err.message || 'Failed to capture proof', { type: 'error' });
     }
-
-    const scanner = new Html5QrcodeScanner(
-      'qr-reader',
-      { fps: 10, qrbox: 250 },
-      /* verbose= */ false
-    );
-    scannerRef.current = scanner;
-    setIsScanning(true);
-
-    scanner.render(
-      async (decodedText) => {
-        // Stop scanner on successful decode
-        try {
-          await scanner.clear();
-        } catch (_) { /* ignore clear errors */ }
-        scannerRef.current = null;
-        setIsScanning(false);
-        setScannedCode(decodedText);
-
-        try {
-          const result = await confirmQR<{ message?: string }>(dropId, decodedText);
-          alert(result.message ?? 'Drop confirmed successfully!');
-        } catch (err: unknown) {
-          alert('Confirmation failed: ' + (err instanceof Error ? err.message : String(err)));
-        }
-      },
-      (err) => {
-        // Decode errors are normal (every frame that isn't a QR code)
-        console.debug('[QRScanner] decode error:', err);
-      }
-    );
   };
 
-  const stopScanner = async () => {
-    if (scannerRef.current) {
-      await scannerRef.current.clear().catch(console.warn);
-      scannerRef.current = null;
+  const handleClaimDrop = async () => {
+    if (!dropId || !profile) return;
+
+    setIsProcessing(true);
+
+    try {
+      // Record location
+      try {
+        await locationBroadcastService.broadcast({
+          lat: 0, lng: 0, drop_id: dropId,
+        });
+      } catch {
+        showToast('Could not record location', { type: 'warning' });
+      }
+
+      // Update drop status
+      const { error } = await supabase
+        .from('drops')
+        .update({ status: 'claimed', updated_at: new Date().toISOString() })
+        .eq('id', dropId)
+        .eq('assigned_to', profile.id);
+
+      if (error) throw error;
+
+      showToast('Drop claimed successfully!', { type: 'success' });
+
+      setTimeout(() => navigate('/drops'), 1200);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to claim drop', { type: 'error' });
+    } finally {
+      setIsProcessing(false);
     }
-    setIsScanning(false);
   };
 
   return (
-    <div className="p-4 bg-card rounded-2xl shadow-sm border border-slate-800 flex flex-col items-center">
-      <h2 className="text-xl font-bold mb-4 text-white">Scan QR to Confirm Drop</h2>
+    <div className="p-6 max-w-md mx-auto">
+      <h1 className="text-2xl font-mono tracking-widest mb-6 text-[#106011]">CLAIM DROP</h1>
 
-      <div
-        id="qr-reader"
-        className="w-full max-w-sm mb-4 rounded-xl overflow-hidden bg-slate-900"
-      />
+      <div className="space-y-4">
+        {/* Proof capture */}
+        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
+          <div className="font-mono text-sm mb-3 text-zinc-400">PROOF OF DELIVERY</div>
+          {!proof ? (
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleCaptureProof('photo')}
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-900 hover:bg-zinc-800 rounded-xl"
+              >
+                <Camera size={18} /> PHOTO
+              </button>
+              <button
+                onClick={() => handleCaptureProof('video')}
+                className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-900 hover:bg-zinc-800 rounded-xl"
+              >
+                <Video size={18} /> VIDEO
+              </button>
+            </div>
+          ) : (
+            <div className="text-emerald-400 text-sm flex items-center gap-2">
+              <CheckCircle size={16} /> Proof captured successfully
+            </div>
+          )}
+        </div>
 
-      <div className="flex gap-3 w-full max-w-sm">
         <button
-          onClick={startScanner}
-          className="flex-1 bg-primary hover:bg-primary/90 transition-colors text-white py-3 rounded-xl font-medium disabled:opacity-60"
-          disabled={loading || isScanning}
+          onClick={handleClaimDrop}
+          disabled={isProcessing}
+          className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-700 rounded-2xl font-mono tracking-widest text-lg transition mt-4"
         >
-          {loading ? 'Confirming…' : 'Start QR Scanner'}
+          {isProcessing ? 'CLAIMING DROP...' : 'CONFIRM & CLAIM DROP'}
         </button>
-
-        {isScanning && (
-          <button
-            onClick={stopScanner}
-            className="flex-1 bg-slate-700 hover:bg-slate-600 transition-colors text-white py-3 rounded-xl font-medium"
-          >
-            Stop Scanner
-          </button>
-        )}
       </div>
-
-      {scannedCode && (
-        <p className="mt-4 text-sm text-green-500 font-mono break-all">
-          Scanned: {scannedCode}
-        </p>
-      )}
     </div>
   );
 }

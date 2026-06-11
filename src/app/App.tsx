@@ -7,6 +7,7 @@ import { RoleProvider } from '../context/RoleContext';
 import { LocationOutbox } from '../services/LocationOutbox';
 import { supabase } from '../lib/supabase';
 import { LocationDebugPanel } from '../components/debug/LocationDebugPanel';
+import { ToastProvider } from '@/components/ui/ToastContainer';
 
 function BackgroundSync() {
   useEffect(() => {
@@ -43,9 +44,11 @@ export default function App() {
       <EnvChecker>
         <AuthProvider>
           <RoleProvider>
-            <BackgroundSync />
-            <AppRouter />
-            {showDebug && <LocationDebugPanel />}
+            <ToastProvider>
+              <BackgroundSync />
+              <AppRouter />
+              {showDebug && <LocationDebugPanel />}
+            </ToastProvider>
           </RoleProvider>
         </AuthProvider>
       </EnvChecker>

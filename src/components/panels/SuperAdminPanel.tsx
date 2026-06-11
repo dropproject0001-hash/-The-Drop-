@@ -1,11 +1,20 @@
 import { lazy, Suspense } from 'react';
-import { Activity, Radio, Shield, Users, PackageSearch, Terminal } from 'lucide-react';
+import { Activity, Radio, Shield, Users, PackageSearch, Terminal, Plus } from 'lucide-react';
+import { CreateDropPanel } from './CreateDropPanel';
+import { useState } from 'react';
 
 const DropMap = lazy(() => import('@/components/map/DropMap'));
 
 export function SuperAdminPanel() {
+  const [showCreateDrop, setShowCreateDrop] = useState(false);
+  
   return (
     <div className="flex flex-col h-full bg-black/95 rounded-2xl border border-[#106011]/50 shadow-[0_0_20px_rgba(16,96,17,0.3)] overflow-hidden relative select-none">
+      {showCreateDrop && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+          <CreateDropPanel onClose={() => setShowCreateDrop(false)} />
+        </div>
+      )}
       {/* Tactical HUD Corner Brackets */}
       <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-[#106011] rounded-tl-xl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.8)] z-30"></div>
       <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-[#106011] rounded-tr-xl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.8)] z-30"></div>
@@ -25,6 +34,12 @@ export function SuperAdminPanel() {
           </h2>
         </div>
         <div className="flex gap-3">
+          <button 
+            onClick={() => setShowCreateDrop(true)}
+            className="flex items-center gap-1.5 px-3 py-1 bg-[#106011]/20 hover:bg-[#106011]/40 border border-[#106011] text-[10px] font-mono font-bold tracking-widest uppercase transition-colors"
+          >
+            <Plus size={12} /> ADD
+          </button>
           <span className="flex items-center gap-1 text-[10px] font-mono text-[#106011] font-bold tracking-widest uppercase">
             <span className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-ping mr-1.5" /> OVERSEER
           </span>

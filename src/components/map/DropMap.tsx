@@ -24,7 +24,9 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { supabase } from '@/lib/supabase';
 import { EpicModal } from '@/components/ui/EpicModal';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { DropperTrackingControl } from '@/components/dropper/DropperTrackingControl';
 import { useProfile } from '@/hooks/useProfile';
+import { useDropperDrops } from '@/hooks/useDropperDrops';
 import type { Drop, DropStatus } from '@/types/domain';
 import { useDrops } from '@/hooks/useDrops';
 import { locationBroadcastService } from '@/services/LocationBroadcastService';
@@ -75,8 +77,11 @@ const STALE_LOCATION_MS = 5 * 60 * 1_000;
 
 export function DropMap({ height = '650px' }: DropMapProps) {
   const { drops } = useDrops();
+  const { profile, loading: profileLoading, isSuperAdmin, isAdmin, isDropper } = useProfile();
+  const { drops: assignedDrops } = useDropperDrops(profile?.id);
   const [filteredStatus, setFilteredStatus] = useState<DropStatus | 'all'>('all');
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
+  const [selectedDropForTracking, setSelectedDropForTracking] = useState<Drop | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Tactical waypoint telemetry states
@@ -92,7 +97,8 @@ export function DropMap({ height = '650px' }: DropMapProps) {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [mapStyle, setMapStyle] = useState<'tactical' | 'satellite'>('tactical');
 
-  const { profile, isSuperAdmin, isAdmin, isDropper } = useProfile();
+  if (profileLoading) return <div className="h-full flex items-center justify-center text-zinc-500 font-mono">Loading Map...</div>;
+
   const isClientUser = !isSuperAdmin && !isAdmin && !isDropper;
   const [adminLocations, setAdminLocations] = useState<Record<string, AdminLocation>>({});
 
@@ -406,6 +412,11 @@ export function DropMap({ height = '650px' }: DropMapProps) {
         style={{ height: height === '100%' ? '100%' : height, width: '100%' }}
         className="flex-1 w-full overflow-hidden relative z-0 border border-[#106011]/50 shadow-[0_0_30px_rgba(16,96,17,0.3)] rounded-2xl"
       >
+        {isDropper && selectedDropForTracking && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[500] bg-black/80 text-emerald-400 px-4 py-1 rounded-full text-xs font-mono tracking-widest border border-emerald-500">
+            BROADCASTING FOR: {selectedDropForTracking.title}
+          </div>
+        )}
         {/* Floating tactical HUD overlays on top of map container margins */}
         <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-[#106011] rounded-tl pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
         <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-[#106011] rounded-tr pointer-events-none drop-shadow-[0_0_5px_rgba(16,96,17,0.9)] z-[1000]"></div>
@@ -524,8 +535,19 @@ export function DropMap({ height = '650px' }: DropMapProps) {
                 eventHandlers={{ click: () => handleMarkerClick(drop) }}
               >
                 <Popup>
-                  <div className="text-slate-900">
-                    <strong>{drop.title}</strong>
+                  <div className="text-slate-900 min-w-[220px]">
+                    <div className="font-bold mb-1">{drop.title}</div>
+                    
+                    {isDropper && assignedDrops.some(d => d.id === drop.id) && (
+                      <div className="mt-3">
+                        <DropperTrackingControl
+                          drop={drop}
+                          onTrackingChange={(tracking) => {
+                            setSelectedDropForTracking(tracking ? drop : null);
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </Popup>
               </Marker>

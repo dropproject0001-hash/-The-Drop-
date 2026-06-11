@@ -10,6 +10,7 @@
 import { useState, useEffect } from 'react';
 import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ui/ToastContainer';
 
 // Fallback centre for Mamburao, Occidental Mindoro
 const MAMBURAO_LAT = 13.226;
@@ -25,6 +26,7 @@ export function CreateDropScreen() {
 
   const [locStatus, setLocStatus] = useState<'resolving' | 'resolved' | 'fallback'>('resolving');
   const { validateDrop, loading, error } = useEdgeFunctions();
+  const { showToast } = useToast();
 
   // FIX H-5: Resolve user's geolocation on mount
   useEffect(() => {
@@ -51,7 +53,7 @@ export function CreateDropScreen() {
 
   const handleCreateDrop = async () => {
     if (!form.title.trim()) {
-      alert('Please enter a drop title.');
+      showToast('Please enter a drop title.', { type: 'warning' });
       return;
     }
 
@@ -66,7 +68,7 @@ export function CreateDropScreen() {
       });
 
       if (!validation.valid) {
-        alert(validation.errors.join('\n'));
+        showToast(validation.errors.join('\n'), { type: 'error' });
         return;
       }
 
@@ -85,10 +87,10 @@ export function CreateDropScreen() {
 
       if (insertError) throw insertError;
 
-      alert('Drop created successfully!');
+      showToast('Drop created successfully!', { type: 'success' });
       setForm((prev) => ({ ...prev, title: '', assignedTo: '' }));
     } catch (err: unknown) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      showToast('Error: ' + (err instanceof Error ? err.message : String(err)), { type: 'error' });
     }
   };
 
