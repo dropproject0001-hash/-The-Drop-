@@ -9,12 +9,12 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/Appicon.png",
+      "src": "/logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/Appicon.png",
+      "src": "/logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

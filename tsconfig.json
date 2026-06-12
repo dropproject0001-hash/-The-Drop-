@@ -25,6 +25,9 @@
     "noEmit": true
   },
   "exclude": [
-    "supabase/**/*"
+    "supabase/**/*",
+    "authfix_out/**/*",
+    "node_modules",
+    "dist"
   ]
 }

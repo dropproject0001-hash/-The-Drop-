@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="icon" type="image/png" href="/Appicon.png" />
-    <title>DropPin Ops — Mamburao Live Tracking</title>
-    <meta name="description" content="DropPin Ops — Offline-ready field drop tracking for Mamburao, Occidental Mindoro." />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <title>The Drop — Nueva Ecija Live Tracking</title>
+    <meta name="description" content="The Drop (Droppin Ops) — Secure, covert, and offline-ready product drop tracking for Nueva Ecija field operations." />
     <meta name="theme-color" content="#22c55e" />
     <script>
       // Global error handler to catch and display any runtime JS crashes in the browser
@@ -55,6 +55,13 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js').catch((err) => {
+            console.log('SW registration failed: ', err);
+          });
+        });
+      }
     </script>
   </body>
 </html>

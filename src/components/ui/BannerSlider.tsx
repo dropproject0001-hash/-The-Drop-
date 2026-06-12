@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const banners = [
-  "/CoverpPhoto.png",
-  "/coverphoto2.jpg",
-  "/coverphoto3.jpg",
-  "/coverphoto4.jpg"
+  "/coverphoto001.png",
+  "/coverphoto002.jpg",
+  "/coverphoto003.jpg",
+  "/coverphoto004.jpg"
 ];
 
 export const BannerSlider: React.FC = () => {

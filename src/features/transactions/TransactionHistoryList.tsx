@@ -45,8 +45,8 @@ export function TransactionHistoryList() {
           amount: 5000,
           status: 'pending',
           created_at: new Date().toISOString(),
-          gps_lat: 13.2245,
-          gps_lng: 120.5945,
+          gps_lat: 15.4845,
+          gps_lng: 120.9712,
           photo_url: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=600&q=80'
         },
         {
@@ -55,8 +55,8 @@ export function TransactionHistoryList() {
           amount: 15500,
           status: 'granted',
           created_at: new Date(Date.now() - 3600 * 1000).toISOString(),
-          gps_lat: 13.2272,
-          gps_lng: 120.5982,
+          gps_lat: 15.4872,
+          gps_lng: 120.9752,
           photo_url: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=600&q=80'
         },
         {
@@ -65,8 +65,8 @@ export function TransactionHistoryList() {
           amount: 8200,
           status: 'declined',
           created_at: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-          gps_lat: 13.2221,
-          gps_lng: 120.5921
+          gps_lat: 15.4821,
+          gps_lng: 120.9691
         }
       ]);
       setLoading(false);

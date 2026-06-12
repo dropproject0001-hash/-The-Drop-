@@ -9,17 +9,15 @@ import { supabase } from '../lib/supabase';
 import { LocationDebugPanel } from '../components/debug/LocationDebugPanel';
 import { ToastProvider } from '@/components/ui/ToastContainer';
 
+import { InstallBanner } from '@/components/ui/InstallBanner';
+
 function BackgroundSync() {
   useEffect(() => {
     const flushQueue = async () => {
-      const queued = await LocationOutbox.getAll();
-      for (const item of queued) {
-        try {
-          await supabase.functions.invoke('broadcast-location', { body: item.payload });
-          await LocationOutbox.remove(item.id!);
-        } catch {
-          await LocationOutbox.incrementAttempts(item.id!);
-        }
+      try {
+        await LocationOutbox.flush();
+      } catch (err) {
+        console.warn('[BackgroundSync] Auto-flush error:', err);
       }
     };
 
@@ -46,6 +44,7 @@ export default function App() {
           <RoleProvider>
             <ToastProvider>
               <BackgroundSync />
+              <InstallBanner />
               <AppRouter />
               {showDebug && <LocationDebugPanel />}
             </ToastProvider>

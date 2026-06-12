@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlobalModals } from '@/components/ui/GlobalModals';
-import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart, LogOut } from 'lucide-react';
+import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart, LogOut, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 
 import { CargoBayView } from './views/CargoBayView';
 import { ChatBoxView } from './views/ChatBoxView';
@@ -11,10 +11,11 @@ import { StocksAnalysisView } from './views/StocksAnalysisView';
 import { ControlSettingsView } from './views/ControlSettingsView';
 import { useRole } from '@/context/RoleContext';
 import { useAuth } from '@/app/providers/AuthContext';
+import { useLocationOutboxStatus } from '@/hooks/useLocationOutboxStatus';
 
 export function BaseLayout() {
   const { isClient, role, loading } = useRole();
-  const { signOut } = useAuth();
+  const { signOut, profile } = useAuth();
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
@@ -33,6 +34,40 @@ export function BaseLayout() {
     await signOut();
     navigate('/auth');
   };
+
+  const getAccountBadge = (userRole: string | null | undefined) => {
+    const r = (userRole || '').toLowerCase();
+    if (r === 'admin' || r === 'dropper') {
+      return {
+        src: '/dropper_role_icon.jpg',
+        borderColor: 'border-[#3b82f6]',
+        shadowColor: 'rgba(59,130,246,0.5)',
+        textColor: 'text-blue-400',
+        textGlow: 'drop-shadow-[0_0_6px_rgba(59,130,246,0.5)]',
+        label: 'DROPPER'
+      };
+    } else if (r === 'client' || r === 'buyer') {
+      return {
+        src: '/client_role_icon.jpg',
+        borderColor: 'border-[#f5a623]',
+        shadowColor: 'rgba(245,166,35,0.5)',
+        textColor: 'text-amber-500',
+        textGlow: 'drop-shadow-[0_0_6px_rgba(245,166,35,0.5)]',
+        label: 'BUYER/CLIENT'
+      };
+    } else {
+      return {
+        src: '/admin_role_icon.jpg',
+        borderColor: 'border-[#0ad111]',
+        shadowColor: 'rgba(10,209,17,0.5)',
+        textColor: 'text-emerald-400',
+        textGlow: 'drop-shadow-[0_0_6px_rgba(10,209,17,0.5)]',
+        label: 'OPERATOR/BOSS'
+      };
+    }
+  };
+
+  const badge = getAccountBadge(role);
 
   return (
     <div 
@@ -97,7 +132,7 @@ export function BaseLayout() {
             className="w-full h-full relative z-10"
           >
             <img 
-              src="/coverphoto3.jpg" 
+              src="/coverphoto003.jpg" 
               alt="Droppin Ops Brand" 
               className="w-full h-full object-cover group-hover/brand:scale-105 transition-all duration-700" 
               referrerPolicy="no-referrer"
@@ -202,7 +237,7 @@ export function BaseLayout() {
                 {/* Mission Protocol Contents */}
                 <div 
                   className="absolute inset-0 w-full h-full opacity-10 pointer-events-none mix-blend-luminosity bg-cover bg-center bg-no-repeat grayscale"
-                  style={{ backgroundImage: `url('/coverphoto3.jpg')` }}
+                  style={{ backgroundImage: `url('/coverphoto003.jpg')` }}
                 />
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] pointer-events-none" />
 
@@ -358,19 +393,101 @@ export function BaseLayout() {
             </div>
           </motion.div>
           
-          <div className="flex items-center gap-4 relative z-10 pr-2">
+          <div className="flex items-center gap-5 relative z-10 pr-2">
+            <LocationSyncWidget />
             
+            {/* Account Login Indicator Badge */}
+            <div className="flex items-center gap-2.5 pl-4 border-l border-[#106011]/30 select-none">
+              <div className="hidden sm:flex flex-col items-end text-right">
+                <span className="text-[10px] font-mono font-black text-slate-200 uppercase tracking-widest truncate max-w-[120px]">
+                  {profile?.username || profile?.alias || 'OPERATOR'}
+                </span>
+                <span className={`text-[8px] font-mono font-black uppercase tracking-[0.18em] ${badge.textColor} ${badge.textGlow}`}>
+                  {badge.label}
+                </span>
+              </div>
+              
+              {/* Glowing Interactive Circle Badge Avatar */}
+              <div 
+                className={`w-9 h-9 rounded-full overflow-hidden border-2 shrink-0 ${badge.borderColor} bg-black flex items-center justify-center p-0.5 relative group/profile shadow-lg`}
+                style={{ boxShadow: `0 0 10px ${badge.shadowColor}` }}
+              >
+                <img 
+                  src={badge.src} 
+                  alt={badge.label} 
+                  className="w-full h-full object-cover rounded-full group-hover/profile:scale-110 transition-transform duration-300" 
+                  referrerPolicy="no-referrer" 
+                />
+                {/* Glowing status ring dot */}
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#0ad111] border border-black animate-pulse shadow-[0_0_8px_#0ad111]" />
+              </div>
+            </div>
           </div>
         </motion.header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-auto custom-scrollbar relative">
-          {activeTab === 'map' && <Outlet />}
-          {activeTab === 'cargo' && <CargoBayView />}
-          {activeTab === 'chat' && <ChatBoxView />}
-          {activeTab === 'droppers' && <DropperListView onSwitchToChat={() => setActiveTab('chat')} />}
-          {activeTab === 'stocks' && <StocksAnalysisView />}
-          {activeTab === 'settings' && <ControlSettingsView />}
+        <main className="flex-1 overflow-auto custom-scrollbar relative bg-black/95">
+          {/* Enhanced Tactical Background layer active for non-map tabs to preserve operational atmosphere */}
+          {activeTab !== 'map' && (
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
+              {/* Subtle grid background */}
+              <div 
+                className="absolute inset-0 opacity-[0.08]"
+                style={{
+                  backgroundImage: `
+                    linear-gradient(rgba(16, 96, 17, 0.25) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(16, 96, 17, 0.25) 1px, transparent 1px)
+                  `,
+                  backgroundSize: '30px 30px'
+                }}
+              />
+              
+              {/* Atmospheric Breathing Glows */}
+              <motion.div 
+                animate={{ 
+                  opacity: [0.15, 0.35, 0.15],
+                  scale: [1, 1.05, 1]
+                }}
+                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-[#106011]/8 blur-[100px] pointer-events-none"
+              />
+              
+              <motion.div 
+                animate={{ 
+                  opacity: [0.1, 0.25, 0.1],
+                  scale: [1, 0.95, 1]
+                }}
+                transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-[#0ad111]/5 blur-[120px] pointer-events-none"
+              />
+
+              {/* Symmetrical HUD Ticks and Crosshairs */}
+              <div className="absolute top-4 left-4 w-4 h-4 border-t border-l border-[#106011]/40" />
+              <div className="absolute top-4 right-4 w-4 h-4 border-t border-r border-[#106011]/40" />
+              <div className="absolute bottom-4 left-4 w-4 h-4 border-b border-l border-[#106011]/40" />
+              <div className="absolute bottom-4 right-4 w-4 h-4 border-b border-r border-[#106011]/40" />
+
+              {/* Glowing vector target indicators */}
+              <div className="absolute top-1/2 left-6 -translate-y-1/2 flex flex-col gap-4 text-[7px] font-mono text-[#106011]/40 tracking-widest uppercase font-black">
+                <div>[COM_LINK_STABLE]</div>
+                <div>SEC: D_NUEVA</div>
+              </div>
+              <div className="absolute top-1/2 right-6 -translate-y-1/2 flex flex-col gap-4 text-[7px] font-mono text-[#106011]/40 tracking-widest uppercase font-black items-end">
+                <div>SYS.VOLTS: 3.8V</div>
+                <div>[OPS_SYS_A]</div>
+              </div>
+            </div>
+          )}
+
+          {/* Child active views content styled to float seamlessly above background */}
+          <div className="relative z-10 w-full h-full">
+            {activeTab === 'map' && <Outlet />}
+            {activeTab === 'cargo' && <CargoBayView />}
+            {activeTab === 'chat' && <ChatBoxView />}
+            {activeTab === 'droppers' && <DropperListView onSwitchToChat={() => setActiveTab('chat')} />}
+            {activeTab === 'stocks' && <StocksAnalysisView />}
+            {activeTab === 'settings' && <ControlSettingsView />}
+          </div>
         </main>
       </div>
 
@@ -528,7 +645,7 @@ function AboutDrawer({ isExpanded }: { isExpanded: boolean }) {
             {/* Background Cover Photo Overlay */}
             <div 
               className="absolute inset-0 w-full h-full opacity-15 pointer-events-none mix-blend-luminosity bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url('/coverphoto3.jpg')` }}
+              style={{ backgroundImage: `url('/coverphoto003.jpg')` }}
             />
 
             {/* Universal Tactical HUD Corner Brackets */}
@@ -589,6 +706,77 @@ function AboutDrawer({ isExpanded }: { isExpanded: boolean }) {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function LocationSyncWidget() {
+  const { isSyncing, queueSize, flush } = useLocationOutboxStatus();
+  const [online, setOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const updateOnline = () => setOnline(navigator.onLine);
+    window.addEventListener('online', updateOnline);
+    window.addEventListener('offline', updateOnline);
+    return () => {
+      window.removeEventListener('online', updateOnline);
+      window.removeEventListener('offline', updateOnline);
+    };
+  }, []);
+
+  const handleManualSync = async () => {
+    if (isSyncing) return;
+    try {
+      await flush();
+    } catch (e) {
+      console.error('[LocationSyncWidget] Manual sync error:', e);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3">
+      {/* Mini Connection Strength Status */}
+      <div 
+        className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[9px] font-mono tracking-widest uppercase transition-all duration-300 ${
+          online 
+            ? 'border-[#106011]/30 bg-black/40 text-emerald-500' 
+            : 'border-red-900 bg-red-950/20 text-red-500 animate-pulse'
+        }`}
+      >
+        {online ? (
+          <Wifi className="w-3.5 h-3.5 text-[#0ad111]" />
+        ) : (
+          <WifiOff className="w-3.5 h-3.5 text-red-500" />
+        )}
+      </div>
+
+      {/* Main Interactive Button */}
+      <button
+        onClick={handleManualSync}
+        disabled={isSyncing || (!online && queueSize === 0)}
+        className={`h-8 rounded-xl border flex items-center justify-center px-4 font-mono text-[10px] font-bold tracking-widest transition-all duration-300 select-none relative group/sync overflow-hidden ${
+          isSyncing 
+            ? 'bg-[#106011]/15 border-[#106011] text-emerald-400' 
+            : queueSize > 0
+              ? 'bg-amber-950/20 border-amber-600/80 hover:border-amber-500 text-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.2)] font-black'
+              : 'border-[#106011]/45 bg-black/40 text-[#106011] hover:border-[#106011]/80 hover:text-[#0ad111] hover:shadow-[0_0_15px_rgba(16,96,17,0.35)]'
+        }`}
+        title="Force Telemetry Outbox Sync Now"
+      >
+        {/* Tactical HUD Corner elements on hover */}
+        <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-[#106011]/25 group-hover/sync:border-[#106011]/80 transition-colors" />
+        <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-[#106011]/25 group-hover/sync:border-[#106011]/80 transition-colors" />
+
+        {/* Dynamic Context-Aware Labels */}
+        <span className="relative z-10 hidden sm:inline tracking-widest">
+          {isSyncing 
+            ? "SYNCING..." 
+            : queueSize > 0 
+              ? `SYNC NOW (${queueSize})` 
+              : "SYNCED"
+          }
+        </span>
+      </button>
     </div>
   );
 }

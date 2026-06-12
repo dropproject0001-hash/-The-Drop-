@@ -6,7 +6,6 @@
  * FIX M-3: Removed unused `LocationBroadcast` import.
  */
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
 import type { Profile, Drop } from '@/types/domain';
 
 // ── Auth Store ────────────────────────────────────────────────────────────────
@@ -20,30 +19,13 @@ interface AuthState {
   clear: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  devtools(
-    (set) => ({
-      session: null,
-      profile: null,
-      setSession: (session) => set({ session }, false, 'setSession'),
-      setProfile: (profile) => set({ profile }, false, 'setProfile'),
-      clear: () => set({ session: null, profile: null }, false, 'clear'),
-    }),
-    { 
-      enabled: !!(import.meta as any).env?.DEV, 
-      name: 'AuthStore',
-      // Explicitly serialize state for devtools to avoid call stack errors with complex objects
-      serialize: { 
-        options: { 
-          map: true,
-          set: true,
-          // Deep objects can be truncated
-          depth: 3
-        } 
-      }
-    }
-  )
-);
+export const useAuthStore = create<AuthState>()((set) => ({
+  session: null,
+  profile: null,
+  setSession: (session) => set({ session }),
+  setProfile: (profile) => set({ profile }),
+  clear: () => set({ session: null, profile: null }),
+}));
 
 // ── Drop Store ────────────────────────────────────────────────────────────────
 
@@ -55,22 +37,17 @@ interface DropState {
   removeDrop: (id: string) => void;
 }
 
-export const useDropStore = create<DropState>()(
-  devtools(
-    (set) => ({
-      drops: [],
-      setDrops: (drops) => set({ drops }),
-      addDrop: (drop) =>
-        set((state) => ({ drops: [...state.drops, drop] })),
-      updateDrop: (drop) =>
-        set((state) => ({
-          drops: state.drops.map((d) => (d.id === drop.id ? drop : d)),
-        })),
-      removeDrop: (id) =>
-        set((state) => ({
-          drops: state.drops.filter((d) => d.id !== id),
-        })),
-    }),
-    { enabled: !!(import.meta as any).env?.DEV, name: 'DropStore' }
-  )
-);
+export const useDropStore = create<DropState>()((set) => ({
+  drops: [],
+  setDrops: (drops) => set({ drops }),
+  addDrop: (drop) =>
+    set((state) => ({ drops: [...state.drops, drop] })),
+  updateDrop: (drop) =>
+    set((state) => ({
+      drops: state.drops.map((d) => (d.id === drop.id ? drop : d)),
+    })),
+  removeDrop: (id) =>
+    set((state) => ({
+      drops: state.drops.filter((d) => d.id !== id),
+    })),
+}));

@@ -10,10 +10,10 @@ export function StocksAnalysisView() {
 
   // Animate mock stock levels slightly
   const [stocks, setStocks] = useState([
-    { id: 'S1', name: 'Tactical Supply Crate', zone: 'Mamburao West S1', qty: 24, max: 30, code: 'X-901', claimRate: 'High' },
+    { id: 'S1', name: 'Tactical Supply Crate', zone: 'Nueva Ecija West S1', qty: 24, max: 30, code: 'X-901', claimRate: 'High' },
     { id: 'S2', name: 'Encrypted Radio Node', zone: 'Sector-4 Alpha', qty: 3, max: 10, code: 'Z-204', claimRate: 'Critical' },
-    { id: 'S3', name: 'Medical Rations Pack', zone: 'Centro Terminal B', qty: 45, max: 50, code: 'M-112', claimRate: 'Medium' },
-    { id: 'S4', name: 'Secure Courier Cache', zone: 'Paypay Offshore', qty: 12, max: 15, code: 'P-502', claimRate: 'Optimal' },
+    { id: 'S3', name: 'Medical Rations Pack', zone: 'Cabanatuan Terminal B', qty: 45, max: 50, code: 'M-112', claimRate: 'Medium' },
+    { id: 'S4', name: 'Secure Courier Cache', zone: 'Gapan Tactical', qty: 12, max: 15, code: 'P-502', claimRate: 'Optimal' },
   ]);
 
   const handleCalibrate = () => {
@@ -153,7 +153,7 @@ export function StocksAnalysisView() {
 
           <div className="flex-1 flex flex-col gap-4">
             <p className="text-[10px] font-mono text-slate-300 tracking-wider leading-relaxed">
-              Maintain optimal supply data integrity. Perform frequent sweeps of the Mamburao sector networks when cargo volumes drop.
+              Maintain optimal supply data integrity. Perform frequent sweeps of the Nueva Ecija sector networks when cargo volumes drop.
             </p>
 
             <button
@@ -199,7 +199,7 @@ export function StocksAnalysisView() {
         <div className="flex justify-between items-center border-b border-[#106011]/30 pb-3 mb-6">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4.5 h-4.5 text-[#106011] drop-shadow-[0_0_5px_rgba(16,96,17,0.8)]" />
-            <span className="text-white font-display font-bold tracking-[0.16em] text-xs">MAMBURAO SECURED CARGO STOCK REGISTRY</span>
+            <span className="text-white font-display font-bold tracking-[0.16em] text-xs">NUEVA ECIJA SECURED CARGO STOCK REGISTRY</span>
           </div>
           <span className="text-[9px] font-mono font-bold uppercase rounded border-2 border-[#106011] px-2 py-0.5 shadow-[0_0_5px_rgba(16,96,17,0.3)] text-[#106011]">ACTIVE: 4 OPERATIONS</span>
         </div>

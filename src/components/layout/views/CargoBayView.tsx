@@ -3,10 +3,10 @@ import { Package, ShieldCheck, Plus, Minus, FilePlus, RefreshCw } from 'lucide-r
 
 export function CargoBayView() {
   const [cargo, setCargo] = useState([
-    { id: 'CRG-A01', name: 'Premium Supply Bundle', category: 'Tactical', qty: 15, location: 'Mamburao Depot Area A', security: 'Level 4' },
-    { id: 'CRG-B04', name: 'Secured Rations Pack', category: 'Rations', qty: 42, location: 'Mamburao West S1', security: 'Level 2' },
-    { id: 'CRG-C09', name: 'Emergency Transceiver Unit', category: 'Hardware', qty: 6, location: 'Centro Terminal B', security: 'Level 5' },
-    { id: 'CRG-D12', name: 'Encrypted Drop Locator Tag', category: 'GPS Tracker', qty: 29, location: 'Paypay Offshore Base', security: 'Level 4' },
+    { id: 'CRG-A01', name: 'Premium Supply Bundle', category: 'Tactical', qty: 15, location: 'Nueva Ecija Depot Area A', security: 'Level 4' },
+    { id: 'CRG-B04', name: 'Secured Rations Pack', category: 'Rations', qty: 42, location: 'Nueva Ecija West S1', security: 'Level 2' },
+    { id: 'CRG-C09', name: 'Emergency Transceiver Unit', category: 'Hardware', qty: 6, location: 'Cabanatuan Terminal B', security: 'Level 5' },
+    { id: 'CRG-D12', name: 'Encrypted Drop Locator Tag', category: 'GPS Tracker', qty: 29, location: 'Gapan Tactical Base', security: 'Level 4' },
   ]);
 
   const [newItemName, setNewItemName] = useState('');
@@ -35,7 +35,7 @@ export function CargoBayView() {
       name: newItemName,
       category: newItemCategory,
       qty: newItemQty,
-      location: 'Mamburao Central Vault',
+      location: 'Nueva Ecija Central Vault',
       security: 'Level 4'
     };
 
@@ -154,7 +154,7 @@ export function CargoBayView() {
             <div className="absolute inset-1 border border-dashed border-[#106011]/30 rounded-xl pointer-events-none"></div>
 
             <div className="border-b border-[#106011]/30 pb-3 mb-4 flex justify-between items-center relative z-10">
-              <span className="tracking-[0.16em] border border-[#106f0a] h-[36px] bg-[#020302] italic font-bold no-underline text-[20px] leading-[17px] text-left font-['Times_New_Roman'] text-[#03ad29] flex items-center px-2">Mamburao Dropped Registry</span>
+              <span className="tracking-[0.16em] border border-[#106f0a] h-[36px] bg-[#020302] italic font-bold no-underline text-[20px] leading-[17px] text-left font-['Times_New_Roman'] text-[#03ad29] flex items-center px-2">Nueva Ecija Drop Registry</span>
             </div>
 
             <div className="overflow-x-auto custom-scrollbar relative z-10 pb-2">

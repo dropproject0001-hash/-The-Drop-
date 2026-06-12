@@ -26,31 +26,31 @@ export function NeonIcon({
         text: 'text-green-500',
         dropShadow: 'drop-shadow-[0_0_8px_rgba(34,197,94,0.8)] drop-shadow-[0_0_20px_rgba(34,197,94,0.4)]',
         border: 'border-green-500/30 text-green-500/20',
-        imgBorder: 'border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.6)]'
+        imgBorder: 'border-[#1dd33b]/80 shadow-[0_0_35px_rgba(29,211,59,0.5),inset_0_0_20px_rgba(0,0,0,0.9)] ring-4 ring-[#0ad111]/20'
       },
       blue: {
         text: 'text-blue-500',
         dropShadow: 'drop-shadow-[0_0_8px_rgba(59,130,246,0.8)] drop-shadow-[0_0_20px_rgba(59,130,246,0.4)]',
         border: 'border-blue-500/30 text-blue-500/20',
-        imgBorder: 'border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.6)]'
+        imgBorder: 'border-[#3b82f6]/80 shadow-[0_0_35px_rgba(59,130,246,0.5),inset_0_0_20px_rgba(0,0,0,0.9)] ring-4 ring-[#3b82f6]/20'
       },
       red: {
         text: 'text-red-500',
         dropShadow: 'drop-shadow-[0_0_8px_rgba(239,68,68,0.8)] drop-shadow-[0_0_20px_rgba(239,68,68,0.4)]',
         border: 'border-red-500/30 text-red-500/20',
-        imgBorder: 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.6)]'
+        imgBorder: 'border-[#ef4444]/80 shadow-[0_0_35px_rgba(239,68,68,0.5),inset_0_0_20px_rgba(0,0,0,0.9)] ring-4 ring-[#ef4444]/20'
       },
       white: {
         text: 'text-slate-200',
         dropShadow: 'drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]',
         border: 'border-slate-300/30 text-slate-300/20',
-        imgBorder: 'border-slate-300/50 shadow-[0_0_15px_rgba(255,255,255,0.4)]'
+        imgBorder: 'border-slate-300/80 shadow-[0_0_35px_rgba(255,255,255,0.4),inset_0_0_20px_rgba(0,0,0,0.9)] ring-4 ring-white/20'
       },
       gold: {
         text: 'text-[#e2c80f]',
         dropShadow: 'drop-shadow-[0_0_8px_rgba(226,200,15,0.8)] drop-shadow-[0_0_20px_rgba(226,200,15,0.4)]',
         border: 'border-[#e2c80f]/30 text-[#e2c80f]/20',
-        imgBorder: 'border-[#e2c80f]/50 shadow-[0_0_15px_rgba(226,200,15,0.65)]'
+        imgBorder: 'border-[#e2c80f]/80 shadow-[0_0_35px_rgba(226,200,15,0.5),inset_0_0_20px_rgba(0,0,0,0.9)] ring-4 ring-[#e2c80f]/20'
       }
     };
     return glows[color];
@@ -59,7 +59,7 @@ export function NeonIcon({
   const style = getGlowStyles(color);
 
   return (
-    <div className={`relative flex items-center justify-center ${className} w-[180px] h-[180px]`}>
+    <div className={`relative flex items-center justify-center ${className} w-[220px] h-[220px]`}>
       {/* Background ambient glow */}
       <div 
         className={`absolute inset-0 rounded-full blur-xl opacity-30 mix-blend-screen bg-current ${style.text}`}
@@ -78,7 +78,7 @@ export function NeonIcon({
           src={imageSrc} 
           alt="HUD Interface Center"
           referrerPolicy="no-referrer"
-          className={`relative z-10 rounded-full object-cover border-2 ${style.imgBorder} animate-breathe`}
+          className={`relative z-10 rounded-full object-cover border-2 ${style.imgBorder} filter brightness-110 contrast-110 transition-all duration-500 hover:scale-[1.12]`}
           style={{ width: size, height: size }}
         />
       ) : (

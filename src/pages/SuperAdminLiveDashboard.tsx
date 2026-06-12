@@ -13,7 +13,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-const MAMBURAO_CENTER: [number, number] = [13.226, 120.596];
+const NUEVA_ECIJA_CENTER: [number, number] = [15.4865, 120.9734];
 
 export default function SuperAdminLiveDashboard() {
   const { drops, loading: dropsLoading, error: dropsError } = useLiveDrops();
@@ -63,7 +63,7 @@ export default function SuperAdminLiveDashboard() {
             LIVE SATCOM + AGENT TRACKING
           </div>
 
-          <MapContainer center={MAMBURAO_CENTER} zoom={13} className="h-full w-full">
+          <MapContainer center={NUEVA_ECIJA_CENTER} zoom={13} className="h-full w-full">
             <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
 
             {/* Pinned Active Drops (the Goods) */}

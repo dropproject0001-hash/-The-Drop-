@@ -7,10 +7,10 @@ interface DropperListViewProps {
 
 export function DropperListView({ onSwitchToChat }: DropperListViewProps) {
   const [agents, setAgents] = useState([
-    { id: 'D10', alias: 'DROPPER-01', sector: 'Mamburao Central East', status: 'Active', signal: '106.011 MHz', strength: 98, lat: 13.2265, lng: 120.5961, latency: '4ms' },
-    { id: 'D12', alias: 'DROPPER-02', sector: 'Paypay Offshore Terminal', status: 'Running', signal: '106.045 MHz', strength: 71, lat: 13.2450, lng: 120.5822, latency: '22ms' },
-    { id: 'D14', alias: 'DROPPER-03', sector: 'Centro West Base 2', status: 'Standby', signal: '106.002 MHz', strength: 89, lat: 13.2118, lng: 120.6050, latency: '8ms' },
-    { id: 'D17', alias: 'DROPPER-04', sector: 'Northern Airport Zone', status: 'Offline', signal: '106.014 MHz', strength: 0, lat: 13.2554, lng: 120.6121, latency: 'N/A' },
+    { id: 'D10', alias: 'DROPPER-01', sector: 'Cabanatuan Central East', status: 'Active', signal: '106.011 MHz', strength: 98, lat: 15.4865, lng: 120.9734, latency: '4ms' },
+    { id: 'D12', alias: 'DROPPER-02', sector: 'Talavera Sector Terminal', status: 'Running', signal: '106.045 MHz', strength: 71, lat: 15.4950, lng: 120.9622, latency: '22ms' },
+    { id: 'D14', alias: 'DROPPER-03', sector: 'Cabanatuan West Base 2', status: 'Standby', signal: '106.002 MHz', strength: 89, lat: 15.4718, lng: 120.9850, latency: '8ms' },
+    { id: 'D17', alias: 'DROPPER-04', sector: 'Northern Gapan Zone', status: 'Offline', signal: '106.014 MHz', strength: 0, lat: 15.5054, lng: 120.9921, latency: 'N/A' },
   ]);
 
   const [pingingAgent, setPingingAgent] = useState<string | null>(null);
@@ -48,7 +48,7 @@ export function DropperListView({ onSwitchToChat }: DropperListViewProps) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#106011]/40 pb-6 relative z-10">
         <div>
           <span className="text-[9px] font-mono tracking-[0.25em] bg-[#106011]/15 px-2.5 py-1 rounded border border-[#106011]/30 uppercase font-black">
-            Mamburao Operator Network
+            Nueva Ecija Operator Network
           </span>
           <h2 className="text-2xl font-display font-black tracking-[0.15em] uppercase text-white drop-shadow-[0_0_12px_rgba(16,96,17,0.85)] mt-2">
             ADMIN/DROPPER LIST
@@ -164,7 +164,7 @@ export function DropperListView({ onSwitchToChat }: DropperListViewProps) {
           </div>
 
           <p className="text-[10px] font-mono text-slate-400 tracking-wider leading-relaxed mb-4">
-            Broadcast encrypted pings to scan and lock coordinate displacements for active operaters on Mamburao grid.
+            Broadcast encrypted pings to scan and lock coordinate displacements for active operaters on Nueva Ecija grid.
           </p>
 
           <div className="flex-1 flex flex-col border border-[#106011]/30 bg-[#106011]/5 rounded p-3 text-[9px] font-mono uppercase tracking-widest text-[#106011] overflow-y-auto custom-scrollbar gap-1.5 shadow-inner">

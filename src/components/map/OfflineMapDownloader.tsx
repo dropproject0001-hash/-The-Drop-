@@ -11,30 +11,30 @@ export function OfflineMapDownloader({ onComplete }: OfflineMapDownloaderProps) 
   const [status, setStatus] = useState<'idle' | 'downloading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
-  // Mamburao bounding box + zoom levels
-  const MAMBURAO_BOUNDS = {
-    minLat: 13.18,
-    maxLat: 13.28,
-    minLng: 120.55,
-    maxLng: 120.65,
+  // Nueva Ecija bounding box + zoom levels
+  const NUEVA_ECIJA_BOUNDS = {
+    minLat: 15.40,
+    maxLat: 15.56,
+    minLng: 120.90,
+    maxLng: 121.05,
     zoomLevels: [12, 13, 14, 15],
   };
 
-  const downloadMamburaoTiles = async () => {
+  const downloadNuevaEcijaTiles = async () => {
     setIsDownloading(true);
     setStatus('downloading');
     setProgress(0);
     setMessage('Preparing to download map tiles...');
 
-    const cache = await caches.open('mamburao-map-tiles-v1');
+    const cache = await caches.open('nueva-ecija-map-tiles-v1');
     const tileUrls: string[] = [];
 
     // Generate all tile URLs
-    for (const z of MAMBURAO_BOUNDS.zoomLevels) {
-      const minX = Math.floor(((MAMBURAO_BOUNDS.minLng + 180) / 360) * Math.pow(2, z));
-      const maxX = Math.floor(((MAMBURAO_BOUNDS.maxLng + 180) / 360) * Math.pow(2, z));
-      const minY = Math.floor((1 - Math.log(Math.tan(MAMBURAO_BOUNDS.maxLat * Math.PI / 180) + 1 / Math.cos(MAMBURAO_BOUNDS.maxLat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, z));
-      const maxY = Math.floor((1 - Math.log(Math.tan(MAMBURAO_BOUNDS.minLat * Math.PI / 180) + 1 / Math.cos(MAMBURAO_BOUNDS.minLat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, z));
+    for (const z of NUEVA_ECIJA_BOUNDS.zoomLevels) {
+      const minX = Math.floor(((NUEVA_ECIJA_BOUNDS.minLng + 180) / 360) * Math.pow(2, z));
+      const maxX = Math.floor(((NUEVA_ECIJA_BOUNDS.maxLng + 180) / 360) * Math.pow(2, z));
+      const minY = Math.floor((1 - Math.log(Math.tan(NUEVA_ECIJA_BOUNDS.maxLat * Math.PI / 180) + 1 / Math.cos(NUEVA_ECIJA_BOUNDS.maxLat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, z));
+      const maxY = Math.floor((1 - Math.log(Math.tan(NUEVA_ECIJA_BOUNDS.minLat * Math.PI / 180) + 1 / Math.cos(NUEVA_ECIJA_BOUNDS.minLat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, z));
 
       for (let x = minX; x <= maxX; x++) {
         for (let y = minY; y <= maxY; y++) {
@@ -46,7 +46,7 @@ export function OfflineMapDownloader({ onComplete }: OfflineMapDownloaderProps) 
     let downloaded = 0;
     const total = tileUrls.length;
 
-    setMessage(`Downloading ${total} map tiles for Mamburao...`);
+    setMessage(`Downloading ${total} map tiles for Nueva Ecija...`);
 
     for (const url of tileUrls) {
       try {
@@ -69,7 +69,7 @@ export function OfflineMapDownloader({ onComplete }: OfflineMapDownloaderProps) 
 
     setProgress(100);
     setStatus('success');
-    setMessage('Map tiles for Mamburao downloaded successfully!');
+    setMessage('Map tiles for Nueva Ecija downloaded successfully!');
     setIsDownloading(false);
 
     if (onComplete) onComplete();
@@ -80,17 +80,17 @@ export function OfflineMapDownloader({ onComplete }: OfflineMapDownloaderProps) 
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold flex items-center gap-2">
-            <Download size={18} /> Offline Map - Mamburao
+            <Download size={18} /> Offline Map - Nueva Ecija
           </h3>
           <p className="text-sm text-slate-400 mt-1">
-            Download map tiles for offline use in Mamburao area
+            Download map tiles for offline use in Nueva Ecija area
           </p>
         </div>
       </div>
 
       {status === 'idle' && (
         <button
-          onClick={downloadMamburaoTiles}
+          onClick={downloadNuevaEcijaTiles}
           disabled={isDownloading}
           className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-medium transition-colors"
         >

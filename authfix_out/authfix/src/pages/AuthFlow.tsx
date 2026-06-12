@@ -145,7 +145,7 @@ export default function AuthFlow() {
       <div className="fixed inset-0 z-0 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-40 grayscale-[0.3] brightness-75 pointer-events-none"
-          style={{ backgroundImage: `url('/coverphoto002.jpg')` }}
+          style={{ backgroundImage: `url('/regenerated_image_1781027109738.jpg')` }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black via-black/30 to-black pointer-events-none" />
         <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[linear-gradient(rgba(10,209,17,0.15)_1px,transparent_1px)] bg-[length:100%_4px]" />
@@ -164,7 +164,7 @@ export default function AuthFlow() {
               <motion.img
                 animate={{ scale: [1, 1.05, 1] }}
                 transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-                src="/coverphoto002.jpg"
+                src="/regenerated_image_1781027109738.jpg"
                 alt="Tactical Background"
                 className="w-full h-full object-cover filter grayscale-[0.4] brightness-50 contrast-125"
               />
@@ -208,13 +208,13 @@ export default function AuthFlow() {
                     PURE. NATURAL. LEGITIMATE.
                   </h2>
                   <h1 className="text-[#0ad111] text-xs font-mono tracking-[0.4em] uppercase font-black">
-                    NUEVA ECIJA DROP SHOP
+                    OCCI.MINDORO DROP SHOP
                   </h1>
                 </div>
 
                 <div className="relative aspect-video rounded-xl overflow-hidden border border-[#106011]/50">
                   <img
-                    src="/coverphoto004.jpg"
+                    src="/coverphoto4.jpg"
                     className="w-full h-full object-cover filter brightness-50 contrast-125"
                     alt="cover"
                   />
@@ -223,7 +223,7 @@ export default function AuthFlow() {
                       THE DROP
                     </h2>
                     <p className="text-[7px] font-mono text-zinc-300 mt-2">
-                      Nueva Ecija Legit Drop Shop 100%
+                      Occ.Mindoro Legit Drop Shop 100%
                     </p>
                   </div>
                 </div>
@@ -263,7 +263,7 @@ export default function AuthFlow() {
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <h2 className="text-xl font-black tracking-[0.3em] text-white">THE DROP</h2>
             <p className="text-[7px] font-mono text-zinc-300 tracking-widest mt-1 uppercase">
-              Nueva Ecija Legit Drop Shop 100%
+              Occ.Mindoro Legit Drop Shop 100%
             </p>
           </div>
         </div>
@@ -287,7 +287,7 @@ export default function AuthFlow() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-6">
           <div className="w-20 h-20 bg-black border-2 border-[#106011] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(16,96,17,0.4)] overflow-hidden mb-3">
-            <img src="/logo.png" alt="App Icon" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
+            <img src="/Appicon.png" alt="App Icon" className="w-full h-full object-cover rounded-full" />
           </div>
           <h1 className="text-2xl font-black tracking-[0.4em] text-white">THE DROP</h1>
         </div>

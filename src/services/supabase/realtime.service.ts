@@ -14,6 +14,7 @@ class RealtimeService {
     channel: RealtimeChannel;
     callbacks: Set<SubscriptionCallback>;
   }> = new Map();
+  private retries: Map<string, number> = new Map();
 
   /**
    * Subscribe to table changes
@@ -45,6 +46,7 @@ class RealtimeService {
     
     const channel = supabase.channel(channelName);
     this.channels.set(channelName, { channel, callbacks });
+    this.retries.set(channelName, 0);
 
     channel
       .on('postgres_changes', { event, schema: 'public', table, filter }, (payload) => {
@@ -65,17 +67,30 @@ class RealtimeService {
         }
       })
       .subscribe((status, err) => {
-        if (status === 'SUBSCRIBED') {
-          console.log(`[Realtime] ✅ Subscribed to ${channelName}`);
+        const isActive = this.channels.has(channelName);
+        if (!isActive) {
+          // Channel was deleted intentionally via unsubscribe cleanup. Skip errors/warnings!
+          return;
         }
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-          console.error(`[Realtime] ❌ ${status} on ${channelName}:`, err);
-          // Only unsubscribe if it's still the same entry
-          const current = this.channels.get(channelName);
-          if (current && current.channel === channel) {
-            this.unsubscribe(channelName);
+
+        if (status === 'SUBSCRIBED') {
+          this.retries.set(channelName, 0);
+          console.log(`[Realtime] ✅ Subscribed to ${channelName}`);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          const currentRetries = this.retries.get(channelName) || 0;
+          const nextRetries = currentRetries + 1;
+          this.retries.set(channelName, nextRetries);
+
+          const maxLimit = options.maxRetries ?? 5;
+          
+          if (nextRetries >= maxLimit) {
+            console.error(`[Realtime] 🚨 Hard failure on ${channelName} after ${nextRetries} failed attempts. Dropping to fallback mechanism.`, err);
+            if (options.onError) {
+              options.onError(err || new Error(`${status} on ${channelName} after ${nextRetries} consecutive failures`));
+            }
+          } else {
+            console.warn(`[Realtime] ⚠️ ${status} on ${channelName} (Attempt ${nextRetries}/${maxLimit}). Supabase will attempt auto-reconnect:`, err);
           }
-          if (options.onError) options.onError(err || new Error(`${status} on ${channelName}`));
         }
       });
 
@@ -93,8 +108,9 @@ class RealtimeService {
   private unsubscribe(channelName: string) {
     const entry = this.channels.get(channelName);
     if (entry) {
+      this.channels.delete(channelName); // Delete first to prevent synchronous CLOSED triggering unsubscribe again
+      this.retries.delete(channelName);  // Clear retry counter
       supabase.removeChannel(entry.channel);
-      this.channels.delete(channelName);
       console.log(`[Realtime] Unsubscribed from ${channelName}`);
     }
   }

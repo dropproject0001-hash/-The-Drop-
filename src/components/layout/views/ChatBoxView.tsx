@@ -1,11 +1,40 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Send, Paperclip, ShieldCheck, Check, CornerDownLeft, Eye } from 'lucide-react';
 
+// Maps incoming or outgoing handles to the new flat tactical badges
+function getSenderBadge(sender: string) {
+  const s = sender.toUpperCase();
+  if (s.includes('DROPPER')) {
+    return {
+      src: '/dropper_role_icon.jpg',
+      borderColor: 'border-[#3b82f6]',
+      shadowColor: 'rgba(59,130,246,0.6)',
+      role: 'DROPPER'
+    };
+  } else if (s.includes('BUYER') || s.includes('CLIENT')) {
+    return {
+      src: '/client_role_icon.jpg',
+      borderColor: 'border-[#f5a623]',
+      shadowColor: 'rgba(245,166,35,0.6)',
+      role: 'CLIENT / BUYER'
+    };
+  } else {
+    // Defaults to operator/owner/boss
+    return {
+      src: '/admin_role_icon.jpg',
+      borderColor: 'border-[#0ad111]',
+      shadowColor: 'rgba(10,209,17,0.6)',
+      role: 'BOSS / OWNER'
+    };
+  }
+}
+
 export function ChatBoxView() {
   const [messages, setMessages] = useState([
     { id: '1', sender: 'DROPPER-01', text: 'Cargo drop initialized at Sector 3 paypay.', time: '12:01', isMe: false, isSeen: true },
     { id: '2', sender: 'OPERATOR-HQ', text: 'Roger that. Coordinates mapped to God\'s Eye system.', time: '12:02', isMe: true, isSeen: true },
-    { id: '3', sender: 'DROPPER-01', text: 'Awaiting client confirm for delivery verification code.', time: '12:03', isMe: false, isSeen: true },
+    { id: '3', sender: 'BUYER-42', text: 'Securing USDT transfer details. Drop zone appears clear.', time: '12:02', isMe: false, isSeen: true },
+    { id: '4', sender: 'DROPPER-01', text: 'Awaiting client confirm for delivery verification code.', time: '12:03', isMe: false, isSeen: true },
   ]);
 
   const [inputMessage, setInputMessage] = useState('');
@@ -73,7 +102,7 @@ export function ChatBoxView() {
       {/* Header telemetry info */}
       <div 
         className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#106011]/40 p-4 pb-6 shrink-0 z-10 relative overflow-hidden rounded-xl bg-cover bg-center"
-        style={{ backgroundImage: `url('/coverphoto2.jpg')` }}
+        style={{ backgroundImage: `url('/coverphoto002.jpg')` }}
       >
         <div className="absolute inset-0 bg-black/85 z-0 pointer-events-none" />
         <div className="relative z-10">
@@ -146,48 +175,77 @@ export function ChatBoxView() {
 
           {/* Active dialogue logs */}
           <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-4 mb-4 border border-[#106011]/35 bg-[#106011]/5 rounded min-h-[220px]">
-            {messages.map((m) => (
-              <div key={m.id} className={`flex flex-col max-w-[85%] ${m.isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
-                <div className="flex items-center gap-1.5 text-[9px] font-mono uppercase text-[#106011]/70 mb-1 px-1 font-bold tracking-widest">
-                  <span>{m.sender}</span>
-                  <span>•</span>
-                  <span>{m.time}</span>
-                </div>
-                
-                <div className={`p-3 rounded-2xl border text-slate-200 font-mono text-[11px] uppercase tracking-wide leading-relaxed shadow-[0_3px_8px_rgba(0,0,0,0.4)] relative ${m.isMe ? 'bg-black text-[#106011] border-[#106011] rounded-tr-none' : 'bg-black/90 border-[#106011]/40 rounded-tl-none'}`}>
-                  {/* Glowing corners for messages */}
-                  <div className="absolute top-0.5 left-0.5 w-1.5 h-1.5 border-t border-l border-[#106011]/45 pointer-events-none rounded-tl-sm"></div>
-                  <div className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 border-b border-r border-[#106011]/45 pointer-events-none rounded-br-sm"></div>
+            {messages.map((m) => {
+              const badge = getSenderBadge(m.sender);
+              return (
+                <div key={m.id} className={`flex items-start gap-3 max-w-[90%] ${m.isMe ? 'ml-auto flex-row-reverse' : 'mr-auto flex-row'}`}>
+                  {/* Flat Tactical Badge Icon Avatar */}
+                  <div 
+                    className={`w-9 h-9 rounded-full overflow-hidden border-2 shrink-0 ${badge.borderColor} bg-black flex items-center justify-center p-0.5 self-end`}
+                    style={{ boxShadow: `0 0 10px ${badge.shadowColor}` }}
+                    title={badge.role}
+                  >
+                    <img src={badge.src} alt={badge.role} className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
+                  </div>
 
-                  <p>{m.text}</p>
-                </div>
-                
-                {m.isMe && (
-                  <div className="flex items-center gap-1 mt-1 px-1 font-mono text-[8px] uppercase tracking-widest text-[#106011]/60 font-black">
-                    {m.isSeen ? (
-                      <>
-                        <Check className="w-2.5 h-2.5 text-green-500 inline" />
-                        <span>SEEN BY OPERATOR</span>
-                      </>
-                    ) : (
-                      <span>TRANSMITTED STAGE</span>
+                  <div className={`flex flex-col ${m.isMe ? 'items-end' : 'items-start'}`}>
+                    <div className="flex items-center gap-1.5 text-[9px] font-mono uppercase text-[#106011]/70 mb-1 px-1 font-bold tracking-widest">
+                      <span>{m.sender}</span>
+                      <span>•</span>
+                      <span className="text-slate-300 font-black">{badge.role}</span>
+                      <span>•</span>
+                      <span>{m.time}</span>
+                    </div>
+                    
+                    <div className={`p-3 rounded-2xl border text-slate-200 font-mono text-[11px] uppercase tracking-wide leading-relaxed shadow-[0_3px_8px_rgba(0,0,0,0.4)] relative ${m.isMe ? 'bg-black text-[#106011] border-[#106011] rounded-br-none' : 'bg-black/90 border-[#106011]/40 rounded-bl-none'}`}>
+                      {/* Glowing corners for messages */}
+                      <div className="absolute top-0.5 left-0.5 w-1.5 h-1.5 border-t border-l border-[#106011]/45 pointer-events-none rounded-tl-sm"></div>
+                      <div className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 border-b border-r border-[#106011]/45 pointer-events-none rounded-br-sm"></div>
+
+                      <p>{m.text}</p>
+                    </div>
+                    
+                    {m.isMe && (
+                      <div className="flex items-center gap-1 mt-1 px-1 font-mono text-[8px] uppercase tracking-widest text-[#106011]/60 font-black">
+                        {m.isSeen ? (
+                          <>
+                            <Check className="w-2.5 h-2.5 text-green-500 inline" />
+                            <span>SEEN BY OPERATOR</span>
+                          </>
+                        ) : (
+                          <span>TRANSMITTED STAGE</span>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
             
             {isTyping && (
-              <div className="flex flex-col mr-auto max-w-[80%] items-start">
-                <div className="flex items-center gap-1.5 text-[9px] font-mono uppercase text-[#106011]/70 mb-1 px-1 font-bold">
-                  <span>DROPPER-01</span>
-                  <span>•</span>
-                  <span className="animate-pulse">TYPING FEED ACTIVE...</span>
+              <div className="flex items-start gap-3 mr-auto max-w-[80%] flex-row">
+                {/* Dropper Live Badge Avatar */}
+                <div 
+                  className="w-9 h-9 rounded-full overflow-hidden border-2 shrink-0 border-[#3b82f6] bg-black flex items-center justify-center p-0.5 self-end"
+                  style={{ boxShadow: '0 0 10px rgba(59,130,246,0.6)' }}
+                  title="DROPPER"
+                >
+                  <img src="/dropper_role_icon.jpg" alt="DROPPER" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
                 </div>
-                <div className="p-3 bg-black/90 border border-dashed border-[#106011]/55 rounded-2xl rounded-tl-none flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-bounce" style={{ animationDelay: '300ms' }}></span>
+
+                <div className="flex flex-col items-start">
+                  <div className="flex items-center gap-1.5 text-[9px] font-mono uppercase text-[#106011]/70 mb-1 px-1 font-bold">
+                    <span>DROPPER-01</span>
+                    <span>•</span>
+                    <span className="text-slate-300 font-black">DROPPER</span>
+                    <span>•</span>
+                    <span className="animate-pulse">TYPING FEED ACTIVE...</span>
+                  </div>
+                  <div className="p-3 bg-black/90 border border-dashed border-[#106011]/55 rounded-2xl rounded-bl-none flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#106011] animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                  </div>
                 </div>
               </div>
             )}

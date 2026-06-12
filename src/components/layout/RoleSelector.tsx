@@ -21,7 +21,7 @@ export function RoleSelector() {
           }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           className="absolute inset-0 w-full h-full mix-blend-luminosity bg-cover bg-center bg-no-repeat grayscale-[0.5] brightness-75 transition-opacity duration-1000"
-          style={{ backgroundImage: `url('/regenerated_image_1781027109738.jpg')` }}
+          style={{ backgroundImage: `url('/coverphoto003.jpg')` }}
         />
         
         {/* Layer 2: Dynamic Atmospheric Scanning Mask (Full Frame) */}
@@ -34,16 +34,97 @@ export function RoleSelector() {
         {/* Global HUD Scanning Emission Depth */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/45 to-black/95 pointer-events-none" />
 
-        {/* Layer 3: Tactical Grid Overlay */}
+        {/* Layer 3: Tactical Grid Overlay with elegant glowing grid points */}
         <div 
-          className="absolute inset-0 opacity-[0.1]" 
+          className="absolute inset-0 opacity-[0.12]" 
           style={{
             backgroundImage: `
               linear-gradient(rgba(16, 96, 17, 0.3) 1px, transparent 1px),
               linear-gradient(90deg, rgba(16, 96, 17, 0.3) 1px, transparent 1px)
             `,
-            backgroundSize: '80px 80px'
+            backgroundSize: '40px 40px'
           }}
+        />
+
+        {/* Large Decorative Symmetrical HUD Radar Circles in background */}
+        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full border border-[#106011]/15 flex items-center justify-center">
+          <motion.div 
+            animate={{ rotate: 360 }} 
+            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+            className="w-80 h-80 rounded-full border border-dashed border-[#106011]/20 flex items-center justify-center"
+          >
+            <div className="w-48 h-48 rounded-full border border-[#106011]/10 flex items-center justify-center">
+              <div className="w-4 h-4 rounded-full bg-[#106011]/10" />
+            </div>
+          </motion.div>
+        </div>
+
+        <div className="absolute bottom-1/4 -right-32 w-120 h-120 rounded-full border border-[#0ad111]/10 flex items-center justify-center">
+          <motion.div 
+            animate={{ rotate: -360 }} 
+            transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+            className="w-96 h-96 rounded-full border border-[#0ad111]/10 flex items-center justify-center"
+          >
+            <div className="w-64 h-64 border border-dashed border-[#0ad111]/15 rounded-full flex items-center justify-center" />
+          </motion.div>
+        </div>
+
+        {/* Tactical Crosshair Corner Anchors */}
+        <div className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-[#106011]/30" />
+        <div className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-[#106011]/30" />
+        <div className="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-[#106011]/30" />
+        <div className="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-[#106011]/30" />
+
+        {/* Left Side Tactical Coordinates Margin Info Container */}
+        <div className="absolute left-6 top-1/3 hidden xl:flex flex-col gap-10 text-[9px] font-mono font-black text-[#106011]/50 select-none tracking-widest writing-mode-vertical">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#e2c80f] animate-ping" />
+            <span>LAT: 15° 40' 58.2" N</span>
+          </div>
+          <div>OPS_GRID_INDEX: NE_SECTOR_01</div>
+          <div>SIGNAL LINK STATUS: EXCELLENT</div>
+        </div>
+
+        {/* Right Side Tactical Coordinates Margin Info Container */}
+        <div className="absolute right-6 top-1/3 hidden xl:flex flex-col gap-10 text-[9px] font-mono font-black text-[#106011]/50 select-none tracking-widest writing-mode-vertical items-end text-right">
+          <div className="flex items-center gap-2">
+            <span>LON: 120° 53' 44.5" E</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0ad111] animate-pulse" />
+          </div>
+          <div>COMM_CRYPTO: AES_256_GCM</div>
+          <div>UPLINK: ACTIVE // GPS_LOCK_ON</div>
+        </div>
+
+        {/* Ambient Floating Mini Glow Nodes (Representing drops / roles on the map grid) */}
+        {/* GOLD NODE (Buyer) */}
+        <motion.div 
+          animate={{ 
+            y: [-10, 10, -10],
+            opacity: [0.3, 0.7, 0.3],
+            scale: [0.9, 1.1, 0.9]
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[20%] left-[15%] w-3 h-3 rounded-full bg-[#e2c80f]/30 border border-[#e2c80f] shadow-[0_0_12px_#e2c80f]"
+        />
+        {/* BLUE NODE (Dropper) */}
+        <motion.div 
+          animate={{ 
+            y: [15, -15, 15],
+            opacity: [0.2, 0.6, 0.2],
+            scale: [1, 0.8, 1]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute bottom-[25%] left-[25%] w-2 h-2 rounded-full bg-[#3b82f6]/40 border border-[#3b82f6] shadow-[0_0_10px_#3b82f6]"
+        />
+        {/* GREEN NODE (Boss / Owner) */}
+        <motion.div 
+          animate={{ 
+            y: [-12, 12, -12],
+            opacity: [0.4, 0.8, 0.4],
+            scale: [0.85, 1.15, 0.85]
+          }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute top-[35%] right-[20%] w-3 h-3 rounded-full bg-[#0ad111]/30 border border-[#0ad111] shadow-[0_0_12px_#0ad111]"
         />
 
         {/* Layer 4: Global Scanning HUD Line */}
@@ -64,6 +145,46 @@ export function RoleSelector() {
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 flex flex-col items-center gap-1 mt-4"
       >
+        {/* High-Fidelity Tactical Frame wrapping the Main Operational Banner */}
+        <div className="relative p-1 bg-black/90 border border-[#106011]/80 rounded-lg shadow-[0_0_20px_rgba(10,209,17,0.25)] w-full max-w-[400px] md:max-w-[600px] mb-6 overflow-hidden group/banner z-10">
+          {/* Internal neon sub-border */}
+          <div className="absolute inset-0.5 border border-[#0ad111]/30 rounded-[6px] pointer-events-none" />
+          
+          {/* Tactical Crosshair Corner Anchors */}
+          <div className="absolute top-0 left-0 w-3.5 h-3.5 border-t-[2.5px] border-l-[2.5px] border-[#0ad111] z-20" />
+          <div className="absolute top-0 right-0 w-3.5 h-3.5 border-t-[2.5px] border-r-[2.5px] border-[#0ad111] z-20" />
+          <div className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-[2.5px] border-l-[2.5px] border-[#0ad111] z-20" />
+          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-[2.5px] border-r-[2.5px] border-[#0ad111] z-20" />
+
+          {/* Symmetrical mechanical micro HUD ticks on margins */}
+          <div className="absolute top-1/2 -translate-y-1/2 left-0 w-[3px] h-3 bg-[#0ad111]/50 z-20" />
+          <div className="absolute top-1/2 -translate-y-1/2 right-0 w-[3px] h-3 bg-[#0ad111]/50 z-20" />
+
+          {/* High-contrast subgrid overlay */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(16,96,17,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(16,96,17,0.12)_1px,transparent_1px)] bg-[size:12px_12px] opacity-30 pointer-events-none" />
+
+          {/* Ambient scanning light */}
+          <motion.div 
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-[#0ad111]/10 to-transparent skew-x-12 pointer-events-none z-10"
+          />
+
+          {/* Solid Banner Image */}
+          <img 
+            src="/coverphoto001.png" 
+            alt="The Drop Logo" 
+            className="w-full h-auto object-contain relative z-10 group-hover/banner:scale-[1.015] transition-transform duration-500 rounded-md" 
+          />
+
+          {/* Symmetrical metadata telemetry lines inside the container edges */}
+          <div className="absolute top-1 left-4 font-mono text-[7px] text-[#0ad111]/80 tracking-widest uppercase font-black z-20 bg-black/70 px-1.5 rounded-sm select-none border border-[#106011]/30">
+            BANNER_LINK // OK
+          </div>
+          <div className="absolute bottom-1 right-4 font-mono text-[7px] text-[#0ad111]/80 tracking-widest uppercase font-black z-20 bg-black/70 px-1.5 rounded-sm select-none border border-[#106011]/30">
+            NUEVA_ECIJA_UPLINK
+          </div>
+        </div>
         <div className="flex items-center gap-4 mb-2">
           <div className="w-12 h-[1px] bg-gradient-to-r from-transparent to-[#106011]" />
           <motion.span 
@@ -91,7 +212,9 @@ export function RoleSelector() {
             transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             className="absolute inset-y-0 w-full bg-gradient-to-r from-transparent via-[#0ad111]/25 to-transparent skew-x-[35deg] pointer-events-none z-0"
           />
-          <span className="relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">Nueva Ecija</span> <span className="text-[#0ad111] relative z-10 drop-shadow-[0_0_15px_rgba(10,209,17,0.4)]">Representing</span>
+          <span className="relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" style={{ fontFamily: 'Courier New', color: '#ffffff' }}>Nueva </span>
+          <span className="relative z-10 drop-shadow-[0_0_15px_rgba(10,209,17,0.5)]" style={{ fontFamily: 'Courier New', color: '#0ad111' }}>Ecija </span>
+          <span className="relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" style={{ fontFamily: 'Courier New', color: '#ffffff' }}>Representing</span>
         </motion.h1>
       </motion.div>
       
@@ -102,7 +225,7 @@ export function RoleSelector() {
       >
         <RoleCard 
           to="/client" 
-          icon={<NeonIcon imageSrc="/buyer-icon.png" color="gold" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
+          icon={<NeonIcon imageSrc="/client_role_icon.jpg" color="gold" size={160} className="group-hover:scale-110 transition-transform duration-300" />} 
           title="Client" 
           features={[
             "PRODUCT MAP VIEW:",
@@ -130,7 +253,7 @@ export function RoleSelector() {
         />
         <RoleCard 
           to="/dropper" 
-          icon={<NeonIcon imageSrc="/Dropper-icon.png" color="blue" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
+          icon={<NeonIcon imageSrc="/dropper_role_icon.jpg" color="blue" size={160} className="group-hover:scale-110 transition-transform duration-300" />} 
           title="DROPPER" 
           features={[
             "PRODUCT DROP SYSTEM:",
@@ -164,7 +287,7 @@ export function RoleSelector() {
         />
         <RoleCard 
           to="/super-admin" 
-          icon={<NeonIcon imageSrc="/Appicon.png" color="green" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
+          icon={<NeonIcon imageSrc="/admin_role_icon.jpg" color="green" size={160} className="group-hover:scale-110 transition-transform duration-300" />} 
           title="Boss/Owner" 
           features={[
             "LIVE GPS TRACKING:",
@@ -581,7 +704,7 @@ function BulletinDrawer() {
         <div className="flex flex-col items-center justify-center gap-2 w-full text-center">
           <div className="flex items-center gap-3 w-full overflow-hidden">
             <div className="w-8 h-8 rounded-full overflow-hidden border border-[#0ad111] bg-black shrink-0 shadow-[0_0_8px_rgba(10,209,17,0.4)] flex items-center justify-center p-0.5 group-hover:shadow-[0_0_12px_#0ad111] relative z-10">
-              <img src="/Appicon.png" alt="App Icon" className="w-full h-full object-cover rounded-full" />
+              <img src="/logo.png" alt="App Icon" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
             </div>
             
             <div 
@@ -642,7 +765,7 @@ function BulletinDrawer() {
               {/* Ultra-High Contrast Background Core */}
               <div 
                 className="absolute inset-0 w-full h-full opacity-40 pointer-events-none mix-blend-screen bg-cover bg-center bg-no-repeat grayscale-[0.2] brightness-110 contrast-150 scale-105 transition-transform duration-1000 group-hover/panel:scale-110"
-                style={{ backgroundImage: `url('/regenerated_image_1781027109738.jpg')` }}
+                style={{ backgroundImage: `url('/coverphoto004.jpg')` }}
               />
 
               {/* Tactical Flux Overlays */}

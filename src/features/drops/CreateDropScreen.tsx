@@ -2,7 +2,7 @@
  * @file src/features/drops/CreateDropScreen.tsx
  *
  * FIX H-5: lat/lng now default to the user's geolocation (or fall back to
- *           Mamburao centre) rather than 0,0 (Gulf of Guinea).
+ *           Nueva Ecija centre) rather than 0,0 (Gulf of Guinea).
  * FIX M-8: Added a basic assignee field so drops are not silently self-assigned.
  *           Replace the text input with a proper user-picker once the profiles
  *           query is wired up.
@@ -12,15 +12,15 @@ import { useEdgeFunctions } from '@/hooks/useEdgeFunctions';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/ToastContainer';
 
-// Fallback centre for Mamburao, Occidental Mindoro
-const MAMBURAO_LAT = 13.226;
-const MAMBURAO_LNG = 120.596;
+// Fallback centre for Cabanatuan, Nueva Ecija
+const NUEVA_ECIJA_LAT = 15.4865;
+const NUEVA_ECIJA_LNG = 120.9734;
 
 export function CreateDropScreen() {
   const [form, setForm] = useState({
     title: '',
-    lat: MAMBURAO_LAT,
-    lng: MAMBURAO_LNG,
+    lat: NUEVA_ECIJA_LAT,
+    lng: NUEVA_ECIJA_LNG,
     assignedTo: '',  // FIX M-8: assignee field
   });
 
@@ -44,7 +44,7 @@ export function CreateDropScreen() {
         setLocStatus('resolved');
       },
       () => {
-        // Fall back to Mamburao centre
+        // Fall back to Nueva Ecija centre
         setLocStatus('fallback');
       },
       { enableHighAccuracy: true, timeout: 5_000 }
@@ -117,7 +117,7 @@ export function CreateDropScreen() {
       <div className="mb-3 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-400">
         {locStatus === 'resolving' && '📍 Resolving your location…'}
         {locStatus === 'resolved' && `📍 Your location: ${form.lat}, ${form.lng}`}
-        {locStatus === 'fallback' && `📍 Using Mamburao centre: ${form.lat}, ${form.lng}`}
+        {locStatus === 'fallback' && `📍 Using Nueva Ecija centre: ${form.lat}, ${form.lng}`}
       </div>
 
       <button
