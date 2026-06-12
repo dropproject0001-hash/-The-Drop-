@@ -136,23 +136,23 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
       <div style={{ height }} className="relative w-full rounded-2xl overflow-hidden border border-zinc-805 bg-black">
         
         {/* === TACTICAL INTEGRATED CONTROL BAR === */}
-        <div className="absolute top-4 right-4 z-[1000] pointer-events-auto flex flex-col items-end gap-1.5 max-w-[92%] sm:max-w-none">
-          <div className="flex items-center gap-1.5 bg-slate-950/95 backdrop-blur-md border border-[#106011]/80 rounded-xl p-1 shadow-[0_0_20px_rgba(16,96,17,0.4)] transition-all duration-300">
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-[1000] pointer-events-auto flex flex-col items-end gap-2 max-w-[88%] sm:max-w-none">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-1.5 bg-slate-950/95 backdrop-blur-md border border-[#106011]/80 rounded-xl p-2 sm:p-1 shadow-[0_0_20px_rgba(16,96,17,0.4)] transition-all duration-300 w-full sm:w-auto">
             
             {/* Search Input Section */}
-            <div className="flex items-center px-1.5 py-1 min-w-[140px] sm:min-w-[200px]">
+            <div className="flex items-center px-1.5 py-1 flex-1 sm:flex-initial min-w-[120px] xs:min-w-[150px] sm:min-w-[200px]">
               <Search className="w-3.5 h-3.5 text-[#0ad111] mr-1.5 shrink-0 animate-pulse" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="SEARCH COORDINATE OR ID..."
-                className="w-full bg-transparent text-[#0ad111] font-mono text-[8px] sm:text-[10px] placeholder:text-[#106011]/40 focus:outline-none uppercase tracking-widest"
+                className="w-full bg-transparent text-[#0ad111] font-mono text-[9px] sm:text-[10px] placeholder:text-[#106011]/40 focus:outline-none uppercase tracking-widest"
               />
               {searchQuery ? (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="text-slate-400 hover:text-red-400 p-0.5 focus:outline-none shrink-0"
+                  className="text-slate-400 hover:text-red-400 p-0.5 focus:outline-none shrink-0 ml-1"
                   title="Clear Query"
                 >
                   <X className="w-3 h-3" />
@@ -161,7 +161,7 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
                 userPosition && (
                   <button
                     onClick={() => handleLocateTarget(userPosition[0], userPosition[1])}
-                    className="text-[#106011] hover:text-[#0ad111] p-0.5 transition-colors shrink-0"
+                    className="text-[#106011] hover:text-[#0ad111] p-0.5 transition-colors shrink-0 ml-1"
                     title="Focus Live Location"
                   >
                     <Navigation className="w-3 h-3" />
@@ -170,29 +170,32 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
               )}
             </div>
 
-            {/* Vertical Divider Line */}
-            <div className="h-5 w-[1px] bg-[#106011]/30" />
+            {/* Responsive Divider Line */}
+            <div className="hidden sm:block h-5 w-[1px] bg-[#106011]/30 align-middle shrink-0" />
+            <div className="block sm:hidden h-[1px] w-full bg-[#106011]/20 my-0.5 shrink-0" />
 
             {/* Map Style Selector Section */}
-            <div className="flex items-center gap-1">
-              <div className="p-1 px-1.5 text-[#0ad111] flex items-center gap-1 font-mono text-[8px] sm:text-[9px] tracking-widest font-black uppercase">
+            <div className="flex items-center justify-between sm:justify-start gap-1 flex-1 sm:flex-initial">
+              <div className="p-1 px-1 text-[#0ad111] flex items-center gap-1 font-mono text-[8px] sm:text-[9px] tracking-widest font-black uppercase shrink-0">
                 <Layers className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">STYLE</span>
+                <span className="hidden sm:inline">STYLE</span>
               </div>
-              <div className="h-4 w-[1px] bg-[#106011]/30 mr-1 hidden md:block" />
-              {(['street', 'satellite', 'tactical'] as MapStyle[]).map((style) => (
-                <button
-                  key={style}
-                  onClick={() => setMapStyle(style)}
-                  className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg font-mono text-[8px] sm:text-[9px] font-bold tracking-widest transition-all duration-300 ${
-                    mapStyle === style
-                      ? 'bg-[#106011] text-black shadow-[0_0_10px_rgba(16,96,17,0.5)] font-black'
-                      : 'text-[#106011]/70 hover:text-[#0ad111] hover:bg-[#106011]/15'
-                  }`}
-                >
-                  {style.toUpperCase()}
-                </button>
-              ))}
+              <div className="h-4 w-[1px] bg-[#106011]/30 mr-1 hidden sm:block shrink-0" />
+              <div className="flex items-center gap-1 flex-1 sm:flex-initial">
+                {(['street', 'satellite', 'tactical'] as MapStyle[]).map((style) => (
+                  <button
+                    key={style}
+                    onClick={() => setMapStyle(style)}
+                    className={`flex-1 sm:flex-initial px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg font-mono text-[8px] sm:text-[9px] font-bold tracking-widest transition-all duration-300 text-center uppercase whitespace-nowrap ${
+                      mapStyle === style
+                        ? 'bg-[#106011] text-black shadow-[0_0_10px_rgba(16,96,17,0.5)] font-black'
+                        : 'text-[#106011]/70 hover:text-[#0ad111] hover:bg-[#106011]/15'
+                    }`}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

@@ -1,16 +1,19 @@
 import { useState } from 'react';
-import { Users, Wifi, ShieldAlert, Navigation, MessageSquare, Radar } from 'lucide-react';
+import { Users, Wifi, ShieldAlert, Navigation, MessageSquare, Radar, Shield, Terminal } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface DropperListViewProps {
   onSwitchToChat?: () => void;
 }
 
 export function DropperListView({ onSwitchToChat }: DropperListViewProps) {
+  const navigate = useNavigate();
   const [agents, setAgents] = useState([
-    { id: 'D10', alias: 'DROPPER-01', sector: 'Cabanatuan Central East', status: 'Active', signal: '106.011 MHz', strength: 98, lat: 15.4865, lng: 120.9734, latency: '4ms' },
-    { id: 'D12', alias: 'DROPPER-02', sector: 'Talavera Sector Terminal', status: 'Running', signal: '106.045 MHz', strength: 71, lat: 15.4950, lng: 120.9622, latency: '22ms' },
-    { id: 'D14', alias: 'DROPPER-03', sector: 'Cabanatuan West Base 2', status: 'Standby', signal: '106.002 MHz', strength: 89, lat: 15.4718, lng: 120.9850, latency: '8ms' },
-    { id: 'D17', alias: 'DROPPER-04', sector: 'Northern Gapan Zone', status: 'Offline', signal: '106.014 MHz', strength: 0, lat: 15.5054, lng: 120.9921, latency: 'N/A' },
+    { id: 'D10', alias: 'DROPPER-01', sector: 'Cabanatuan Central East', status: 'Active', signal: '106.011 MHz', strength: 98, lat: 15.4865, lng: 120.9734, latency: '4ms', role: 'dropper' },
+    { id: 'D12', alias: 'DROPPER-02', sector: 'Talavera Sector Terminal', status: 'Running', signal: '106.045 MHz', strength: 71, lat: 15.4950, lng: 120.9622, latency: '22ms', role: 'dropper' },
+    { id: 'A01', alias: 'ADMIN-ALPHA', sector: 'Central Operations HQ', status: 'Active', signal: '900.555 MHz', strength: 100, lat: 15.4865, lng: 120.9734, latency: '2ms', role: 'admin' },
+    { id: 'D14', alias: 'DROPPER-03', sector: 'Cabanatuan West Base 2', status: 'Standby', signal: '106.002 MHz', strength: 89, lat: 15.4718, lng: 120.9850, latency: '8ms', role: 'dropper' },
+    { id: 'D17', alias: 'DROPPER-04', sector: 'Northern Gapan Zone', status: 'Offline', signal: '106.014 MHz', strength: 0, lat: 15.5054, lng: 120.9921, latency: 'N/A', role: 'dropper' },
   ]);
 
   const [pingingAgent, setPingingAgent] = useState<string | null>(null);
@@ -55,9 +58,11 @@ export function DropperListView({ onSwitchToChat }: DropperListViewProps) {
           </h2>
         </div>
         
-        <div className="p-2.5 bg-black/80 border-2 border-[#106011] rounded shadow-[0_0_12px_rgba(16,96,17,0.3)] flex items-center gap-2 text-slate-300 font-mono text-[10px] uppercase font-bold">
-          <Users className="w-4 h-4 text-[#106011]" />
-          <span>OPERATOR DUPLEX STREAMS: 4 CONNECTED</span>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-black/80 border-2 border-[#106011] rounded shadow-[0_0_12px_rgba(16,96,17,0.3)] flex items-center gap-2 text-slate-300 font-mono text-[10px] uppercase font-bold">
+            <Users className="w-4 h-4 text-[#106011]" />
+            <span>OPERATOR DUPLEX STREAMS: 4 CONNECTED</span>
+          </div>
         </div>
       </div>
 
@@ -90,7 +95,16 @@ export function DropperListView({ onSwitchToChat }: DropperListViewProps) {
                           <span className={`absolute -inset-0.5 rounded-full blur-xs opacity-60 ${isOffline ? 'bg-red-500' : 'bg-green-500 animate-ping'}`}></span>
                           <span className={`relative w-2 h-2 rounded-full block ${isOffline ? 'bg-red-500' : 'bg-green-500'}`}></span>
                         </div>
-                        <span className="text-[10px] font-mono font-bold text-slate-400">OPERATIVE ID: {agent.id}</span>
+                        <div className="flex items-center gap-1.5 font-mono text-[9px] font-black tracking-widest">
+                          <span className="text-slate-400">ID: {agent.id}</span>
+                          <span className={`px-1.5 py-0.5 rounded-sm border ${
+                            agent.role === 'admin' 
+                              ? 'bg-blue-950/30 text-blue-400 border-blue-900/50' 
+                              : 'bg-emerald-950/30 text-emerald-400 border-emerald-900/50'
+                          }`}>
+                            {agent.role.toUpperCase()}
+                          </span>
+                        </div>
                       </div>
                       <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${isOffline ? 'bg-red-950/40 text-red-500 border-red-800' : 'bg-green-950/40 text-green-400 border-green-800 font-bold'}`}>
                         {agent.status}
@@ -98,7 +112,14 @@ export function DropperListView({ onSwitchToChat }: DropperListViewProps) {
                     </div>
 
                     <div className="space-y-1">
-                      <h3 className="text-xl font-display font-black tracking-widest text-white uppercase">{agent.alias}</h3>
+                      <div className="flex items-center gap-2">
+                        {agent.role === 'admin' ? (
+                          <Shield size={18} className="text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                        ) : (
+                          <Terminal size={18} className="text-[#106011] drop-shadow-[0_0_8px_rgba(16,96,17,0.5)]" />
+                        )}
+                        <h3 className="text-xl font-display font-black tracking-widest text-white uppercase">{agent.alias}</h3>
+                      </div>
                       <p className="text-[11px] font-mono text-slate-300 tracking-wider">SECTOR: {agent.sector}</p>
                     </div>
 

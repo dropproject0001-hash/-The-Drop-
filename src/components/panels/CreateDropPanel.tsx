@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Save } from 'lucide-react';
+import { Save, Crosshair } from 'lucide-react';
 import { useToast } from '@/components/ui/ToastContainer';
 
 export function CreateDropPanel({ onClose }: { onClose: () => void }) {
@@ -12,6 +12,28 @@ export function CreateDropPanel({ onClose }: { onClose: () => void }) {
     lng: '',
     assigned_to: ''
   });
+
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      showToast('Geolocation is not supported by your browser', { type: 'error' });
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData(prev => ({
+          ...prev,
+          lat: position.coords.latitude.toString(),
+          lng: position.coords.longitude.toString()
+        }));
+        showToast('Location acquired', { type: 'success' });
+      },
+      (error) => {
+        console.error(error);
+        showToast('Unable to retrieve location', { type: 'error' });
+      }
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +65,17 @@ export function CreateDropPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="bg-black/95 border border-[#106011]/50 p-6 rounded-2xl flex flex-col gap-4 text-white">
-      <h3 className="text-[#106011] font-mono tracking-widest uppercase text-lg">Initialize New DropZone</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-[#106011] font-mono tracking-widest uppercase text-lg">Initialize New DropZone</h3>
+        <button 
+          type="button" 
+          onClick={handleGetCurrentLocation}
+          className="text-[#0ad111] hover:text-white p-2 rounded-lg bg-[#106011]/20 hover:bg-[#106011]/40 transition-colors"
+          title="Get Current Location"
+        >
+          <Crosshair size={20} />
+        </button>
+      </div>
       
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1">

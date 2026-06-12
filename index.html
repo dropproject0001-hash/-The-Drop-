@@ -56,11 +56,29 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js').catch((err) => {
-            console.log('SW registration failed: ', err);
-          });
+        console.warn('⚠️ [PWA Protection] Purging all service workers and clearing caches to guarantee fresh load.');
+        
+        // 1. Unregister all service workers
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var registration of registrations) {
+            registration.unregister();
+            console.log('✅ Action complete: Service worker unregistered.');
+          }
+        }).catch(function(err) {
+          console.error('❌ Failed to unregister service worker:', err);
         });
+
+        // 2. Clear all cache storages
+        if (window.caches) {
+          caches.keys().then(function(keys) {
+            return Promise.all(keys.map(function(key) {
+              console.log('✅ Action complete: Cache purged: ' + key);
+              return caches.delete(key);
+            }));
+          }).catch(function(err) {
+            console.error('❌ Failed to clear caches:', err);
+          });
+        }
       }
     </script>
   </body>

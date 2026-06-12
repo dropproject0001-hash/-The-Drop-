@@ -1,11 +1,13 @@
 import { lazy, Suspense } from 'react';
-import { Activity, Radio, Shield, Users, PackageSearch, Terminal, Plus } from 'lucide-react';
+import { Activity, Radio, Shield, PackageSearch, Terminal, Plus } from 'lucide-react';
 import { CreateDropPanel } from './CreateDropPanel';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const DropMap = lazy(() => import('@/components/map/DropMap'));
 
 export function SuperAdminPanel() {
+  const navigate = useNavigate();
   const [showCreateDrop, setShowCreateDrop] = useState(false);
   
   return (

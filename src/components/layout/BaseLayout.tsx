@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlobalModals } from '@/components/ui/GlobalModals';
-import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart, LogOut, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart, LogOut, RefreshCw, Wifi, WifiOff, Shield, Terminal } from 'lucide-react';
 
 import { CargoBayView } from './views/CargoBayView';
 import { ChatBoxView } from './views/ChatBoxView';
 import { DropperListView } from './views/DropperListView';
+import { UserRosterView } from './views/UserRosterView';
 import { StocksAnalysisView } from './views/StocksAnalysisView';
 import { ControlSettingsView } from './views/ControlSettingsView';
 import { useRole } from '@/context/RoleContext';
@@ -14,12 +15,13 @@ import { useAuth } from '@/app/providers/AuthContext';
 import { useLocationOutboxStatus } from '@/hooks/useLocationOutboxStatus';
 
 export function BaseLayout() {
-  const { isClient, role, loading } = useRole();
+  const { isClient, role, loading, isSuperAdmin } = useRole();
   const { signOut, profile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [activeTab, setActiveTab] = useState<'map' | 'cargo' | 'chat' | 'droppers' | 'stocks' | 'settings'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'cargo' | 'chat' | 'droppers' | 'stocks' | 'settings' | 'roster'>('map');
   
   const isExpanded = isHovered || isLocked;
 
@@ -164,6 +166,9 @@ export function BaseLayout() {
           )}
           {!isClient && (
             <NavItem icon={<Activity className="w-5 h-5" />} active={activeTab === 'stocks'} tooltip="Stocks Analysis" label="STOCKS ANALYSIS" isExpanded={isExpanded} onClick={() => setActiveTab('stocks')} />
+          )}
+          {isSuperAdmin && (
+            <NavItem icon={<Users className="w-5 h-5" />} active={activeTab === 'roster'} tooltip="Account Roster" label="SECURE ROSTER" isExpanded={isExpanded} onClick={() => setActiveTab('roster')} badge="FULL CONTROL" badgeStyle="border-red-900 bg-red-950/40 text-red-500 animate-pulse" />
           )}
         </nav>
         
@@ -409,7 +414,7 @@ export function BaseLayout() {
               
               {/* Glowing Interactive Circle Badge Avatar */}
               <div 
-                className={`w-9 h-9 rounded-full overflow-hidden border-2 shrink-0 ${badge.borderColor} bg-black flex items-center justify-center p-0.5 relative group/profile shadow-lg`}
+                className={`w-9 h-9 rounded-full border-2 shrink-0 ${badge.borderColor} bg-black flex items-center justify-center p-0.5 relative group/profile shadow-lg`}
                 style={{ boxShadow: `0 0 10px ${badge.shadowColor}` }}
               >
                 <img 
@@ -418,6 +423,20 @@ export function BaseLayout() {
                   className="w-full h-full object-cover rounded-full group-hover/profile:scale-110 transition-transform duration-300" 
                   referrerPolicy="no-referrer" 
                 />
+                
+                {/* Role Icon Overlay Badge */}
+                <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border border-black flex items-center justify-center z-20 shadow-md ${
+                  role === 'super_admin' ? 'bg-red-600' : role === 'admin' ? 'bg-blue-600' : role === 'dropper' ? 'bg-emerald-600' : 'bg-amber-600'
+                }`}>
+                  {role === 'super_admin' || role === 'admin' ? (
+                    <Shield size={8} className="text-white" />
+                  ) : role === 'dropper' ? (
+                    <Terminal size={8} className="text-white" />
+                  ) : (
+                    <ShoppingCart size={8} className="text-white" />
+                  )}
+                </div>
+
                 {/* Glowing status ring dot */}
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#0ad111] border border-black animate-pulse shadow-[0_0_8px_#0ad111]" />
               </div>
@@ -481,12 +500,24 @@ export function BaseLayout() {
 
           {/* Child active views content styled to float seamlessly above background */}
           <div className="relative z-10 w-full h-full">
-            {activeTab === 'map' && <Outlet />}
-            {activeTab === 'cargo' && <CargoBayView />}
-            {activeTab === 'chat' && <ChatBoxView />}
-            {activeTab === 'droppers' && <DropperListView onSwitchToChat={() => setActiveTab('chat')} />}
-            {activeTab === 'stocks' && <StocksAnalysisView />}
-            {activeTab === 'settings' && <ControlSettingsView />}
+            {/* If we are on a specialized sub-route that isn't just the base role dashboard, force Outlet visibility */}
+            {location.pathname !== '/' && 
+             location.pathname !== '/super-admin' && 
+             location.pathname !== '/admin' && 
+             location.pathname !== '/dropper' && 
+             location.pathname !== '/client' ? (
+              <Outlet />
+            ) : (
+              <>
+                {activeTab === 'map' && <Outlet />}
+                {activeTab === 'cargo' && <CargoBayView />}
+                {activeTab === 'chat' && <ChatBoxView />}
+                {activeTab === 'droppers' && <DropperListView onSwitchToChat={() => setActiveTab('chat')} />}
+                {activeTab === 'stocks' && <StocksAnalysisView />}
+                {activeTab === 'settings' && <ControlSettingsView />}
+                {activeTab === 'roster' && isSuperAdmin && <UserRosterView />}
+              </>
+            )}
           </div>
         </main>
       </div>
