@@ -245,6 +245,29 @@ export interface Database {
         };
         Update: never; // activity_log is immutable
       };
+      bulletins: {
+        Row: {
+          id: string;
+          title: string;
+          content: string;
+          status: 'CRITICAL' | 'OPERATIONAL' | 'SUPER_ADMIN' | 'SECURITY';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          content: string;
+          status?: 'CRITICAL' | 'OPERATIONAL' | 'SUPER_ADMIN' | 'SECURITY';
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          content?: string;
+          status?: 'CRITICAL' | 'OPERATIONAL' | 'SUPER_ADMIN' | 'SECURITY';
+          created_at?: string;
+        };
+      };
       otp_codes: {
         Row: {
           id: string;

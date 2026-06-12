@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Users, Shield, Terminal, ShoppingCart, Search, Filter, MoreVertical, Ban, Trash2, Edit2, CheckCircle2, X, UserPlus } from 'lucide-react';
+import { Users, Shield, Terminal, ShoppingCart, Search, Filter, MoreVertical, Ban, Trash2, Edit2, CheckCircle2, X, UserPlus, Megaphone } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/ToastContainer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { CreateBulletinModal } from '../../panels/CreateBulletinModal';
 
 interface Profile {
   id: string;
@@ -25,6 +26,7 @@ export function UserRosterView() {
   const [users, setUsers] = useState<Profile[]>([]);
   const [filter, setFilter] = useState<'all' | 'admin' | 'dropper' | 'client'>('all');
   const [search, setSearch] = useState('');
+  const [showCreateBulletin, setShowCreateBulletin] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -190,6 +192,13 @@ export function UserRosterView() {
             <UserPlus size={14} />
             INITIALIZE NODE
           </button>
+          <button 
+            onClick={() => setShowCreateBulletin(true)}
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-blue-900/20 border-2 border-blue-600 rounded-xl text-[9px] font-mono font-black tracking-[0.2em] text-white hover:bg-blue-900/40 transition-all shadow-[0_0_15px_rgba(30,58,138,0.3)]"
+          >
+            <Megaphone size={14} />
+            NEW BULLETIN
+          </button>
         </div>
       </div>
 
@@ -346,6 +355,11 @@ export function UserRosterView() {
         </div>
         <span className="text-[7px] font-mono tracking-widest uppercase">Encrypted Personnel Buffer v4.2.0</span>
       </div>
+
+      <CreateBulletinModal 
+        isOpen={showCreateBulletin} 
+        onClose={() => setShowCreateBulletin(false)} 
+      />
     </div>
   );
 }

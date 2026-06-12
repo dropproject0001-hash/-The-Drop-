@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores';
 import { useToast } from '@/components/ui/ToastContainer';
+import { CreateBulletinModal } from '../components/panels/CreateBulletinModal';
 
 interface Analytics {
   totalUsers: number;
@@ -36,6 +37,8 @@ export default function SuperAdminDashboard() {
 
   // Create Dropper State
   const [showCreateDropper, setShowCreateDropper] = useState(false);
+  const [showCreateBulletin, setShowCreateBulletin] = useState(false);
+  
   const [newDropperUsername, setNewDropperUsername] = useState('');
   const [newDropperPassword, setNewDropperPassword] = useState('');
   const [newDropperPhone, setNewDropperPhone] = useState('');
@@ -137,12 +140,20 @@ export default function SuperAdminDashboard() {
           <h1 className="text-4xl font-bold mb-2">SUPER ADMIN DASHBOARD</h1>
           <p className="text-[#106011]">Droppin Ops — Command &amp; Control</p>
         </div>
-        <button
-          onClick={() => setShowCreateDropper(true)}
-          className="bg-[#106011] hover:bg-green-700 text-black font-mono font-bold tracking-widest uppercase px-6 py-3 rounded-xl transition"
-        >
-          Create Dropper
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => setShowCreateDropper(true)}
+            className="bg-[#106011] hover:bg-green-700 text-black font-mono font-bold tracking-widest uppercase px-6 py-3 rounded-xl transition"
+          >
+            Create Dropper
+          </button>
+          <button
+            onClick={() => setShowCreateBulletin(true)}
+            className="bg-zinc-800 hover:bg-zinc-700 text-white font-mono font-bold tracking-widest uppercase px-6 py-3 rounded-xl transition"
+          >
+            Create Bulletin
+          </button>
+        </div>
       </div>
 
       {/* Analytics Cards */}
@@ -304,6 +315,11 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
       )}
+      {/* Create Bulletin Modal */}
+      <CreateBulletinModal 
+        isOpen={showCreateBulletin} 
+        onClose={() => setShowCreateBulletin(false)} 
+      />
     </div>
   );
 }

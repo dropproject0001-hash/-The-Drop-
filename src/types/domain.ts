@@ -30,6 +30,7 @@ export interface LiveLocation {
 export type ActivityLog = Database['public']['Tables']['activity_log']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];
 export type Pickup = Database['public']['Tables']['pickups']['Row'];
+export type Bulletin = Database['public']['Tables']['bulletins']['Row'];
 
 /** A drop enriched with the calculated distance from the current user's position. */
 export interface DropWithDistance extends Drop {
