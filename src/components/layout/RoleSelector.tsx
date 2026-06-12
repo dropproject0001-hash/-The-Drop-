@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Radio, Target, Leaf, Satellite, MessageSquare, AlertCircle, Terminal, Info, ChevronDown, ChevronUp, Activity, ShieldCheck } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Radio, Target, Leaf, Satellite, MessageSquare, AlertCircle, Terminal, Info, ChevronDown, ChevronUp, Activity, ShieldCheck, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NeonIcon } from '../ui/NeonIcons';
 import { BannerSlider } from '../ui/BannerSlider';
@@ -13,14 +13,26 @@ export function RoleSelector() {
     >
       {/* Enhanced Tactical Background Layers */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Layer 1: High-Fidelity Primary Background */}
-        <div 
-          className="absolute inset-0 w-full h-full opacity-60 mix-blend-luminosity bg-cover bg-center bg-no-repeat grayscale-[0.5] brightness-75 transition-opacity duration-1000"
+        {/* Layer 1: High-Fidelity Primary Background with Breathing Animation */}
+        <motion.div 
+          animate={{ 
+            opacity: [0.55, 0.65, 0.55],
+            scale: [1, 1.02, 1]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0 w-full h-full mix-blend-luminosity bg-cover bg-center bg-no-repeat grayscale-[0.5] brightness-75 transition-opacity duration-1000"
           style={{ backgroundImage: `url('/regenerated_image_1781027109738.jpg')` }}
         />
         
-        {/* Layer 2: Subtle Mission Depth (Optional, reduced for clarity) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/90 pointer-events-none" />
+        {/* Layer 2: Dynamic Atmospheric Scanning Mask (Full Frame) */}
+        <motion.div 
+          animate={{ x: ['-100%', '200%'] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-y-0 w-full bg-gradient-to-r from-transparent via-[#106011]/10 to-transparent skew-x-[30deg] pointer-events-none z-10"
+        />
+
+        {/* Global HUD Scanning Emission Depth */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/45 to-black/95 pointer-events-none" />
 
         {/* Layer 3: Tactical Grid Overlay */}
         <div 
@@ -54,121 +66,144 @@ export function RoleSelector() {
       >
         <div className="flex items-center gap-4 mb-2">
           <div className="w-12 h-[1px] bg-gradient-to-r from-transparent to-[#106011]" />
-          <span className="text-[10px] font-mono font-black text-[#0ad111] tracking-[0.5em] uppercase drop-shadow-[0_0_5px_rgba(10,209,17,0.5)]">
-            Mission Deployment Terminal
-          </span>
+          <motion.span 
+            animate={{ opacity: [0.7, 1, 0.7] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="text-[10px] font-mono font-black text-[#0ad111] tracking-[0.4em] uppercase drop-shadow-[0_0_8px_rgba(10,209,17,0.8)] px-3 py-1 bg-[#106011]/10 border border-[#106011]/30 rounded-sm relative overflow-hidden group"
+          >
+            <motion.div 
+              animate={{ x: ['-100%', '200%'] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-[#0ad111]/20 to-transparent skew-x-12 pointer-events-none"
+            />
+            MANATILING LOWKEY AT KALMADO KEEP SAFE
+          </motion.span>
           <div className="w-12 h-[1px] bg-gradient-to-l from-transparent to-[#106011]" />
         </div>
-        <h1 className="text-4xl font-display font-black text-white tracking-tighter uppercase italic">
-          Select <span className="text-[#0ad111] drop-shadow-[0_0_10px_rgba(10,209,17,0.6)]">Operational</span> Role
-        </h1>
+        <motion.h1 
+          animate={{ opacity: [0.85, 1, 0.85] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="text-4xl font-display font-black text-white tracking-tighter uppercase italic relative px-6 py-2 overflow-hidden"
+        >
+          {/* Internal Header Scanning Mask */}
+          <motion.div 
+            animate={{ x: ['-100%', '250%'] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-y-0 w-full bg-gradient-to-r from-transparent via-[#0ad111]/25 to-transparent skew-x-[35deg] pointer-events-none z-0"
+          />
+          <span className="relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">Nueva Ecija</span> <span className="text-[#0ad111] relative z-10 drop-shadow-[0_0_15px_rgba(10,209,17,0.4)]">Representing</span>
+        </motion.h1>
       </motion.div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full relative z-10">
-         <RoleCard 
-           to="/super-admin" 
-           icon={<NeonIcon imageSrc="/Appicon.png" color="green" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
-           title="Boss/Owner" 
-           features={[
-             "LIVE GPS TRACKING:",
-             "Track Admin/Droppers in realtime",
-             "Realtime map movement updates",
-             "Live movement path history",
-             "GPS activity logs",
-             "Last active timestamps",
-             "LIVE MAP MONITORING:",
-             "View product pin locations",
-             "Different marker colors/icons",
-             "Clickable modal popup on pins",
-             "PRODUCT DROP ANALYTICS:",
-             "Product dropped timestamps",
-             "Daily/weekly/monthly analytics",
-             "Heatmap analysis",
-             "Drop success logs",
-             "Looted product logs",
-             "INVENTORY SYSTEM:",
-             "Inventory monitoring",
-             "Product stock analysis",
-             "Low stock warnings",
-             "Product categories",
-             "Inventory charts",
-             "CHAT SYSTEM:",
-             "Private chat with Admins/Clients",
-             "Realtime messaging",
-             "Typing & read indicators",
-             "File attachments",
-             "LOG SYSTEM:",
-             "GPS logs",
-             "Product logs",
-             "Transaction logs",
-             "User activity logs",
-             "Security logs"
-           ]}
-           color="green"
-         />
-         <RoleCard 
-           to="/dropper" 
-           icon={<NeonIcon imageSrc="/Dropper-icon.png" color="blue" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
-           title="DROPPER" 
-           features={[
-             "PRODUCT DROP SYSTEM:",
-             "Create product drop",
-             "Pin exact GPS location",
-             "Upload: image & video guide",
-             "Add instructions/notes",
-             "Generate QR code for drop",
-             "CLIENT MANAGEMENT:",
-             "Private client chat",
-             "Approve orders/payments",
-             "Send live drop location",
-             "Track client GPS",
-             "LIVE MAP:",
-             "Realtime map",
-             "Client tracking",
-             "Product drop pins",
-             "GPS navigation pathway",
-             "INVENTORY:",
-             "View inventory",
-             "Update stock",
-             "Product logs",
-             "Delivery status",
-             "TRANSACTION SYSTEM:",
-             "Order approvals",
-             "Payment status",
-             "Transaction timestamps",
-             "Delivery confirmation"
-           ]}
-           color="blue"
-         />
-         <RoleCard 
-           to="/client" 
-           icon={<NeonIcon imageSrc="/buyer-icon.png" color="gold" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
-           title="Client" 
-           features={[
-             "PRODUCT MAP VIEW:",
-             "Realtime map",
-             "View approved dropped product location",
-             "GPS route/pathway to dropped product",
-             "Product pin marker",
-             "Getto 💲",
-             "PRIVATE CHAT:",
-             "Private order messaging with Admin",
-             "Upload proof/payment screenshots",
-             "Realtime chat",
-             "PRODUCT ACCESS:",
-             "client receives live pinned location",
-             "receives hidden product image",
-             "receives short guide video",
-             "receives QR code",
-             "PRODUCT LOOT SYSTEM:",
-             "Client can mark product as “Looted”",
-             "Product pin disappears after looted",
-             "Transaction closes automatically",
-             "Timestamp logs saved"
-           ]}
-           color="gold"
-         />
-      </div>
+      <motion.div 
+        animate={{ opacity: [0.98, 1, 0.98] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full relative z-10"
+      >
+        <RoleCard 
+          to="/client" 
+          icon={<NeonIcon imageSrc="/buyer-icon.png" color="gold" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
+          title="Client" 
+          features={[
+            "PRODUCT MAP VIEW:",
+            "Realtime map",
+            "View approved dropped product location",
+            "GPS route/pathway to dropped product",
+            "Product pin marker",
+            "Getto 💲",
+            "PRIVATE CHAT:",
+            "Private order messaging with Admin",
+            "Upload proof/payment screenshots",
+            "Realtime chat",
+            "PRODUCT ACCESS:",
+            "client receives live pinned location",
+            "receives hidden product image",
+            "receives short guide video",
+            "receives QR code",
+            "PRODUCT LOOT SYSTEM:",
+            "Client can mark product as “Looted”",
+            "Product pin disappears after looted",
+            "Transaction closes automatically",
+            "Timestamp logs saved"
+          ]}
+          color="gold"
+        />
+        <RoleCard 
+          to="/dropper" 
+          icon={<NeonIcon imageSrc="/Dropper-icon.png" color="blue" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
+          title="DROPPER" 
+          features={[
+            "PRODUCT DROP SYSTEM:",
+            "Create product drop",
+            "Pin exact GPS location",
+            "Upload: image & video guide",
+            "Add instructions/notes",
+            "Generate QR code for drop",
+            "CLIENT MANAGEMENT:",
+            "Private client chat",
+            "Approve orders/payments",
+            "Send live drop location",
+            "Track client GPS",
+            "LIVE MAP:",
+            "Realtime map",
+            "Client tracking",
+            "Product drop pins",
+            "GPS navigation pathway",
+            "INVENTORY:",
+            "View inventory",
+            "Update stock",
+            "Product logs",
+            "Delivery status",
+            "TRANSACTION SYSTEM:",
+            "Order approvals",
+            "Payment status",
+            "Transaction timestamps",
+            "Delivery confirmation"
+          ]}
+          color="blue"
+        />
+        <RoleCard 
+          to="/super-admin" 
+          icon={<NeonIcon imageSrc="/Appicon.png" color="green" size={120} className="group-hover:scale-110 transition-transform duration-300" />} 
+          title="Boss/Owner" 
+          features={[
+            "LIVE GPS TRACKING:",
+            "Track Admin/Droppers in realtime",
+            "Realtime map movement updates",
+            "Live movement path history",
+            "GPS activity logs",
+            "Last active timestamps",
+            "LIVE MAP MONITORING:",
+            "View product pin locations",
+            "Different marker colors/icons",
+            "Clickable modal popup on pins",
+            "PRODUCT DROP ANALYTICS:",
+            "Product dropped timestamps",
+            "Daily/weekly/monthly analytics",
+            "Heatmap analysis",
+            "Drop success logs",
+            "Looted product logs",
+            "INVENTORY SYSTEM:",
+            "Inventory monitoring",
+            "Product stock analysis",
+            "Low stock warnings",
+            "Product categories",
+            "Inventory charts",
+            "CHAT SYSTEM:",
+            "Private chat with Admins/Clients",
+            "Realtime messaging",
+            "Typing & read indicators",
+            "File attachments",
+            "LOG SYSTEM:",
+            "GPS logs",
+            "Product logs",
+            "Transaction logs",
+            "User activity logs",
+            "Security logs"
+          ]}
+          color="green"
+        />
+      </motion.div>
 
       {/* Bulletins / Field Updates Drawer */}
       <BulletinDrawer />
@@ -177,6 +212,9 @@ export function RoleSelector() {
 }
 
 function RoleCard({ to, icon, title, description, features, color }: { to: string, icon: React.ReactNode, title: string, description?: string, features?: string[], color: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const navigate = useNavigate();
+
   const themes = {
     red: { // Boss / Owner (Crimson & Solar Amber)
       border: "border-red-950/60 hover:border-red-500 shadow-[0_0_20px_rgba(220,25,25,0.1)] hover:shadow-[0_0_40px_rgba(220,25,25,0.4)]",
@@ -259,8 +297,23 @@ function RoleCard({ to, icon, title, description, features, color }: { to: strin
   const theme = themes[color as keyof typeof themes] || themes.green;
 
   return (
-    <Link to={to} className={`group flex flex-col items-center gap-6 p-8 rounded-[2rem] bg-black/95 transition-all duration-700 border-2 ${theme.border} hover:-translate-y-4 relative overflow-hidden select-none h-[600px] shadow-[0_0_40px_rgba(0,0,0,0.5)]`}>
-      {/* 1. Tactical Ambient Core Layer */}
+    <motion.div
+      animate={{ opacity: [0.96, 1, 0.96] }}
+      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      className={`${isExpanded ? 'h-auto min-h-[600px]' : 'h-[600px]'} transition-all duration-500`}
+    >
+      <div 
+        onClick={() => !isExpanded && navigate(to)}
+        className={`group flex flex-col items-center gap-6 p-8 rounded-[2rem] bg-black/95 transition-all duration-700 border-2 ${theme.border} ${!isExpanded ? 'hover:-translate-y-4 cursor-pointer' : ''} relative overflow-hidden select-none h-full shadow-[0_0_40px_rgba(0,0,0,0.5)]`}
+      >
+        {/* 0. Primary Scanning Mask Layer (Global Card Level) */}
+        <motion.div 
+          animate={{ x: ['-150%', '250%'] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+          className={`absolute inset-y-0 w-1/4 bg-gradient-to-r from-transparent via-current to-transparent skew-x-[30deg] opacity-0 group-hover:opacity-[0.05] pointer-events-none z-10 ${theme.text}`}
+        />
+
+        {/* 1. Tactical Ambient Core Layer */}
       <div className={`absolute inset-0 bg-gradient-to-br ${theme.bgOverlay} opacity-30 group-hover:opacity-60 transition-opacity duration-1000 pointer-events-none`} />
       
       {/* 2. Precision Scanning Matrix Mask */}
@@ -299,26 +352,138 @@ function RoleCard({ to, icon, title, description, features, color }: { to: strin
         ))}
       </div>
 
-      {/* 7. Animated Icon Module */}
-      <motion.div 
-        whileHover={{ scale: 1.05, rotate: [0, -2, 2, 0] }}
-        className={`p-6 rounded-full bg-black/60 border-2 ${theme.iconBg} shadow-[0_0_30px_rgba(0,0,0,0.4)] relative z-10 transition-all duration-500 ${theme.iconGlow}`}
-      >
-        {icon}
-      </motion.div>
-      
-      {/* 8. Content Container */}
-      <div className="flex flex-col gap-6 items-center w-full relative z-10">
-        <h2 className={`relative px-8 py-3.5 font-display font-black uppercase tracking-[0.35em] text-sm text-center border-2 rounded-xl overflow-hidden select-none transition-all duration-500 ${theme.titleBorder} shadow-lg`}>
+      {/* 7. Tactical Title Module (At Top) */}
+      <div className="w-full flex-shrink-0 relative z-40">
+        <motion.h2 
+          animate={{ opacity: [0.9, 1, 0.9] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className={`mx-auto relative px-6 py-3 font-display font-black uppercase tracking-[0.4em] text-xs text-center border-2 rounded-xl overflow-hidden select-none transition-all duration-500 ${theme.titleBorder} shadow-lg w-full flex items-center justify-center whitespace-nowrap`}
+        >
+          {/* Dynamic Scanning Mask Layer */}
+          <motion.div 
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            className={`absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-current to-transparent skew-x-12 opacity-0 group-hover:opacity-20 pointer-events-none z-0 ${theme.text}`}
+          />
+
           {/* Tactical HUD Corner Brackets inside Title */}
-          <div className={`absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 ${theme.cornerBorder} pointer-events-none`}></div>
-          <div className={`absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 ${theme.cornerBorder} pointer-events-none`}></div>
-          <div className={`absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 ${theme.cornerBorder} pointer-events-none`}></div>
-          <div className={`absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 ${theme.cornerBorder} pointer-events-none`}></div>
+          <div className={`absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 ${theme.cornerBorder} pointer-events-none`}></div>
+          <div className={`absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 ${theme.cornerBorder} pointer-events-none`}></div>
+          <div className={`absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 ${theme.cornerBorder} pointer-events-none`}></div>
+          <div className={`absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 ${theme.cornerBorder} pointer-events-none`}></div>
 
           <span className={`relative z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] ${theme.hoverText}`}>{title}</span>
-        </h2>
-        
+        </motion.h2>
+      </div>
+
+      {/* 8. Animated Icon Module (Centered) */}
+      <div className="flex-1 flex items-center justify-center w-full relative z-10 my-4">
+        <motion.div 
+          whileHover={{ scale: 1.05, rotate: [0, -2, 2, 0] }}
+          className={`p-6 rounded-full bg-black/60 border-2 ${theme.iconBg} shadow-[0_0_30px_rgba(0,0,0,0.4)] relative transition-all duration-500 ${theme.iconGlow}`}
+        >
+          {icon}
+        </motion.div>
+      </div>
+      
+      {/* 9. Content Cluster (Bottom Cluster) */}
+      <div className="flex flex-col gap-6 items-center w-full relative z-20 mt-auto mb-4">
+        {/* Features Matrix Toggle */}
+        {features && features.length > 0 && (
+          <div className="w-full flex flex-col gap-2 relative z-20">
+            <motion.button 
+              animate={{ 
+                opacity: isExpanded ? 1 : [0.8, 1, 0.8],
+                boxShadow: isExpanded ? [`0 0 15px ${theme.border.split(' ')[0].replace('border-', '')}`] : []
+              }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              className={`flex items-center justify-between w-full px-5 py-3 rounded-xl border-2 transition-all duration-500 group/btn relative overflow-hidden ${isExpanded ? theme.border + ' bg-black/60 shadow-lg' : 'border-slate-800/60 hover:border-slate-600 bg-black/40'}`}
+            >
+              {/* Internal Button Dynamic Scanning Mask */}
+              <motion.div 
+                animate={{ x: ['-200%', '300%'] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                className={`absolute inset-y-0 w-full bg-gradient-to-r from-transparent via-current to-transparent skew-x-[30deg] opacity-0 group-hover/btn:opacity-20 pointer-events-none z-0 ${theme.text}`}
+              />
+
+              {/* HUD Brackets for Toggle */}
+              <div className={`absolute top-0 left-0 w-2 h-2 border-t border-l pointer-events-none transition-opacity ${isExpanded ? 'opacity-100' : 'opacity-0'} ${theme.cornerBorder}`} />
+              <div className={`absolute bottom-0 right-0 w-2 h-2 border-b border-r pointer-events-none transition-opacity ${isExpanded ? 'opacity-100' : 'opacity-0'} ${theme.cornerBorder}`} />
+
+              <div className="flex items-center gap-3 relative z-10">
+                <Layers className={`w-4 h-4 transition-transform duration-500 ${isExpanded ? theme.text + ' rotate-180' : 'text-slate-500'}`} />
+                <span className={`text-[11px] font-mono font-black uppercase tracking-[0.25em] transition-colors duration-500 ${isExpanded ? theme.text : 'text-slate-400 group-hover/btn:text-slate-200'}`}>
+                  Operational Matrix
+                </span>
+              </div>
+              
+              <div className="relative z-10">
+                {isExpanded ? (
+                  <ChevronUp className={`w-4 h-4 ${theme.text} drop-shadow-[0_0_5px_currentColor]`} />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-slate-500 group-hover/btn:text-slate-300 transition-colors" />
+                )}
+              </div>
+            </motion.button>
+
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: "circOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="text-[11px] font-mono flex flex-col items-start w-full mt-2 space-y-2 pl-2 max-h-[350px] overflow-y-auto pr-4 custom-scrollbar-thin bg-black/30 rounded-xl p-3 border border-white/5">
+                    {features.map((feature, i) => {
+                      if (feature.endsWith(':')) {
+                        return (
+                          <motion.div 
+                            key={i} 
+                            initial={{ x: -10, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: i * 0.02 }}
+                            className={`mt-4 mb-1 text-[10px] w-full ${theme.bulletSubheaderText}`}
+                          >
+                            {feature.replace(':', '')}
+                          </motion.div>
+                        );
+                      }
+                      return (
+                        <motion.div 
+                          key={i} 
+                          initial={{ x: -10, opacity: 0 }}
+                          animate={{ x: 0, opacity: 0.8 }}
+                          whileHover={{ x: 5, opacity: 1 }}
+                          className="flex items-start gap-3 text-left text-slate-300 transition-all duration-300"
+                        >
+                          <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${theme.bulletBg}`}></span> 
+                          {feature === "Getto 💲" ? (
+                            <motion.span 
+                              animate={{ opacity: [1, 0.5, 1], scale: [1, 1.05, 1] }}
+                              transition={{ duration: 1, repeat: Infinity }}
+                              className="text-[#fdb804] font-black drop-shadow-[0_0_12px_rgba(253,184,4,0.8)]"
+                            >
+                              {feature}
+                            </motion.span>
+                          ) : (
+                            <span className="leading-tight group-hover:text-white transition-colors">{feature}</span>
+                          )}
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
         {/* Signal/Metadata Badge */}
         <div className={`relative px-6 py-2 flex items-center justify-center overflow-hidden border-2 bg-black/90 rounded-full transition-all duration-500 select-none ${theme.subBorder} shadow-md`}>
           <div className="flex items-center gap-2.5 relative z-10">
@@ -332,66 +497,27 @@ function RoleCard({ to, icon, title, description, features, color }: { to: strin
             </span>
           </div>
         </div>
-        
-        {description && (
-          <p className="text-[12px] font-mono text-slate-400 group-hover:text-slate-100 transition-colors text-center leading-relaxed max-w-[240px] px-2 opacity-80 group-hover:opacity-100">
-            {description}
-          </p>
-        )}
-        
-        {/* Features Matrix */}
-        {features && features.length > 0 && (
-          <div className="text-[11px] font-mono flex flex-col items-start w-full mt-4 space-y-2 pl-4 max-h-[180px] overflow-y-auto pr-4 custom-scrollbar-thin">
-            {features.map((feature, i) => {
-              if (feature.endsWith(':')) {
-                return (
-                  <motion.div 
-                    key={i} 
-                    initial={{ x: -10, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: i * 0.05 }}
-                    className={`mt-4 mb-1 text-[10px] w-full ${theme.bulletSubheaderText}`}
-                  >
-                    {feature.replace(':', '')}
-                  </motion.div>
-                );
-              }
-              return (
-                <motion.div 
-                  key={i} 
-                  initial={{ x: -10, opacity: 0 }}
-                  animate={{ x: 0, opacity: 0.8 }}
-                  whileHover={{ x: 5, opacity: 1 }}
-                  className="flex items-start gap-3 text-left text-slate-300 transition-all duration-300"
-                >
-                  <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${theme.bulletBg}`}></span> 
-                  {feature === "Getto 💲" ? (
-                    <motion.span 
-                      animate={{ opacity: [1, 0.5, 1], scale: [1, 1.05, 1] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                      className="text-[#fdb804] font-black drop-shadow-[0_0_12px_rgba(253,184,4,0.8)]"
-                    >
-                      {feature}
-                    </motion.span>
-                  ) : (
-                    <span className="leading-tight group-hover:text-white transition-colors">{feature}</span>
-                  )}
-                </motion.div>
-              )
-            })}
-          </div>
-        )}
       </div>
       
-      {/* Footer / Initialize Button Action */}
-      <motion.div 
-        whileHover={{ x: 10 }}
-        className={`mt-auto pt-6 w-full flex items-center justify-center gap-3 text-[11px] font-mono font-black uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0 ${theme.hoverText}`}
-      >
-        <span className="animate-pulse">Initialize Sequence</span>
-        <Terminal className="w-4 h-4" />
-      </motion.div>
-    </Link>
+      {/* Footer / Initialize Button Action (At Bottom) */}
+      <div className="w-full flex-shrink-0 mt-2">
+        <Link 
+          to={to}
+          onClick={(e) => e.stopPropagation()}
+          className={`flex items-center justify-center gap-3 w-full py-4 rounded-xl border-2 font-mono font-black uppercase tracking-[0.3em] text-[11px] transition-all duration-500 shadow-lg ${theme.titleBorder} ${theme.hoverText} hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group/init`}
+        >
+          {/* Internal Button Scan Line */}
+          <motion.div 
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className={`absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none`}
+          />
+          <span className="animate-pulse relative z-10">Initialize Sequence</span>
+          <Terminal className="w-4 h-4 relative z-10" />
+        </Link>
+      </div>
+      </div>
+    </motion.div>
   );
 }
 

@@ -91,12 +91,24 @@ export function BaseLayout() {
           <div className="absolute inset-0.5 border border-dashed pointer-events-none rounded-[10px] z-20 border-[#106011]/30 group-hover/brand:border-[#106011]/50 transition-colors"></div>
           <div className="absolute inset-1 border pointer-events-none rounded-[8px] z-20 border-[#106011]/15 group-hover/brand:border-[#106011]/30 transition-colors"></div>
           
-          <img 
-            src="/coverphoto3.jpg" 
-            alt="Droppin Ops Brand" 
-            className="w-full h-full object-cover relative z-10 opacity-90 group-hover/brand:opacity-100 group-hover/brand:scale-105 transition-all duration-300" 
-            referrerPolicy="no-referrer"
-          />
+          <motion.div
+            animate={{ opacity: [0.85, 1, 0.85] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="w-full h-full relative z-10"
+          >
+            <img 
+              src="/coverphoto3.jpg" 
+              alt="Droppin Ops Brand" 
+              className="w-full h-full object-cover group-hover/brand:scale-105 transition-all duration-700" 
+              referrerPolicy="no-referrer"
+            />
+            {/* Dynamic Scanning Mask Layer for Brand Image */}
+            <motion.div 
+              animate={{ x: ['-150%', '250%'] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-y-0 w-full bg-gradient-to-r from-transparent via-[#0ad111]/15 to-transparent skew-x-[25deg] pointer-events-none z-20"
+            />
+          </motion.div>
 
           {/* Tactical Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none z-20"></div>
@@ -281,10 +293,21 @@ export function BaseLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 h-screen">
         {/* Top Header with High-Contrast Tactical HUD and Nested Signal Borders */}
-        <header className="h-16 flex items-center justify-between px-6 border-b border-[#106011]/50 bg-black/95 relative shrink-0 z-40 overflow-hidden shadow-[0_4px_25px_rgba(16,96,17,0.15)]">
+        <motion.header 
+          animate={{ opacity: [0.94, 1, 0.94] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          className="h-16 flex items-center justify-between px-6 border-b border-[#106011]/50 bg-black/95 relative shrink-0 z-40 overflow-hidden shadow-[0_4px_30px_rgba(16,96,17,0.2)]"
+        >
+          {/* Dynamic Scanning Mask Layer */}
+          <motion.div 
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-[#106011]/10 to-transparent skew-x-[20deg] pointer-events-none z-0"
+          />
+
           {/* Tactical HUD Inset Borders & Corner Brackets */}
           <div className="absolute inset-x-4 inset-y-2 border border-[#106011]/30 pointer-events-none rounded-md"></div>
-          <div className="absolute inset-x-5 inset-y-2.5 border border-dashed border-[#106011]/15 pointer-events-none rounded-md"></div>
+          <div className="absolute inset-x-5 inset-y-2.5 border border-dashed border-[#106011]/20 pointer-events-none rounded-md"></div>
           
           {/* Header HUD Corner Segments */}
           <div className="absolute top-1 left-3 w-3 h-2 border-t-2 border-l-2 border-[#106011] pointer-events-none drop-shadow-[0_0_4px_rgba(16,96,17,0.8)]"></div>
@@ -338,7 +361,7 @@ export function BaseLayout() {
           <div className="flex items-center gap-4 relative z-10 pr-2">
             
           </div>
-        </header>
+        </motion.header>
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-auto custom-scrollbar relative">
