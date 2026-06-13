@@ -8,20 +8,22 @@ export function useOTP() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const requestOTP = async (phone: string) => {
+  const requestOTP = async (phone: string, purpose: string = 'auth') => {
     setLoading(true);
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: phone,
+      const { data, error } = await supabase.functions.invoke('send-otp', {
+        body: { phone, purpose },
       });
 
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
       await startListeningForOTP();
       return { success: true };
     } catch (err: any) {
+      console.error('[useOTP] requestOTP failed:', err);
       setError(err.message || 'Failed to send OTP');
       return { success: false };
     } finally {
@@ -29,21 +31,21 @@ export function useOTP() {
     }
   };
 
-  const verifyOTP = async (phone: string, code: string) => {
+  const verifyOTP = async (phone_number: string, otp_code: string, purpose: string = 'auth') => {
     setLoading(true);
     setError(null);
 
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone: phone,
-        token: code,
-        type: 'sms',
+      const { data, error } = await supabase.functions.invoke('verify-otp', {
+        body: { phone_number, otp_code, purpose },
       });
 
       if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-      return { success: true, user: data.user };
+      return { success: true };
     } catch (err: any) {
+      console.error('[useOTP] verifyOTP failed:', err);
       setError(err.message || 'Invalid OTP code');
       return { success: false };
     } finally {
