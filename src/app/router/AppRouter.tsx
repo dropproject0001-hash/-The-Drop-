@@ -25,7 +25,6 @@ export function AppRouter() {
         {/* Public Routes */}
         <Route path="/auth" element={<AuthFlow />} />
         <Route path="/register" element={<ClientRegistration />} />
-        <Route path="/super-admin-setup" element={<SuperAdminSetup />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/capture" element={<CaptureTest />} />
         <Route path="/location" element={<LocationTest />} />
@@ -79,11 +78,12 @@ export function AppRouter() {
           <Route 
             path="create-dropper" 
             element={
-              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+              <ProtectedRoute allowedRoles={['super_admin']}>
                 <CreateDropper />
               </ProtectedRoute>
             } 
           />
+          <Route path="super-admin-setup" element={<SuperAdminSetup />} />
           <Route path="login-otp" element={<LoginWithOTP />} />
         </Route>
       </Routes>

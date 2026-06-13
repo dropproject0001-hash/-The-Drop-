@@ -1,6 +1,5 @@
 import { ShieldAlert } from 'lucide-react';
 import DropMap from '@/components/map/DropMap';
-import { SuperAdminAccountManagement } from '@/features/admin/SuperAdminAccountManagement';
 import { TransactionHistoryList } from '@/features/transactions/TransactionHistoryList';
 import { PortalNavbar } from '@/components/layout/PortalNavbar';
 
@@ -22,7 +21,11 @@ export function SuperAdminPortal() {
           <TransactionHistoryList />
         </div>
         <div className="space-y-8">
-          <SuperAdminAccountManagement />
+          {/* Account Management is now handled in SuperAdminDashboard or a dedicated page */}
+          <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-lg">
+            <h2 className="text-xl font-bold text-white mb-4">Quick Stats</h2>
+            <p className="text-slate-400 text-sm">Use the Dashboard for advanced account management.</p>
+          </div>
         </div>
       </div>
     </div>
