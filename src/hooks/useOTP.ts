@@ -8,20 +8,27 @@ export function useOTP() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const requestOTP = async (phone: string) => {
+  const requestOTP = async (phone: string, purpose: string = 'login') => {
     setLoading(true);
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: phone,
+      // Use custom Edge Function instead of built-in Supabase Auth OTP
+      // to avoid "Unsupported phone provider" errors and use our Twilio config.
+      const { data, error: invokeError } = await supabase.functions.invoke('send-otp', {
+        body: {
+          phone: phone,
+          purpose: purpose
+        }
       });
 
-      if (error) throw error;
+      if (invokeError) throw invokeError;
+      if (data?.error) throw new Error(data.error);
 
       await startListeningForOTP();
       return { success: true };
     } catch (err: any) {
+      console.error('[useOTP] requestOTP error:', err);
       setError(err.message || 'Failed to send OTP');
       return { success: false };
     } finally {
@@ -29,21 +36,31 @@ export function useOTP() {
     }
   };
 
-  const verifyOTP = async (phone: string, code: string) => {
+  const verifyOTP = async (phone: string, code: string, purpose: string = 'login') => {
     setLoading(true);
     setError(null);
 
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone: phone,
-        token: code,
-        type: 'sms',
+      // Use custom Edge Function for verification
+      const { data, error: invokeError } = await supabase.functions.invoke('verify-otp', {
+        body: {
+          phone_number: phone,
+          otp_code: code,
+          purpose: purpose
+        }
       });
 
-      if (error) throw error;
+      if (invokeError) throw invokeError;
+      if (data?.error) throw new Error(data.error);
 
-      return { success: true, user: data.user };
+      // Note: verify-otp currently just returns success.
+      // In a real flow, it might return a session or we might need to sign in.
+      // Since our auth model for clients is currently "profile-based" or mock-based,
+      // we return success here.
+
+      return { success: true, data };
     } catch (err: any) {
+      console.error('[useOTP] verifyOTP error:', err);
       setError(err.message || 'Invalid OTP code');
       return { success: false };
     } finally {
@@ -66,7 +83,7 @@ export function useOTP() {
       setTimeout(() => {
         try {
           AndroidSmsRetriever.stopWatch();
-          listener.remove();
+          listener?.remove();
         } catch (_) {}
       }, 5 * 60 * 1000);
     } catch (err) {

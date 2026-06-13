@@ -1,35 +1,35 @@
-import { lazy, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { BaseLayout } from '@/components/layout/BaseLayout';
-import { RoleSelector } from '@/components/layout/RoleSelector';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-// Lazy load heavy page components
-const AuthFlow = lazy(() => import('@/pages/AuthFlow'));
-const LoginWithOTP = lazy(() => import('@/pages/LoginWithOTP'));
-const ClientRegistration = lazy(() => import('@/pages/ClientRegistration'));
-const SuperAdminSetup = lazy(() => import('@/pages/SuperAdminSetup'));
-const Unauthorized = lazy(() => import('@/pages/Unauthorized'));
-const CreateDropper = lazy(() => import('@/pages/CreateDropper'));
+// Lazy loaded heavy components
+const RoleSelector = React.lazy(() => import('@/components/layout/RoleSelector').then(m => ({ default: m.RoleSelector })));
+const AuthFlow = React.lazy(() => import('@/pages/AuthFlow'));
+const ClientRegistration = React.lazy(() => import('@/pages/ClientRegistration'));
+const SuperAdminSetup = React.lazy(() => import('@/pages/SuperAdminSetup'));
+const Unauthorized = React.lazy(() => import('@/pages/Unauthorized'));
+const SuperAdminDashboard = React.lazy(() => import('@/pages/SuperAdminDashboard'));
 
-const AdminPortal = lazy(() => import('@/features/portals/AdminPortal'));
-const QRConfirmationScreen = lazy(() => import('@/features/drops/QRConfirmationScreen'));
+const SuperAdminPanel = React.lazy(() => import('@/components/panels/SuperAdminPanel').then(m => ({ default: m.SuperAdminPanel })));
+const DropperPanel = React.lazy(() => import('@/components/panels/DropperPanel').then(m => ({ default: m.DropperPanel })));
+const ClientPanel = React.lazy(() => import('@/components/panels/ClientPanel').then(m => ({ default: m.ClientPanel })));
+const AdminPortal = React.lazy(() => import('@/features/portals/AdminPortal'));
+const QRConfirmationScreen = React.lazy(() => import('@/features/drops/QRConfirmationScreen'));
+const CreateDropper = React.lazy(() => import('@/pages/CreateDropper'));
+const LoginWithOTP = React.lazy(() => import('@/pages/LoginWithOTP'));
+const CaptureTest = React.lazy(() => import('@/pages/CaptureTest').then(m => ({ default: m.CaptureTest })));
+const LocationTest = React.lazy(() => import('@/pages/LocationTest').then(m => ({ default: m.LocationTest })));
+const MapTest = React.lazy(() => import('@/pages/MapTest').then(m => ({ default: m.MapTest })));
 
-const SuperAdminPanel = lazy(() => import('@/components/panels/SuperAdminPanel').then(m => ({ default: m.SuperAdminPanel })));
-const DropperPanel = lazy(() => import('@/components/panels/DropperPanel').then(m => ({ default: m.DropperPanel })));
-const ClientPanel = lazy(() => import('@/components/panels/ClientPanel').then(m => ({ default: m.ClientPanel })));
-
-// Test pages
-const CaptureTest = lazy(() => import('@/pages/CaptureTest').then(m => ({ default: m.CaptureTest })));
-const LocationTest = lazy(() => import('@/pages/LocationTest').then(m => ({ default: m.LocationTest })));
-const MapTest = lazy(() => import('@/pages/MapTest').then(m => ({ default: m.MapTest })));
-
-const LoadingFallback = () => (
-  <div className="min-h-screen bg-black flex items-center justify-center font-mono text-xs uppercase text-blue-400 tracking-widest animate-pulse">
-    <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping mr-2"></span>
-    Synchronizing telemetry...
-  </div>
-);
+function LoadingFallback() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] w-full bg-black font-mono text-xs uppercase text-blue-400 tracking-widest animate-pulse">
+      <LoadingSpinner size="lg" text="ESTABLISHING TACTICAL UPLINK..." />
+    </div>
+  );
+}
 
 export function AppRouter() {
   const setupPath = import.meta.env.VITE_SETUP_ROUTE || "/hidden-super-admin-setup-42";
@@ -60,6 +60,14 @@ export function AppRouter() {
               element={
                 <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
                   <SuperAdminPanel />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="super-admin/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                  <SuperAdminDashboard />
                 </ProtectedRoute>
               }
             />
@@ -103,7 +111,7 @@ export function AppRouter() {
                 </ProtectedRoute>
               }
             />
-            <Route path="login-otp" element={<LoginWithOTP />} />
+            {import.meta.env.DEV && <Route path="login-otp" element={<LoginWithOTP />} />}
           </Route>
         </Routes>
       </Suspense>

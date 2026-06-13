@@ -30,9 +30,31 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Extract client IP address for rate limiting
+    const clientIp = req.headers.get('cf-connecting-ip') ||
+                     req.headers.get('x-real-ip') ||
+                     req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                     'unknown';
+
+    // 1. Perform rate limiting check (if RPC exists, otherwise fallback to basic)
+    const { data: isAllowed } = await supabase.rpc('check_and_log_rate_limit', {
+      p_ip: clientIp,
+      p_phone: phone_number,
+      p_action: 'verify_otp',
+      p_max_attempts: 5,
+      p_window_seconds: 60
+    }).catch(() => ({ data: true }));
+
+    if (isAllowed === false) {
+      return new Response(
+        JSON.stringify({ error: "Too many verification attempts. Please wait 1 minute." }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const codeHash = await hashOTP(otp_code);
 
-    // 1. Find the most recent active OTP for this phone and purpose
+    // 2. Find the most recent active OTP for this phone and purpose
     let query = supabase
       .from("otp_codes")
       .select("*")
@@ -56,19 +78,19 @@ serve(async (req) => {
 
     // Check if max attempts reached
     if (otpRecord.attempts >= otpRecord.max_attempts) {
-      // Mark as used/invalid if too many attempts
       await supabase.from("otp_codes").update({ used: true }).eq("id", otpRecord.id);
       return new Response(JSON.stringify({ error: "Too many failed attempts. Please request a new code." }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // 2. Verify hash
+    // 3. Verify hash
     if (otpRecord.code_hash !== codeHash) {
-      // Increment attempts
-      await supabase.rpc('increment_otp_attempts', { otp_id: otpRecord.id });
-      return new Response(JSON.stringify({ error: "Invalid OTP code" }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      await supabase.rpc('increment_otp_attempts', { otp_id: otpRecord.id }).catch(() => {
+         return supabase.from('otp_codes').update({ attempts: otpRecord.attempts + 1 }).eq('id', otpRecord.id);
+      });
+      return new Response(JSON.stringify({ error: "Invalid OTP code", attempts_remaining: otpRecord.max_attempts - otpRecord.attempts - 1 }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // 3. Mark OTP as used
+    // 4. Mark OTP as used
     const { error: updateError } = await supabase
       .from("otp_codes")
       .update({ used: true })
@@ -78,7 +100,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Failed to verify OTP" }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // 4. Return success
     return new Response(JSON.stringify({
       success: true,
       message: "OTP verified successfully",

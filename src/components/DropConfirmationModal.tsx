@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useOTP } from '@/hooks/useOTP';
+import { useTTS } from '@/hooks/useTTS';
 import { X, Shield, Lock, AlertTriangle, Terminal, Key } from 'lucide-react';
 import { isValidE164Phone } from '@/utils/validation';
 
@@ -14,6 +15,7 @@ export default function DropConfirmationModal({ dropId, onConfirm, onClose }: Dr
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [localError, setLocalError] = useState<string | null>(null);
   const { otp, setOtp, loading, error, requestOTP, verifyOTP } = useOTP();
+  const { speak } = useTTS();
 
   const handleSendOTP = async () => {
     setLocalError(null);
@@ -27,6 +29,7 @@ export default function DropConfirmationModal({ dropId, onConfirm, onClose }: Dr
     const result = await requestOTP(phone);
     if (result.success) {
       setStep('otp');
+      await speak("Verification code transmitted to your device.");
     }
   };
 
@@ -34,8 +37,11 @@ export default function DropConfirmationModal({ dropId, onConfirm, onClose }: Dr
     setLocalError(null);
     const result = await verifyOTP(phone, otp);
     if (result.success) {
+      await speak("Verification successful. Drop confirmation authorized.");
       onConfirm(); // Proceed with drop confirmation
       onClose();
+    } else {
+      await speak("Verification failed. Please check your code.");
     }
   };
 

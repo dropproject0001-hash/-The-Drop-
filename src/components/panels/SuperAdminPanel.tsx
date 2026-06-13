@@ -1,14 +1,16 @@
 import { lazy, Suspense } from 'react';
-import { Activity, Radio, Shield, PackageSearch, Terminal, Plus } from 'lucide-react';
+import { Activity, Radio, Shield, PackageSearch, Terminal, Plus, MessageSquare } from 'lucide-react';
 import { CreateDropPanel } from './CreateDropPanel';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import TTSLogsPanel from '@/features/admin/TTSLogsPanel';
 
 const DropMap = lazy(() => import('@/components/map/DropMap'));
 
 export function SuperAdminPanel() {
   const navigate = useNavigate();
   const [showCreateDrop, setShowCreateDrop] = useState(false);
+  const [activeTab, setActiveTab] = useState<'logs' | 'tts' | 'agents'>('logs');
   
   return (
     <div className="flex flex-col h-full bg-black/95 rounded-2xl border border-[#106011]/50 shadow-[0_0_20px_rgba(16,96,17,0.3)] overflow-hidden relative select-none">
@@ -53,7 +55,7 @@ export function SuperAdminPanel() {
         <Suspense fallback={
           <div className="flex-1 h-full w-full bg-black/95 flex items-center justify-center font-mono text-xs uppercase text-[#106011]/80 tracking-widest animate-pulse min-h-[300px]">
             <span className="w-2 h-2 rounded-full bg-[#106011] animate-ping mr-2"></span>
-            Loading Gods Eye Map telemetry...
+            Loading telemetry...
           </div>
         }>
           <DropMap height="100%" />
@@ -70,28 +72,51 @@ export function SuperAdminPanel() {
       </div>
 
       {/* Control Panel Area */}
-      <div className="h-48 border-t border-[#106011]/40 bg-[#090b09]/95 p-4 shrink-0 flex flex-col gap-2 relative z-20">
+      <div className="h-64 border-t border-[#106011]/40 bg-[#090b09]/95 p-4 shrink-0 flex flex-col gap-2 relative z-20 overflow-hidden">
         {/* Tabs */}
-        <div className="flex text-xs font-mono text-[#106011]/60 uppercase tracking-widest border-b border-[#106011]/25 pb-2">
-          <button className="text-[#106011] border-b-2 border-[#106011] pb-2 -mb-[9px] mr-6 font-bold tracking-wider drop-shadow-[0_0_4px_rgba(16,96,17,0.5)]">Live Logs</button>
-          <button className="hover:text-slate-300 transition-colors mr-6">Inventory</button>
-          <button className="hover:text-slate-300 transition-colors">Agents (12)</button>
+        <div className="flex text-xs font-mono text-[#106011]/60 uppercase tracking-widest border-b border-[#106011]/25 pb-2 mb-2">
+          <button
+            onClick={() => setActiveTab('logs')}
+            className={`${activeTab === 'logs' ? 'text-[#106011] border-b-2 border-[#106011] font-bold' : 'hover:text-slate-300'} pb-2 -mb-[10px] mr-6 tracking-wider transition-all`}
+          >
+            Live Logs
+          </button>
+          <button
+            onClick={() => setActiveTab('tts')}
+            className={`${activeTab === 'tts' ? 'text-[#106011] border-b-2 border-[#106011] font-bold' : 'hover:text-slate-300'} pb-2 -mb-[10px] mr-6 tracking-wider transition-all flex items-center gap-1`}
+          >
+            <MessageSquare size={12} /> TTS Audit
+          </button>
+          <button
+            onClick={() => setActiveTab('agents')}
+            className={`${activeTab === 'agents' ? 'text-[#106011] border-b-2 border-[#106011] font-bold' : 'hover:text-slate-300'} pb-2 -mb-[10px] tracking-wider transition-all`}
+          >
+            Agents
+          </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 rounded border border-[#106011]/20 bg-[#106011]/5 p-2 overflow-y-auto font-mono text-[10px] flex flex-col gap-1 custom-scrollbar">
-          <div className="flex gap-2">
-            <span className="text-[#106011]/50 font-bold">[12:04:22]</span>
-            <span className="text-slate-300">System uplink established. Scanning DropZones...</span>
-          </div>
-          <div className="flex gap-2">
-            <span className="text-[#106011]/50 font-bold">[12:05:11]</span>
-            <span className="text-[#106011] font-semibold drop-shadow-[0_0_4px_rgba(16,96,17,0.5)]">Dropper 'DROPPER-01' is online.</span>
-          </div>
-          <div className="flex gap-2">
-            <span className="text-[#106011]/50 font-bold">[12:06:40]</span>
-            <span className="text-slate-300">Awaiting encrypted comms from active operations.</span>
-          </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {activeTab === 'logs' && (
+            <div className="rounded border border-[#106011]/20 bg-[#106011]/5 p-2 font-mono text-[10px] flex flex-col gap-1 min-h-full">
+              <div className="flex gap-2">
+                <span className="text-[#106011]/50 font-bold">[12:04:22]</span>
+                <span className="text-slate-300">System uplink established. Scanning DropZones...</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-[#106011]/50 font-bold">[12:05:11]</span>
+                <span className="text-[#106011] font-semibold drop-shadow-[0_0_4px_rgba(16,96_17,0.5)]">Dropper 'DROPPER-01' is online.</span>
+              </div>
+            </div>
+          )}
+          {activeTab === 'tts' && (
+            <div className="h-full">
+              <TTSLogsPanel />
+            </div>
+          )}
+          {activeTab === 'agents' && (
+            <div className="text-zinc-500 font-mono text-[10px] text-center py-4">Agent roster loading...</div>
+          )}
         </div>
       </div>
     </div>

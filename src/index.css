@@ -39,6 +39,17 @@
   to { transform: rotate(0deg); }
 }
 
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  50% { transform: translateY(100%); }
+  100% { transform: translateY(-100%); }
+}
+
+@keyframes scan-y {
+  from { top: 0%; }
+  to { top: 100%; }
+}
+
 body {
   background-color: var(--bg-primary);
   min-height: 100vh;
