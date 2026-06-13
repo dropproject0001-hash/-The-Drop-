@@ -23,6 +23,7 @@ export default function LoginWithOTP() {
       // Since this is a temporary fix for the login, we will bypass the AuthContext
       // by setting a demo role and going back to the portal selector (DEV only).
       if (import.meta.env.DEV) {
+        localStorage.setItem('demo_role', 'client'); 
       }
       window.location.href = '/'; 
     }

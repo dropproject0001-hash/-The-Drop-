@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlobalModals } from '@/components/ui/GlobalModals';
-import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart, LogOut, RefreshCw, Wifi, WifiOff, Shield, Terminal } from 'lucide-react';
+import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart, LogOut, RefreshCw, Wifi, WifiOff, Shield, Terminal, Sparkles, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LocationSyncWidget } from '@/components/common/LocationSyncWidget';
 
 import { CargoBayView } from './views/CargoBayView';
@@ -11,6 +11,8 @@ import { DropperListView } from './views/DropperListView';
 import { UserRosterView } from './views/UserRosterView';
 import { StocksAnalysisView } from './views/StocksAnalysisView';
 import { ControlSettingsView } from './views/ControlSettingsView';
+import { TacticalAIVoiceCompanion } from '../chat/TacticalAIVoiceCompanion';
+import VoiceAssistantPanel from '@/components/voice/VoiceAssistantPanel';
 import { useRole } from '@/context/RoleContext';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useLocationOutboxStatus } from '@/hooks/useLocationOutboxStatus';
@@ -22,7 +24,9 @@ export function BaseLayout() {
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [activeTab, setActiveTab] = useState<'map' | 'cargo' | 'chat' | 'droppers' | 'stocks' | 'settings' | 'roster'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'cargo' | 'chat' | 'droppers' | 'stocks' | 'settings' | 'roster' | 'copilot'>('map');
+  const [voicePanelOpen, setVoicePanelOpen] = useState(false);
+  const [voiceTriggerVisible, setVoiceTriggerVisible] = useState(false);
   
   const isExpanded = isHovered || isLocked;
 
@@ -162,6 +166,16 @@ export function BaseLayout() {
             <NavItem icon={<Package className="w-5 h-5" />} active={activeTab === 'cargo'} tooltip="Inventory" label="INV. LOCKER" isExpanded={isExpanded} onClick={() => setActiveTab('cargo')} badge="LOCK ON" badgeStyle="border-red-900 bg-red-950 text-red-500 font-bold shadow-[0_0_12px_rgba(220,38,38,0.5)]" />
           )}
           <NavItem icon={<MessageSquare className="w-5 h-5" />} active={activeTab === 'chat'} tooltip="Chat Box" label="CHAT BOX" isExpanded={isExpanded} onClick={() => setActiveTab('chat')} />
+          <NavItem 
+            icon={<Sparkles className="w-5 h-5 text-[#0ad111]" />} 
+            active={activeTab === 'copilot'} 
+            tooltip="Tactical AI Overlord" 
+            label="AI CO-PILOT" 
+            isExpanded={isExpanded} 
+            onClick={() => setActiveTab('copilot')} 
+            badge="OVERLORD" 
+            badgeStyle="border-[#0ad111] bg-black text-[#0ad111]"
+          />
           {!isClient && (
             <NavItem icon={<Users className="w-5 h-5" />} active={activeTab === 'droppers'} tooltip="Dropper List" label="ONLINE DROPPERS" isExpanded={isExpanded} onClick={() => setActiveTab('droppers')} badge="4 ACTIVE" badgeStyle="border-[#106011] bg-[#106011]/20 text-green-400 font-bold shadow-[0_0_12px_rgba(16,96,17,0.5)] animate-pulse" />
           )}
@@ -517,6 +531,11 @@ export function BaseLayout() {
                 {activeTab === 'stocks' && <StocksAnalysisView />}
                 {activeTab === 'settings' && <ControlSettingsView />}
                 {activeTab === 'roster' && isSuperAdmin && <UserRosterView />}
+                {activeTab === 'copilot' && (
+                  <div className="p-4 md:p-6 h-full flex flex-col justify-center max-w-2xl mx-auto w-full relative z-10">
+                    <TacticalAIVoiceCompanion />
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -524,6 +543,41 @@ export function BaseLayout() {
       </div>
 
       <GlobalModals />
+
+      {/* Mini Interactive Floating JARVIS Trigger Button (Absolute non-obtrusive) */}
+      <motion.button
+        id="jarvis-mini-trigger-btn"
+        onClick={() => setVoicePanelOpen(true)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className="fixed top-[50%] translate-y-[-50%] right-6 z-[60] w-12 h-12 rounded-full bg-black hover:bg-[#106011]/20 border-2 border-[#0ad111]/70 hover:border-[#0ad111] flex items-center justify-center shadow-[0_0_15px_rgba(10,209,17,0.45)] cursor-pointer select-none overflow-hidden transition-all duration-350"
+        title="Open JARVIS AI Voice System"
+      >
+        <div className="relative w-full h-full p-0.5 flex items-center justify-center">
+          {/* Subtle concentric rotating ring */}
+          <motion.div 
+            className="absolute inset-0 rounded-full border border-dashed border-[#0ad111]/30"
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 12, ease: "linear" }}
+          />
+          {/* Avatar Core Logo */}
+          <div className="w-8 h-8 rounded-full overflow-hidden border border-[#0ad111]/50 bg-black/95 p-0.5 relative z-10">
+            <img 
+              src="/logo.png" 
+              alt="JARVIS Core" 
+              className="w-full h-full object-cover rounded-full animate-pulse"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          {/* Radar alert indicator */}
+          <span className="absolute top-1 right-1 flex h-1.5 w-1.5 z-20">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+          </span>
+        </div>
+      </motion.button>
+
+      <VoiceAssistantPanel isOpen={voicePanelOpen} onClose={() => setVoicePanelOpen(false)} />
     </div>
   );
 }

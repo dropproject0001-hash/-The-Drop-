@@ -214,7 +214,7 @@ export function RoleSelector() {
           />
           <span className="relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" style={{ fontFamily: 'Courier New', color: '#ffffff' }}>Nueva </span>
           <span className="relative z-10 drop-shadow-[0_0_15px_rgba(10,209,17,0.5)]" style={{ fontFamily: 'Courier New', color: '#0ad111' }}>Ecija </span>
-          <span className="relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" style={{ fontFamily: 'Courier New', color: '#ffffff' }}>Representing</span>
+          <span className="relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" style={{ fontFamily: 'Courier New', color: '#ffffff' }}>Represent</span>
         </motion.h1>
       </motion.div>
       

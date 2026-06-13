@@ -1,5 +1,5 @@
 // src/components/map/DropMap.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useAuthStore } from '@/stores';
@@ -8,6 +8,7 @@ import { useDrops } from '@/hooks/useDrops';
 import { DropperTrackingControl } from '@/components/dropper/DropperTrackingControl';
 import { DropStatusBadge } from '@/components/drops/DropStatusBadge';
 import { CompassOverlay } from '@/components/map/CompassOverlay';
+import { MapMarker } from '@/components/map/MapMarker';
 import { useNavigate } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { Search, X, Crosshair, MapPin, User, Navigation, Layers, Maximize, Minimize, FileEdit, Trash2 } from 'lucide-react';
@@ -19,6 +20,31 @@ L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+// Static High-Performance DivIcon Definitions
+const UserLocationIcon = L.divIcon({
+  className: 'user-location-marker',
+  html: `
+    <div class="relative flex items-center justify-center">
+      <div class="absolute w-6 h-6 rounded-full bg-[#0ad111]/30 animate-ping"></div>
+      <div class="w-3.5 h-3.5 rounded-full bg-[#0ad111] border border-black shadow-[0_0_8px_#0ad111]"></div>
+    </div>
+  `,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
+});
+
+const AgentLiveIcon = L.divIcon({
+  className: 'agent-location-marker',
+  html: `
+    <div class="relative flex items-center justify-center">
+      <div class="absolute w-6 h-6 rounded-full bg-blue-500/30 animate-ping"></div>
+      <div class="w-3.5 h-3.5 rounded-full bg-blue-400 border border-black shadow-[0_0_8px_#3b82f6]"></div>
+    </div>
+  `,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
 });
 
 // Map Controller for smooth setView transitions
@@ -127,30 +153,34 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
     }
   };
 
-  // Filter drops based on search query (by Name / Notes / ID / Status)
-  const filteredDrops = defaultDrops.filter((drop) => {
-    if (!searchQuery) return true;
-    const term = searchQuery.toLowerCase();
-    
-    // Safety fallback for empty string values
-    const idMatch = (drop.id || '').toLowerCase().includes(term);
-    const titleMatch = (drop.title || '').toLowerCase().includes(term);
-    const notesMatch = (drop.notes_encrypted || '').toLowerCase().includes(term);
-    const statusMatch = (drop.status || '').toLowerCase().includes(term);
+  // Filter drops based on search query (by Name / Notes / ID / Status) - MEMOIZED to reduce rendering computation
+  const filteredDrops = useMemo(() => {
+    return defaultDrops.filter((drop) => {
+      if (!searchQuery) return true;
+      const term = searchQuery.toLowerCase();
+      
+      // Safety fallback for empty string values
+      const idMatch = (drop.id || '').toLowerCase().includes(term);
+      const titleMatch = (drop.title || '').toLowerCase().includes(term);
+      const notesMatch = (drop.notes_encrypted || '').toLowerCase().includes(term);
+      const statusMatch = (drop.status || '').toLowerCase().includes(term);
 
-    return idMatch || titleMatch || notesMatch || statusMatch;
-  });
+      return idMatch || titleMatch || notesMatch || statusMatch;
+    });
+  }, [defaultDrops, searchQuery]);
 
-  // Filter live agents/users on the map
-  const filteredLiveLocations = Object.entries(liveLocations).filter(([userId, locs]) => {
-    if (!searchQuery) return true;
-    const term = searchQuery.toLowerCase();
-    
-    const idMatch = userId.toLowerCase().includes(term);
-    const descriptionMatch = 'agent'.includes(term) || 'field'.includes(term);
-    
-    return idMatch || descriptionMatch;
-  });
+  // Filter live agents/users on the map - MEMOIZED to avoid key scanning on every frame rendering
+  const filteredLiveLocations = useMemo(() => {
+    return Object.entries(liveLocations).filter(([userId, locs]) => {
+      if (!searchQuery) return true;
+      const term = searchQuery.toLowerCase();
+      
+      const idMatch = userId.toLowerCase().includes(term);
+      const descriptionMatch = 'agent'.includes(term) || 'field'.includes(term);
+      
+      return idMatch || descriptionMatch;
+    });
+  }, [liveLocations, searchQuery]);
 
   // Perform smooth pan and zoom focusing on a specific target
   const handleLocateTarget = (lat: number, lng: number) => {
@@ -158,9 +188,11 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
     setMapZoom(16); // Close-up focus
   };
 
-  const activeTargetDrop = selectedDrop || 
-    (filteredDrops.find(d => d.assigned_to === profile?.id && d.status === 'active')) || 
-    selectedDrop;
+  const activeTargetDrop = useMemo(() => {
+    return selectedDrop || 
+      (filteredDrops.find(d => d.assigned_to === profile?.id && d.status === 'active')) || 
+      selectedDrop;
+  }, [selectedDrop, filteredDrops, profile?.id]);
 
   return (
     <ErrorBoundary fallback={<div style={{ height }} className="w-full bg-zinc-900 flex items-center justify-center text-red-500 font-mono">MAP_RENDER_ERROR</div>}>
@@ -333,17 +365,7 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
           {userPosition && (
             <Marker 
               position={userPosition}
-              icon={L.divIcon({
-                className: 'user-location-marker',
-                html: `
-                  <div class="relative flex items-center justify-center">
-                    <div class="absolute w-6 h-6 rounded-full bg-[#0ad111]/30 animate-ping"></div>
-                    <div class="w-3.5 h-3.5 rounded-full bg-[#0ad111] border border-black shadow-[0_0_8px_#0ad111]"></div>
-                  </div>
-                `,
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
-              })}
+              icon={UserLocationIcon}
             >
               <Popup>
                 <div className="text-black font-mono text-[10px]">
@@ -359,19 +381,28 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
             filteredDrops
               .filter((d) => d.assigned_to === profile?.id && d.status === 'active')
               .map((drop) => (
-                <Marker key={drop.id} position={[drop.lat, drop.lng]}>
-                  <Popup>
-                    <div className="text-black min-w-[240px]">
-                      <div className="font-bold mb-1">{drop.title}</div>
-                      <div className="text-xs text-zinc-600 mb-3">Status: {drop.status}</div>
-
-                      <DropperTrackingControl
-                        drop={drop}
-                        onTrackingChange={(tracking) => handleTrackingToggle(tracking, drop)}
-                      />
+                <MapMarker
+                  key={drop.id}
+                  position={[drop.lat, drop.lng]}
+                  status="active"
+                  type="drop"
+                  label={drop.title}
+                  id={drop.id}
+                  description={drop.notes_encrypted || "Assigned tactical drop."}
+                >
+                  <div className="text-[#0ad111] font-mono text-xs space-y-3 p-1">
+                    <div className="flex items-center justify-between border-b border-[#106011]/30 pb-2 mb-1">
+                      <span className="font-bold tracking-wider">{drop.title}</span>
+                      <span className="text-[8px] text-zinc-500">ID: {drop.id.slice(0,8)}</span>
                     </div>
-                  </Popup>
-                </Marker>
+                    <div className="text-[10px] text-slate-300">Status: <span className="text-[#0ad111] uppercase font-bold">{drop.status}</span></div>
+
+                    <DropperTrackingControl
+                      drop={drop}
+                      onTrackingChange={(tracking) => handleTrackingToggle(tracking, drop)}
+                    />
+                  </div>
+                </MapMarker>
               ))}
 
           {/* Super Admin: Live agent locations (filtered) */}
@@ -381,7 +412,7 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
               const latest = locs[0];
 
               return (
-                <Marker key={userId} position={[latest.lat, latest.lng]}>
+                <Marker key={userId} position={[latest.lat, latest.lng]} icon={AgentLiveIcon}>
                   <Popup>
                     <div className="text-black">
                       <strong>AGENT LIVE</strong><br />
@@ -398,24 +429,34 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
             filteredDrops
               .filter(d => d.assigned_to === profile?.id)
               .map((drop) => (
-                <Marker key={drop.id} position={[drop.lat, drop.lng]}>
-                  <Popup>
-                    <div className="text-black min-w-[240px]">
-                      <div className="font-bold text-lg mb-1">{drop.title}</div>
-                      <div className="mb-3">
-                        <DropStatusBadge status={drop.status} />
-                      </div>
-                      {drop.status === 'active' && (
-                        <button
-                          onClick={() => navigate(`/claim/${drop.id}`)}
-                          className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-black rounded-xl font-mono text-sm tracking-widest"
-                        >
-                          VIEW & CLAIM DROP
-                        </button>
-                      )}
+                <MapMarker
+                  key={drop.id}
+                  position={[drop.lat, drop.lng]}
+                  status={drop.status === 'claimed' ? 'completed' : drop.status === 'expired' ? 'alert' : 'active'}
+                  type="drop"
+                  label={drop.title}
+                  id={drop.id}
+                  description={drop.notes_encrypted || "Assigned tactical drop."}
+                >
+                  <div className="text-[#0ad111] font-mono text-xs space-y-3 p-1">
+                    <div className="flex items-center justify-between border-b border-[#106011]/30 pb-2 mb-1">
+                      <span className="font-bold tracking-wider">{drop.title}</span>
+                      <span className="text-[8px] text-zinc-500">ID: {drop.id.slice(0,8)}</span>
                     </div>
-                  </Popup>
-                </Marker>
+                    <div className="mb-3 flex justify-between items-center text-[10px]">
+                      <span className="text-zinc-500 font-bold uppercase">SEC_STATUS:</span>
+                      <DropStatusBadge status={drop.status} />
+                    </div>
+                    {drop.status === 'active' && (
+                      <button
+                        onClick={() => navigate(`/claim/${drop.id}`)}
+                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 hover:brightness-110 active:scale-95 text-black rounded-lg font-mono text-xs tracking-wider transition-all cursor-pointer font-bold uppercase"
+                      >
+                        VIEW & CLAIM DROP
+                      </button>
+                    )}
+                  </div>
+                </MapMarker>
               ))
           )}
         </MapContainer>

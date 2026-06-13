@@ -1,16 +1,42 @@
 import { useState } from 'react';
-import { Sliders, Shield, Bell, HardDrive, Volume2, Globe } from 'lucide-react';
+import { Sliders, Shield, Bell, HardDrive, Volume2, Globe, WifiOff } from 'lucide-react';
+import { locationBroadcastService } from '@/services/LocationBroadcastService';
 
 export function ControlSettingsView() {
-  const [cacheMaps, setCacheMaps] = useState(true);
-  const [geofencing, setGeofencing] = useState(true);
-  const [autoExpire, setAutoExpire] = useState(true);
-  const [voiceNotes, setVoiceNotes] = useState(false);
+  const [cacheMaps, setCacheMaps] = useState(() => {
+    return localStorage.getItem('setting_cache_maps') !== 'false'; // default true
+  });
+  const [geofencing, setGeofencing] = useState(() => {
+    return localStorage.getItem('setting_geofencing') !== 'false'; // default true
+  });
+  const [autoExpire, setAutoExpire] = useState(() => {
+    return localStorage.getItem('setting_auto_expire') !== 'false'; // default true
+  });
+  const [voiceNotes, setVoiceNotes] = useState(() => {
+    return localStorage.getItem('setting_voice_notes') === 'true'; // default false
+  });
+  const [lowDataMode, setLowDataMode] = useState(() => {
+    return localStorage.getItem('drop_low_data_mode') === 'true'; // default false
+  });
   const [logs, setLogs] = useState<string[]>([]);
 
-  const handleToggle = (setting: string, val: boolean, setter: (v: boolean) => void) => {
-    setter(!val);
-    setLogs(prev => [`[${new Date().toLocaleTimeString()}] UPDATE: ${setting} initialized as ${!val ? 'ON' : 'OFF'}.`, ...prev]);
+  const handleToggle = (
+    setting: string, 
+    storageKey: string, 
+    val: boolean, 
+    setter: (v: boolean) => void,
+    onChanged?: (newVal: boolean) => void
+  ) => {
+    const nextVal = !val;
+    setter(nextVal);
+    localStorage.setItem(storageKey, String(nextVal));
+    setLogs(prev => [
+      `[${new Date().toLocaleTimeString()}] CONFIG: ${setting} set to ${nextVal ? 'ENABLED' : 'DISABLED'}.`, 
+      ...prev
+    ]);
+    if (onChanged) {
+      onChanged(nextVal);
+    }
   };
 
   return (
@@ -58,10 +84,30 @@ export function ControlSettingsView() {
             </div>
             
             <button
-              onClick={() => handleToggle('Offline Maps Caching', cacheMaps, setCacheMaps)}
+              onClick={() => handleToggle('Offline Maps Caching', 'setting_cache_maps', cacheMaps, setCacheMaps)}
               className={`w-14 h-7 rounded-full border border-[#106011]/60 flex items-center px-1 cursor-pointer transition-colors duration-300 ${cacheMaps ? 'bg-[#106011]/30 border-[#106011]' : 'bg-black'}`}
             >
               <div className={`w-5 h-5 rounded-full shadow-md transition-all duration-300 ${cacheMaps ? 'bg-[#106011] translate-x-7 shadow-[0_0_10px_rgba(16,96,17,0.8)]' : 'bg-slate-500'}`} />
+            </button>
+          </div>
+
+          {/* Setting Item: Low Data Mode */}
+          <div className="flex items-center justify-between border-b border-[#106011]/15 pb-4">
+            <div className="flex items-start gap-3">
+              <WifiOff className="w-5 h-5 text-[#106011] shrink-0 mt-0.5" />
+              <div className="flex flex-col">
+                <span className="text-white font-bold text-xs font-display tracking-wider uppercase">Low Data Mode</span>
+                <span className="text-[10px] font-mono text-slate-400 font-semibold text-[#0ad111]">Throttles update frequencies and suspends high-accuracy GPS</span>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => handleToggle('Low Data Mode', 'drop_low_data_mode', lowDataMode, setLowDataMode, (newVal) => {
+                locationBroadcastService.updateTrackingMode();
+              })}
+              className={`w-14 h-7 rounded-full border border-[#106011]/60 flex items-center px-1 cursor-pointer transition-colors duration-300 ${lowDataMode ? 'bg-[#106011]/30 border-[#106011]' : 'bg-black'}`}
+            >
+              <div className={`w-5 h-5 rounded-full shadow-md transition-all duration-300 ${lowDataMode ? 'bg-[#106011] translate-x-7 shadow-[0_0_10px_rgba(16,96,17,0.8)]' : 'bg-slate-500'}`} />
             </button>
           </div>
 
@@ -76,7 +122,7 @@ export function ControlSettingsView() {
             </div>
             
             <button
-              onClick={() => handleToggle('Geofencing Warnings', geofencing, setGeofencing)}
+              onClick={() => handleToggle('Geofencing Warnings', 'setting_geofencing', geofencing, setGeofencing)}
               className={`w-14 h-7 rounded-full border border-[#106011]/60 flex items-center px-1 cursor-pointer transition-colors duration-300 ${geofencing ? 'bg-[#106011]/30 border-[#106011]' : 'bg-black'}`}
             >
               <div className={`w-5 h-5 rounded-full shadow-md transition-all duration-300 ${geofencing ? 'bg-[#106011] translate-x-7 shadow-[0_0_10px_rgba(16,96,17,0.8)]' : 'bg-slate-500'}`} />
@@ -94,7 +140,7 @@ export function ControlSettingsView() {
             </div>
             
             <button
-              onClick={() => handleToggle('Auto-Expiring Pins', autoExpire, setAutoExpire)}
+              onClick={() => handleToggle('Auto-Expiring Pins', 'setting_auto_expire', autoExpire, setAutoExpire)}
               className={`w-14 h-7 rounded-full border border-[#106011]/60 flex items-center px-1 cursor-pointer transition-colors duration-300 ${autoExpire ? 'bg-[#106011]/30 border-[#106011]' : 'bg-black'}`}
             >
               <div className={`w-5 h-5 rounded-full shadow-md transition-all duration-300 ${autoExpire ? 'bg-[#106011] translate-x-7 shadow-[0_0_10px_rgba(16,96,17,0.8)]' : 'bg-slate-500'}`} />
@@ -112,7 +158,7 @@ export function ControlSettingsView() {
             </div>
             
             <button
-              onClick={() => handleToggle('Comms Voice Sub-Channel', voiceNotes, setVoiceNotes)}
+              onClick={() => handleToggle('Comms Voice Sub-Channel', 'setting_voice_notes', voiceNotes, setVoiceNotes)}
               className={`w-14 h-7 rounded-full border border-[#106011]/60 flex items-center px-1 cursor-pointer transition-colors duration-300 ${voiceNotes ? 'bg-[#106011]/30 border-[#106011]' : 'bg-black'}`}
             >
               <div className={`w-5 h-5 rounded-full shadow-md transition-all duration-300 ${voiceNotes ? 'bg-[#106011] translate-x-7 shadow-[0_0_10px_rgba(16,96,17,0.8)]' : 'bg-slate-500'}`} />

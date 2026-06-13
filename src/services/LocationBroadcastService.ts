@@ -25,12 +25,37 @@ class LocationBroadcastService {
   private presenceChannel: any = null;
   private isBroadcasting = false;
 
+  // Track active options for live updating
+  private activeOptions: {
+    onUpdate?: (location: LiveLocation) => void;
+    onError?: (error: any) => void;
+    dropId?: string | null;
+  } | null = null;
+
   // Public state
   public queueSize = 0;
   public isOnline = navigator.onLine;
 
   private lastBroadcastTime = 0;
-  private readonly THROTTLE_MS = 5000; // Minimum 5 seconds between broadcasts
+  private lastQueueFlushTime = 0;
+
+  private get throttleMs() {
+    try {
+      const lowData = localStorage.getItem('drop_low_data_mode') === 'true';
+      return lowData ? 30000 : 5000; // Minimum 30 seconds in Low Data Mode, 5 seconds normally
+    } catch {
+      return 5000;
+    }
+  }
+
+  private get queueFlushIntervalMs() {
+    try {
+      const lowData = localStorage.getItem('drop_low_data_mode') === 'true';
+      return lowData ? 60000 : 15000; // Flush queue once every 60 seconds in Low Data Mode, 15 seconds normally
+    } catch {
+      return 15000;
+    }
+  }
 
   constructor() {
     this.setupNetworkListeners();
@@ -48,7 +73,13 @@ class LocationBroadcastService {
   }
 
   private async startQueueFlusher() {
-    setInterval(() => this.flushQueue(), 15000); // every 15 seconds
+    setInterval(() => {
+      const now = Date.now();
+      if (now - this.lastQueueFlushTime >= this.queueFlushIntervalMs) {
+        this.lastQueueFlushTime = now;
+        this.flushQueue();
+      }
+    }, 5000); // Check threshold every 5 seconds
   }
 
   // ── Core Broadcast ─────────────────────────────────────────
@@ -62,7 +93,7 @@ class LocationBroadcastService {
     drop_id?: string | null;
   }, force = false) {
     const now = Date.now();
-    if (!force && now - this.lastBroadcastTime < this.THROTTLE_MS) {
+    if (!force && now - this.lastBroadcastTime < this.throttleMs) {
       return { success: true, throttled: true };
     }
 
@@ -121,13 +152,15 @@ class LocationBroadcastService {
   } = {}) {
     if (this.watchId !== null) return; // already tracking
 
+    this.activeOptions = options;
     this.isBroadcasting = true;
 
     // Start presence
     await this.trackPresence(options.dropId);
 
+    const lowData = localStorage.getItem('drop_low_data_mode') === 'true';
     const batteryLevel = await this.getBatteryLevel();
-    const highAccuracy = batteryLevel === null || batteryLevel > 0.2; // Throttle if < 20%
+    const highAccuracy = !lowData && (batteryLevel === null || batteryLevel > 0.2); // Core: disable high accuracy in Low Data Mode
 
     this.watchId = navigator.geolocation.watchPosition(
       async (position) => {
@@ -168,7 +201,7 @@ class LocationBroadcastService {
       },
       { 
         enableHighAccuracy: highAccuracy,
-        maximumAge: highAccuracy ? 10000 : 30000,
+        maximumAge: highAccuracy ? 10000 : (lowData ? 60000 : 30000),
         timeout: 15000,
       }
     );
@@ -181,6 +214,66 @@ class LocationBroadcastService {
     }
     this.untrackPresence();
     this.isBroadcasting = false;
+    this.activeOptions = null;
+  }
+
+  async updateTrackingMode() {
+    if (this.watchId === null) return;
+
+    console.log('[LocationBroadcastService] Modifying location settings. Restarting location watcher...');
+    const currentOptions = this.activeOptions;
+
+    // Fast clear of current geolocation watcher
+    navigator.geolocation.clearWatch(this.watchId);
+    this.watchId = null;
+
+    const lowData = localStorage.getItem('drop_low_data_mode') === 'true';
+    const batteryLevel = await this.getBatteryLevel();
+    const highAccuracy = !lowData && (batteryLevel === null || batteryLevel > 0.2);
+
+    this.watchId = navigator.geolocation.watchPosition(
+      async (position) => {
+        try {
+          const payload = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            heading: position.coords.heading,
+            speed: position.coords.speed,
+            altitude: position.coords.altitude,
+            drop_id: currentOptions?.dropId ?? null,
+          };
+
+          const result = await this.broadcast(payload);
+
+          if (result.success && currentOptions?.onUpdate) {
+            currentOptions.onUpdate({
+              id: 0,
+              user_id: '',
+              lat: payload.lat,
+              lng: payload.lng,
+              accuracy: payload.accuracy ?? null,
+              heading: payload.heading ?? null,
+              speed: payload.speed ?? null,
+              altitude: payload.altitude ?? null,
+              recorded_at: new Date().toISOString(),
+              drop_id: payload.drop_id ?? null,
+            });
+          }
+        } catch (err) {
+          console.error('[LocationBroadcastService] Uncaught error during telemetry tracking execution:', err);
+        }
+      },
+      (error) => {
+        console.error('[LocationBroadcastService] GPS error:', error);
+        if (currentOptions?.onError) currentOptions.onError(error);
+      },
+      { 
+        enableHighAccuracy: highAccuracy,
+        maximumAge: highAccuracy ? 10000 : (lowData ? 60000 : 30000),
+        timeout: 15000,
+      }
+    );
   }
 
   // ── Presence ───────────────────────────────────────────────

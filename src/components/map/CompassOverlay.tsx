@@ -155,7 +155,7 @@ export function CompassOverlay({ userPosition, targetDrop }: CompassOverlayProps
         
         {/* The Rotating Dial (North/East/South/West) */}
         <div 
-          className="absolute inset-0 transition-transform duration-300 ease-out will-change-transform rounded-full"
+          className="absolute inset-0 will-change-transform rounded-full"
           style={{ transform: `rotate(${dialRotation}deg)` }}
         >
           <div className="absolute top-1 left-1/2 -translate-x-1/2 text-[7px] font-mono text-[#0ad111] font-black drop-shadow-[0_0_2px_#0ad111]">N</div>
@@ -168,7 +168,7 @@ export function CompassOverlay({ userPosition, targetDrop }: CompassOverlayProps
         
         {/* The Target Needle */}
         <div 
-          className="absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-out will-change-transform z-10"
+          className="absolute inset-0 flex items-center justify-center will-change-transform z-10"
           style={{ transform: `rotate(${needleRotation}deg)` }}
         >
           {deviceHeading === null ? (

@@ -43,7 +43,7 @@ function TTSHandlers() {
 
 export default function App() {
   console.log('🔄 [App.tsx] Rendering App root component...');
-  const showDebug = (import.meta.env.DEV && localStorage.getItem('show_location_debug') === 'true');
+  const showDebug = import.meta.env.DEV || localStorage.getItem('show_location_debug') === 'true';
 
   return (
     <ErrorBoundary>
