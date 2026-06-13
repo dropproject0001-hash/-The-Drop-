@@ -27,13 +27,6 @@ export function validateEnv(): EnvValidationResult {
     errors.push('VITE_SUPABASE_ANON_KEY appears too short');
   }
 
-  const encryptionKey = ((import.meta as any).env.VITE_ENCRYPTION_KEY || '').trim();
-  if (!encryptionKey) {
-    errors.push('VITE_ENCRYPTION_KEY is missing');
-  } else if (encryptionKey.length < 10) {
-    errors.push('VITE_ENCRYPTION_KEY appears too short');
-  }
-
   // Optional but recommended
   const geminiKey = ((import.meta as any).env.GEMINI_API_KEY || '').trim();
   if (!geminiKey) {

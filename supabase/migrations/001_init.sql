@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ── ENUMS ────────────────────────────────────────────────────────────────────
-CREATE TYPE user_role     AS ENUM ('super_admin', 'admin', 'client');
+CREATE TYPE user_role     AS ENUM ('super_admin', 'admin', 'client', 'dropper');
 CREATE TYPE drop_status   AS ENUM ('active', 'claimed', 'expired');
 CREATE TYPE pickup_method AS ENUM ('qr_scan', 'manual');
 CREATE TYPE notif_type    AS ENUM ('drop_created', 'drop_claimed', 'drop_expired', 'user_login', 'message_received');

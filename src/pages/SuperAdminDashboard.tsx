@@ -86,24 +86,18 @@ export default function SuperAdminDashboard() {
   const updateUserRole = async () => {
     if (!selectedUser) return;
 
-    setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('set-user-role', {
-        body: {
-          targetUserId: selectedUser.id,
-          newRole: newRole,
-        },
+        body: { targetUserId: selectedUser.id, newRole: newRole }
       });
-
-      if (error || data?.error) throw new Error(error?.message || data?.error || 'Failed to update role');
-
+      if (error) throw error;
+      
       showToast('Role updated to ' + newRole, { type: 'success' });
       fetchUsers();
       setSelectedUser(null);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to update role', { type: 'error' });
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to update role', { type: 'error' });
     }
   };
 
@@ -122,6 +116,7 @@ export default function SuperAdminDashboard() {
           username: newDropperUsername,
           password: newDropperPassword,
           phone: newDropperPhone,
+          requestedBy: currentProfile.id
         }
       });
       

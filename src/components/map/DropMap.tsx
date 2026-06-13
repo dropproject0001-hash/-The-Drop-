@@ -1,10 +1,9 @@
 // src/components/map/DropMap.tsx
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useAuthStore } from '@/stores';
 import { useLiveLocations } from '@/hooks/realtime/useLiveLocations';
-import { ConnectionStatusBadge } from '@/components/ui/ConnectionStatusBadge';
 import { useDrops } from '@/hooks/useDrops';
 import { DropperTrackingControl } from '@/components/dropper/DropperTrackingControl';
 import { DropStatusBadge } from '@/components/drops/DropStatusBadge';
@@ -14,19 +13,11 @@ import { Search, X, Crosshair, MapPin, User, Navigation, Layers } from 'lucide-r
 import type { Drop } from '@/types/domain';
 
 // Leaflet default icon fix
-// FIXED H-3: Icons are now explicitly assigned to Markers to avoid broken images in production
-const DEFAULT_ICON_CONFIG = {
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-};
-
-const defaultIcon = new L.Icon({
-  ...DEFAULT_ICON_CONFIG,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
 });
 
 // Map Controller for smooth setView transitions
@@ -76,31 +67,6 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
   const defaultDrops = initialDrops || fetchedDrops || [];
   
   const { locations: liveLocations, status: liveStatus } = useLiveLocations();
-
-  // FIXED H-4: Memoized icons to prevent re-renders
-  const userLocationIcon = useMemo(() => L.divIcon({
-    className: 'user-location-marker',
-    html: `
-      <div class="relative flex items-center justify-center">
-        <div class="absolute w-6 h-6 rounded-full bg-[#0ad111]/30 animate-ping"></div>
-        <div class="w-3.5 h-3.5 rounded-full bg-[#0ad111] border border-black shadow-[0_0_8px_#0ad111]"></div>
-      </div>
-    `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
-  }), []);
-
-  const agentLocationIcon = useMemo(() => L.divIcon({
-    className: 'agent-location-marker',
-    html: `
-      <div class="relative flex items-center justify-center">
-        <div class="absolute w-6 h-6 rounded-full bg-blue-500/30 animate-pulse"></div>
-        <div class="w-3.5 h-3.5 rounded-full bg-blue-500 border border-black shadow-[0_0_8px_#3b82f6]"></div>
-      </div>
-    `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
-  }), []);
 
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
@@ -159,11 +125,11 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
     return idMatch || descriptionMatch;
   });
 
-  // FIXED M-5: Wrapped in useCallback
-  const handleLocateTarget = useCallback((lat: number, lng: number) => {
+  // Perform smooth pan and zoom focusing on a specific target
+  const handleLocateTarget = (lat: number, lng: number) => {
     setMapCenter([lat, lng]);
     setMapZoom(16); // Close-up focus
-  }, []);
+  };
 
   return (
     <ErrorBoundary fallback={<div style={{ height }} className="w-full bg-zinc-900 flex items-center justify-center text-red-500 font-mono">MAP_RENDER_ERROR</div>}>
@@ -316,7 +282,17 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
           {userPosition && (
             <Marker 
               position={userPosition}
-              icon={userLocationIcon}
+              icon={L.divIcon({
+                className: 'user-location-marker',
+                html: `
+                  <div class="relative flex items-center justify-center">
+                    <div class="absolute w-6 h-6 rounded-full bg-[#0ad111]/30 animate-ping"></div>
+                    <div class="w-3.5 h-3.5 rounded-full bg-[#0ad111] border border-black shadow-[0_0_8px_#0ad111]"></div>
+                  </div>
+                `,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+              })}
             >
               <Popup>
                 <div className="text-black font-mono text-[10px]">
@@ -332,7 +308,7 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
             filteredDrops
               .filter((d) => d.assigned_to === profile?.id && d.status === 'active')
               .map((drop) => (
-                <Marker key={drop.id} position={[drop.lat, drop.lng]} icon={defaultIcon}>
+                <Marker key={drop.id} position={[drop.lat, drop.lng]}>
                   <Popup>
                     <div className="text-black min-w-[240px]">
                       <div className="font-bold mb-1">{drop.title}</div>
@@ -354,7 +330,7 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
               const latest = locs[0];
 
               return (
-                <Marker key={userId} position={[latest.lat, latest.lng]} icon={agentLocationIcon}>
+                <Marker key={userId} position={[latest.lat, latest.lng]}>
                   <Popup>
                     <div className="text-black">
                       <strong>AGENT LIVE</strong><br />
@@ -371,7 +347,7 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
             filteredDrops
               .filter(d => d.assigned_to === profile?.id)
               .map((drop) => (
-                <Marker key={drop.id} position={[drop.lat, drop.lng]} icon={defaultIcon}>
+                <Marker key={drop.id} position={[drop.lat, drop.lng]}>
                   <Popup>
                     <div className="text-black min-w-[240px]">
                       <div className="font-bold text-lg mb-1">{drop.title}</div>
@@ -394,14 +370,11 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
         </MapContainer>
 
         {/* Status indicators */}
-        <div className="absolute top-4 left-4 z-[500] flex flex-col gap-2">
-          {isSuperAdmin && (
-            <ConnectionStatusBadge status={liveStatus.mode as 'realtime' | 'polling'} />
-          )}
-          {!navigator.onLine && (
-            <ConnectionStatusBadge status="offline" />
-          )}
-        </div>
+        {isSuperAdmin && liveStatus.mode === 'polling' && (
+          <div className="absolute top-4 left-4 bg-black/80 text-amber-400 px-3 py-1 rounded text-xs font-mono z-[500]">
+            FALLBACK MODE (Polling)
+          </div>
+        )}
 
         {isDropper && selectedDrop && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 text-emerald-400 px-4 py-1 rounded-full text-xs font-mono tracking-widest z-[500] border border-emerald-500">

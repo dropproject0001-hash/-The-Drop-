@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get("APP_URL") || '*',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -33,23 +33,14 @@ serve(async (req: Request) => {
       });
     }
 
-    // Verify caller is super_admin (from app_metadata for security)
-    let isAuthorized = user.app_metadata?.user_role === 'super_admin';
+    // Verify caller is super_admin
+    const { data: callerProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
 
-    if (!isAuthorized) {
-      // Fallback check in profiles
-      const { data: callerProfile } = await supabaseAdmin
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (callerProfile?.role === 'super_admin') {
-        isAuthorized = true;
-      }
-    }
-
-    if (!isAuthorized) {
+    if (callerProfile?.role !== 'super_admin') {
       return new Response(JSON.stringify({ error: "Forbidden: Only Super Admin can assign roles" }), { 
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
@@ -76,10 +67,10 @@ serve(async (req: Request) => {
     // Audit log
     await supabaseAdmin.from('activity_log').insert({
       actor_id: user.id,
-      action: 'update_role',
+      action: 'assign_role',
       entity_type: 'profile',
       entity_id: userId,
-      meta: { newRole }
+      meta: { new_role: newRole, previous_role: callerProfile?.role }
     });
 
     return new Response(JSON.stringify({ success: true, message: `Role updated to ${newRole}` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

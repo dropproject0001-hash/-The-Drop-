@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get("APP_URL") || '*',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -44,7 +44,7 @@ serve(async (req: Request) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { username },
+      user_metadata: { username, role: 'super_admin' },
       app_metadata: { user_role: 'super_admin' }
     });
 
@@ -63,20 +63,20 @@ serve(async (req: Request) => {
 
     if (profileError) throw profileError;
 
-    // 4. Audit log
+    // 4. Mark token used
+    await supabaseAdmin
+      .from('setup_tokens')
+      .update({ used: true })
+      .eq('id', tokenData.id);
+
+    // 5. Audit log
     await supabaseAdmin.from('activity_log').insert({
       actor_id: authData.user.id,
       action: 'bootstrap_super_admin',
       entity_type: 'profile',
       entity_id: authData.user.id,
-      meta: { username, email }
+      meta: { username }
     });
-
-    // 5. Mark token used
-    await supabaseAdmin
-      .from('setup_tokens')
-      .update({ used: true })
-      .eq('id', tokenData.id);
 
     return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 

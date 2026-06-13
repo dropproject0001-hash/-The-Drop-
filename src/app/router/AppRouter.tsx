@@ -25,6 +25,8 @@ export function AppRouter() {
         {/* Public Routes */}
         <Route path="/auth" element={<AuthFlow />} />
         <Route path="/register" element={<ClientRegistration />} />
+        {/* Obfuscated Setup */}
+        <Route path="/hidden-super-admin-setup-42" element={<SuperAdminSetup />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/capture" element={<CaptureTest />} />
         <Route path="/location" element={<LocationTest />} />
@@ -83,7 +85,6 @@ export function AppRouter() {
               </ProtectedRoute>
             } 
           />
-          <Route path="super-admin-setup" element={<SuperAdminSetup />} />
           <Route path="login-otp" element={<LoginWithOTP />} />
         </Route>
       </Routes>

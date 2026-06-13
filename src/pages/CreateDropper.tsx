@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRole } from '../context/RoleContext';
 import { useToast } from '@/components/ui/ToastContainer';
-import { Shield, UserPlus, Phone, Lock, User, ArrowLeft, Terminal, Wand2, Info, CheckCircle2, ShieldAlert, Eye, EyeOff } from 'lucide-react';
+import { Shield, UserPlus, Phone, Lock, User, ArrowLeft, Terminal, Wand2, Info, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,7 +17,6 @@ export default function CreateDropper() {
     role: 'dropper' as 'dropper' | 'admin',
   });
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
 
   if (!isSuperAdmin) {
@@ -40,7 +39,7 @@ export default function CreateDropper() {
 
   const generatePassword = () => {
     // Generate a secure random password
-    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+';
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
     const array = new Uint8Array(16);
     crypto.getRandomValues(array);
     let pass = '';
@@ -248,31 +247,21 @@ export default function CreateDropper() {
             <motion.div variants={itemVariants} className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#106011]" />
               <input
-                type={showPassword ? "text" : "password"}
+                type="password"
                 placeholder="SECURE_TEMPORARY_TOKEN"
                 autoComplete="off"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full bg-black/80 border-2 border-[#106011]/30 focus:border-[#106011] outline-none rounded-xl pl-12 pr-24 py-4 text-sm font-mono text-white placeholder:text-zinc-700 tracking-widest transition-all"
+                className="w-full bg-black/80 border-2 border-[#106011]/30 focus:border-[#106011] outline-none rounded-xl pl-12 pr-12 py-4 text-sm font-mono text-white placeholder:text-zinc-700 tracking-widest transition-all"
               />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-[#106011] hover:text-[#0ad111] transition-colors p-1"
-                  title={showPassword ? "Hide Token" : "Show Token"}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-                <button
-                  type="button"
-                  onClick={generatePassword}
-                  className="text-[#106011] hover:text-[#0ad111] transition-colors p-1"
-                  title="Generate Secure Token"
-                >
-                  <Wand2 size={16} />
-                </button>
-              </div>
+              <button 
+                type="button"
+                onClick={generatePassword}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#106011] hover:text-[#0ad111] transition-colors p-1"
+                title="Generate Secure Token"
+              >
+                <Wand2 size={16} />
+              </button>
             </motion.div>
 
             <motion.div variants={itemVariants} className="relative group">
