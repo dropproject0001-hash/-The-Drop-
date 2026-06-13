@@ -5,6 +5,7 @@ import { captureService } from '@/services/CaptureService';
 import { locationBroadcastService } from '@/services/LocationBroadcastService';
 import { useAuthStore } from '@/stores';
 import { useToast } from '@/components/ui/ToastContainer';
+import { useTTS } from '@/hooks/useTTS';
 import { CheckCircle, Camera, Video } from 'lucide-react';
 
 export default function QRConfirmationScreen() {
@@ -12,6 +13,7 @@ export default function QRConfirmationScreen() {
   const navigate = useNavigate();
   const { profile } = useAuthStore();
   const { showToast } = useToast();
+  const { speak, isSpeaking } = useTTS();
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [proof, setProof] = useState<any>(null);
@@ -22,6 +24,7 @@ export default function QRConfirmationScreen() {
         const result = await captureService.takePhoto();
         setProof(result);
         showToast('Photo captured successfully', { type: 'success' });
+        await speak("Proof of delivery captured. Ready for confirmation.");
       } else {
         // Video capture logic...
         showToast('Video recording started', { type: 'info' });
@@ -35,10 +38,12 @@ export default function QRConfirmationScreen() {
     if (!dropId || !profile) return;
 
     setIsProcessing(true);
+    await speak("Initiating secure drop claim sequence.");
 
     try {
       // Record location
       try {
+        await speak("Location broadcast confirmed.");
         await locationBroadcastService.broadcast({
           lat: 0, lng: 0, drop_id: dropId,
         });
@@ -56,10 +61,12 @@ export default function QRConfirmationScreen() {
       if (error) throw error;
 
       showToast('Drop claimed successfully!', { type: 'success' });
+      await speak("Drop successfully claimed. Transaction complete. Stay safe operative.");
 
       setTimeout(() => navigate('/client'), 1200);
     } catch (err: any) {
       showToast(err.message || 'Failed to claim drop', { type: 'error' });
+      await speak("Claim failed. Please retry or contact command.");
     } finally {
       setIsProcessing(false);
     }
@@ -97,8 +104,8 @@ export default function QRConfirmationScreen() {
 
         <button
           onClick={handleClaimDrop}
-          disabled={isProcessing}
-          className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-700 rounded-2xl font-mono tracking-widest text-lg transition mt-4"
+          disabled={isProcessing || isSpeaking}
+          className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-700 rounded-2xl font-mono tracking-widest text-lg transition mt-4 flex items-center justify-center gap-2"
         >
           {isProcessing ? 'CLAIMING DROP...' : 'CONFIRM & CLAIM DROP'}
         </button>

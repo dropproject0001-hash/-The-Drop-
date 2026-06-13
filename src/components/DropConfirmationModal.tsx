@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useOTP } from '@/hooks/useOTP';
+import { useTTS } from '@/hooks/useTTS';
 import { X, Shield, Lock, AlertTriangle, Terminal, Key } from 'lucide-react';
 
 interface DropConfirmationModalProps {
@@ -12,20 +13,25 @@ export default function DropConfirmationModal({ dropId, onConfirm, onClose }: Dr
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const { otp, setOtp, loading, error, requestOTP, verifyOTP } = useOTP();
+  const { speak } = useTTS();
 
   const handleSendOTP = async () => {
     if (!phone) return;
     const result = await requestOTP(phone);
     if (result.success) {
       setStep('otp');
+      await speak("Verification code transmitted to your device.");
     }
   };
 
   const handleVerifyAndConfirm = async () => {
     const result = await verifyOTP(phone, otp);
     if (result.success) {
+      await speak("Verification successful. Drop confirmation authorized.");
       onConfirm(); // Proceed with drop confirmation
       onClose();
+    } else {
+      await speak("Verification failed. Please check your code.");
     }
   };
 

@@ -2,6 +2,7 @@ import { ShieldAlert } from 'lucide-react';
 import DropMap from '@/components/map/DropMap';
 import { TransactionHistoryList } from '@/features/transactions/TransactionHistoryList';
 import { PortalNavbar } from '@/components/layout/PortalNavbar';
+import TTSLogsPanel from '@/features/admin/TTSLogsPanel';
 
 export function SuperAdminPortal() {
   return (
@@ -19,6 +20,10 @@ export function SuperAdminPortal() {
              <DropMap height="600px" />
           </div>
           <TransactionHistoryList />
+        </div>
+
+        <div className="space-y-8">
+          <TTSLogsPanel />
         </div>
       </div>
     </div>

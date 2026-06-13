@@ -8,6 +8,8 @@ import { LocationOutbox } from '../services/LocationOutbox';
 import { supabase } from '../lib/supabase';
 import { LocationDebugPanel } from '../components/debug/LocationDebugPanel';
 import { ToastProvider } from '@/components/ui/ToastContainer';
+import { useDropStatusTTS } from '@/hooks/useDropStatusTTS';
+import { useProximityTTS } from '@/hooks/useProximityTTS';
 
 import { InstallBanner } from '@/components/ui/InstallBanner';
 
@@ -33,6 +35,12 @@ function BackgroundSync() {
   return null;
 }
 
+function TTSHandlers() {
+  useDropStatusTTS();
+  useProximityTTS();
+  return null;
+}
+
 export default function App() {
   console.log('🔄 [App.tsx] Rendering App root component...');
   const showDebug = import.meta.env.DEV || localStorage.getItem('show_location_debug') === 'true';
@@ -44,6 +52,7 @@ export default function App() {
           <RoleProvider>
             <ToastProvider>
               <BackgroundSync />
+              <TTSHandlers />
               <InstallBanner />
               <AppRouter />
               {showDebug && <LocationDebugPanel />}
@@ -54,4 +63,3 @@ export default function App() {
     </ErrorBoundary>
   );
 }
-
