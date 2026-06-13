@@ -71,7 +71,6 @@ export function ClientRegistration() {
       // Mocking login for UI preview if actual backend is not fully setup
       const mockId = 'client-' + Math.random().toString(36).substr(2, 9);
       useAuthStore.getState().setSession({ user: { id: mockId }, access_token: 'mock', refresh_token: 'mock' });
-      localStorage.setItem('demo_role', 'client'); // added so that RoleContext bypasses
       useAuthStore.getState().setProfile({
         id: mockId,
         role: 'client',
