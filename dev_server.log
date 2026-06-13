@@ -1,5 +1,2 @@
-
-> droppin-ops@0.1.0 dev
-> vite --port=3000 --host=0.0.0.0
-
-sh: 1: vite: not found
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: use --host to expose

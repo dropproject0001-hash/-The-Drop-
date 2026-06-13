@@ -26,36 +26,42 @@ serve(async (req: Request) => {
       global: { headers: { Authorization: req.headers.get("Authorization")! } },
     });
 
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
-    if (userError || !user) {
+    const { data: { user: caller }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !caller) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { 
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
 
-    // Verify caller is actually super_admin (from app_metadata for security)
-    let isAuthorized = user.app_metadata?.user_role === 'super_admin';
+    // Verify caller is actually super_admin or admin (from app_metadata for security)
+    let isAuthorized = caller.app_metadata?.user_role === 'super_admin' || caller.app_metadata?.user_role === 'admin';
 
     if (!isAuthorized) {
       // Fallback check in profiles if metadata is missing
       const { data: callerProfile } = await supabaseAdmin
         .from('profiles')
         .select('role')
-        .eq('id', user.id)
+        .eq('id', caller.id)
         .single();
 
-      if (callerProfile?.role === 'super_admin') {
+      if (callerProfile?.role === 'super_admin' || callerProfile?.role === 'admin') {
         isAuthorized = true;
       }
     }
 
     if (!isAuthorized) {
-      return new Response(JSON.stringify({ error: "Forbidden: Only Super Admin can create accounts" }), { 
+      return new Response(JSON.stringify({ error: "Forbidden: Insufficient privileges" }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
 
     const { username, password, phone, role = 'dropper' } = await req.json();
+
+    if (!phone) {
+      return new Response(JSON.stringify({ error: "Phone number is required for tactical mobile authentication" }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     if (!["super_admin", "admin", "client", "dropper"].includes(role)) {
       return new Response(JSON.stringify({ error: "Invalid role" }), {
@@ -63,20 +69,37 @@ serve(async (req: Request) => {
       });
     }
 
+    // Check if phone already exists in auth.users
+    // (We use maybeSingle in profiles but admin.listUsers or similar for auth is better but profile is usually synced)
+    const { data: existingProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('phone', phone)
+      .maybeSingle();
+
+    if (existingProfile) {
+      return new Response(JSON.stringify({ error: "Phone number already registered in profiles" }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Provision account with Phone Auth as primary
+    // Note: email is kept as a fallback/proxy but phone is the goal.
     const email = `${username}@internal.droppinops.local`;
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      phone: phone || undefined,
+      phone,
+      phone_confirm: true, // Mark phone as confirmed to enable immediate OTP login
       email_confirm: true,
-      user_metadata: { username },
-      app_metadata: { user_role: role }  // ✅ Also set app_metadata
+      user_metadata: { username, full_name: username },
+      app_metadata: { user_role: role }
     });
 
     if (authError) throw authError;
 
-    // Upsert profile (more robust)
+    // Upsert profile
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .upsert({ 
@@ -84,24 +107,25 @@ serve(async (req: Request) => {
         username, 
         role,
         alias: username.toUpperCase(),
-        display_name: username 
+        display_name: username,
+        phone: phone // Sync phone to profiles for RLS lookups
       }, { onConflict: 'id' });
 
     if (profileError) throw profileError;
 
     // Audit log
     await supabaseAdmin.from('activity_log').insert({
-      actor_id: user.id,
+      actor_id: caller.id,
       action: 'create_account',
       entity_type: 'profile',
       entity_id: authData.user.id,
-      meta: { username, role, email }
+      meta: { username, role, email, phone }
     });
 
     return new Response(JSON.stringify({ 
       success: true, 
       user: authData.user,
-      message: `${role.toUpperCase()} account created successfully for @${username}` 
+      message: `${role.toUpperCase()} account provisioned successfully. Target: ${phone}`
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error: any) {

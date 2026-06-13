@@ -1,31 +1,67 @@
 import { useState } from 'react';
-import { useOTP } from '@/hooks/useOTP';
+import { useAuth } from '@/app/providers/AuthContext';
+import { useRole } from '@/context/RoleContext';
 import { Shield, Key, Phone, Terminal, ChevronLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/ToastContainer';
 
 export default function LoginWithOTP() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { signInWithOtp, verifyOtp } = useAuth();
+  const { refreshRole } = useRole();
+
   const [phone, setPhone] = useState('');
+  const [otpCode, setOtpCode] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const { otp, setOtp, loading, error, requestOTP, verifyOTP } = useOTP();
+  const [loading, setLoading] = useState(false);
 
   const handleSendOTP = async () => {
     if (!phone) return;
-    const result = await requestOTP(phone);
-    if (result.success) {
+    setLoading(true);
+    const { error } = await signInWithOtp(phone);
+    setLoading(false);
+
+    if (error) {
+      showToast(error.message || 'Failed to send code', { type: 'error' });
+    } else {
       setStep('otp');
+      showToast('Tactical passcode dispatched', { type: 'success' });
     }
   };
 
   const handleVerify = async () => {
-    const result = await verifyOTP(phone, otp);
-    if (result.success) {
-      // In a real production app, we would now swap to a session-based auth.
-      // Since this is a temporary fix for the login, we will bypass the AuthContext
-      // by setting a demo role and going back to the portal selector (DEV only).
-      if (import.meta.env.DEV) {
-        localStorage.setItem('demo_role', 'client'); 
-      }
-      window.location.href = '/'; 
+    if (otpCode.length !== 6) return;
+    setLoading(true);
+
+    const { error, user } = await verifyOtp(phone, otpCode);
+
+    if (error) {
+      setLoading(false);
+      showToast(error.message || 'Invalid passcode', { type: 'error' });
+      return;
+    }
+
+    if (!user) {
+      setLoading(false);
+      showToast('Authentication failure: No user returned', { type: 'error' });
+      return;
+    }
+
+    // Fetch fresh profile and route accordingly
+    const freshRole = await refreshRole();
+    setLoading(false);
+
+    if (freshRole) {
+      const routes: Record<string, string> = {
+        'super_admin': '/super-admin',
+        'admin': '/admin',
+        'dropper': '/dropper',
+        'client': '/client'
+      };
+      navigate(routes[freshRole] || '/', { replace: true });
+    } else {
+      showToast('Access denied: Profile unauthorized', { type: 'error' });
     }
   };
 
@@ -63,7 +99,7 @@ export default function LoginWithOTP() {
               <Shield className="w-10 h-10 text-[#106011] drop-shadow-[0_0_12px_rgba(16,96,17,0.7)] animate-pulse" />
             </div>
             <h1 className="text-2xl font-display font-black tracking-[0.25em] text-white uppercase">THE DROP</h1>
-            <p className="text-[10px] font-mono text-[#106011] uppercase tracking-widest font-semibold">COVERT SMS + OTP ACCESS</p>
+            <p className="text-[10px] font-mono text-[#106011] uppercase tracking-widest font-semibold">TACTICAL MOBILE ACCESS</p>
           </div>
 
           {step === 'phone' && (
@@ -82,7 +118,7 @@ export default function LoginWithOTP() {
                     className="w-full bg-black border-2 border-zinc-800 focus:border-[#106011] rounded-xl pl-10 pr-4 py-3 text-sm font-mono tracking-wider focus:outline-none transition-colors text-white"
                   />
                 </div>
-                <p className="text-[8px] font-mono text-[#106011]/80 tracking-wider">ENTER OPERATIONAL MOBILE SPECIFYING PH COUNTRY CODE</p>
+                <p className="text-[8px] font-mono text-[#106011]/80 tracking-wider text-center">ENTER OPERATIONAL MOBILE WITH COUNTRY CODE</p>
               </div>
 
               <button
@@ -102,18 +138,18 @@ export default function LoginWithOTP() {
                 <label className="text-[10px] font-mono font-bold text-slate-400 tracking-widest uppercase block">6-DIGIT SECURITY KEY</label>
                 <input
                   type="text"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                   maxLength={6}
                   placeholder="000000"
                   className="w-full bg-black border-2 border-[#106011] rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-[0.4em] focus:outline-none text-white focus:ring-1 focus:ring-[#106011] placeholder:text-zinc-800"
                 />
-                <p className="text-[9px] font-mono text-slate-500 tracking-wider text-center uppercase">CODE FORWARDED TO LINKED PHONE: {phone}</p>
+                <p className="text-[9px] font-mono text-slate-500 tracking-wider text-center uppercase">CODE DISPATCHED TO TARGET: {phone}</p>
               </div>
 
               <button
                 onClick={handleVerify}
-                disabled={loading || otp.length !== 6}
+                disabled={loading || otpCode.length !== 6}
                 className="w-full h-12 border-2 border-[#106011] rounded-xl flex items-center justify-center gap-2 font-mono text-xs font-black uppercase tracking-widest bg-[#106011] text-white hover:bg-green-600 shadow-md shadow-[#106011]/30 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:pointer-events-none"
               >
                 <Key className="w-4 h-4" />
@@ -126,12 +162,6 @@ export default function LoginWithOTP() {
               >
                 USE DIFFERENT PHONE TARGET
               </button>
-            </div>
-          )}
-
-          {error && (
-            <div className="mt-4 p-3 bg-red-950/20 border border-red-900/40 rounded-xl text-[11px] font-mono text-red-400 text-center uppercase tracking-wider">
-              🚨 {error}
             </div>
           )}
         </div>
