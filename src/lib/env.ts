@@ -9,6 +9,7 @@ interface EnvConfig {
   GEMINI_API_KEY?: string;
   VAPID_PUBLIC_KEY?: string;
   STADIA_API_KEY?: string;
+  ENCRYPTION_KEY: string;
 }
 
 function getEnvVar(key: string, required = true): string {
@@ -32,6 +33,7 @@ export const env: EnvConfig = {
   GEMINI_API_KEY: getEnvVar('GEMINI_API_KEY', false),
   VAPID_PUBLIC_KEY: getEnvVar('VITE_VAPID_PUBLIC_KEY', false),
   STADIA_API_KEY: getEnvVar('VITE_STADIA_API_KEY', false),
+  ENCRYPTION_KEY: getEnvVar('VITE_ENCRYPTION_KEY'),
 };
 
 // Optional: Runtime validation helper
@@ -49,6 +51,10 @@ export function validateEnv(): EnvValidationResult {
   
   if (!env.SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY.length < 20) {
     missing.push('VITE_SUPABASE_ANON_KEY');
+  }
+
+  if (!env.ENCRYPTION_KEY || env.ENCRYPTION_KEY.length < 10) {
+    missing.push('VITE_ENCRYPTION_KEY');
   }
   
   return {

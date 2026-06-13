@@ -1,6 +1,7 @@
 import CryptoJS from 'crypto-js';
+import { env } from './env';
 
-const SECRET_KEY = 'THE-DROP-SECRET-KEY-CHANGE-THIS'; // In production, this should be fetched or more complex
+const SECRET_KEY = env.ENCRYPTION_KEY || 'THE-DROP-FALLBACK-SECRET';
 
 /**
  * Simple AES encryption for chat notes and messages
