@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get("APP_URL") || '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -33,20 +33,35 @@ serve(async (req: Request) => {
       });
     }
 
-    // Verify caller is actually super_admin
-    const { data: callerProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    // Verify caller is actually super_admin (from app_metadata for security)
+    let isAuthorized = user.app_metadata?.user_role === 'super_admin';
 
-    if (callerProfile?.role !== 'super_admin') {
+    if (!isAuthorized) {
+      // Fallback check in profiles if metadata is missing
+      const { data: callerProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (callerProfile?.role === 'super_admin') {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
       return new Response(JSON.stringify({ error: "Forbidden: Only Super Admin can create accounts" }), { 
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
 
     const { username, password, phone, role = 'dropper' } = await req.json();
+
+    if (!["super_admin", "admin", "client", "dropper"].includes(role)) {
+      return new Response(JSON.stringify({ error: "Invalid role" }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     const email = `${username}@internal.droppinops.local`;
 
@@ -55,7 +70,7 @@ serve(async (req: Request) => {
       password,
       phone: phone || undefined,
       email_confirm: true,
-      user_metadata: { username, role },
+      user_metadata: { username },
       app_metadata: { user_role: role }  // ✅ Also set app_metadata
     });
 

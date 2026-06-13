@@ -103,17 +103,6 @@ export default function AuthFlow() {
     setLoading(false);
   };
 
-  // ── Demo bypass (DEV only) ───────────────────────────────────────────────
-  const handleDemoBypass = async (demoRole: string) => {
-    setSystemLogs((prev) =>
-      [`DEMO BYPASS: ${demoRole.toUpperCase()}`, ...prev].slice(0, 3)
-    );
-    localStorage.setItem('demo_role', demoRole);
-    // refreshRole reads the demo_role from localStorage in DEV
-    await refreshRole();
-    routeByRole(demoRole);
-  };
-
   // ── Shared navigation helper ─────────────────────────────────────────────
   const routeByRole = (role: string | null) => {
     if (role === 'super_admin') navigate('/super-admin', { replace: true });
@@ -380,20 +369,6 @@ export default function AuthFlow() {
           </div>
         </div>
 
-        {/* DEV-only demo bypass buttons */}
-        {import.meta.env.DEV && mode === 'staff' && (
-          <div className="mt-4 flex gap-2">
-            {(['super_admin', 'admin', 'dropper'] as const).map((r) => (
-              <button
-                key={r}
-                onClick={() => handleDemoBypass(r)}
-                className="flex-1 text-[7px] py-2 border border-[#106011]/30 rounded-lg text-zinc-500 hover:text-[#0ad111] transition font-mono font-black uppercase tracking-widest"
-              >
-                {r.replace('_', '-')}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
