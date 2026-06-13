@@ -1,18 +1,5 @@
 /**
  * RoleContext — lightweight shim over AuthContext.
- *
- * FIX N-4: Previously ran its own onAuthStateChange + profiles query in
- * parallel with AuthContext, causing:
- *   - Two DB round-trips per auth event
- *   - Race between AuthContext.profile and RoleContext.role
- *   - Brief windows of inconsistent state that broke ProtectedRoute
- *
- * Now it simply reads from AuthContext (single source of truth) and
- * re-exposes the same data under the existing useRole() API so that
- * all existing call sites continue to work without changes.
- *
- * FIX Bug-4: refreshRole() returns the actual new role from the DB,
- * not the stale value from React state closure.
  */
 import { createContext, useCallback, useContext } from 'react';
 import { useAuth } from '@/app/providers/AuthContext';
@@ -51,8 +38,6 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     refreshProfile,
   } = useAuth();
 
-  // FIX Bug-4: fetches fresh profile, returns the new role as a value
-  // so callers like handleSuccessfulLogin get the correct role immediately
   const refreshRole = useCallback(async (): Promise<Role> => {
     const freshProfile = await refreshProfile();
     return (freshProfile?.role ?? null) as Role;
