@@ -46,7 +46,9 @@ export default function TTSLogsPanel() {
     const channel = supabase.channel('tts-logs-sync')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tts_logs' }, fetchLogs)
       .subscribe();
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
