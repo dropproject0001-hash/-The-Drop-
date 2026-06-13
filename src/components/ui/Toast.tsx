@@ -33,7 +33,7 @@ export function Toast({ id, type, message, actions, persistent, onClose }: Toast
         {!persistent && (
           <button 
             onClick={() => onClose(id)} 
-            className="text-zinc-400 hover:text-white transition mt-0.5"
+            aria-label="Dismiss notification" className="text-zinc-400 hover:text-white transition mt-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500/50"
           >
             <X size={16} />
           </button>
