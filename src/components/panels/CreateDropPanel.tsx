@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Save, Crosshair } from 'lucide-react';
 import { useToast } from '@/components/ui/ToastContainer';
+import { AfterDropModal } from './AfterDropModal';
 
 export function CreateDropPanel({ onClose }: { onClose: () => void }) {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [successDrop, setSuccessDrop] = useState<any>(null);
   const [formData, setFormData] = useState({
     title: '',
     lat: '',
@@ -44,17 +46,17 @@ export function CreateDropPanel({ onClose }: { onClose: () => void }) {
     const lng = parseFloat(formData.lng);
 
     try {
-      const { error } = await supabase.from('drops').insert({
+      const { data, error } = await supabase.from('drops').insert({
         title: formData.title,
         lat,
         lng,
         assigned_to: formData.assigned_to || null,
         status: 'active'
-      });
+      }).select().single();
 
       if (error) throw error;
+      setSuccessDrop(data);
       showToast('Drop initialized successfully', { type: 'success' });
-      onClose();
     } catch (err) {
       console.error(err);
       showToast('Failed to create drop', { type: 'error' });
@@ -62,6 +64,10 @@ export function CreateDropPanel({ onClose }: { onClose: () => void }) {
       setLoading(false);
     }
   };
+
+  if (successDrop) {
+    return <AfterDropModal drop={successDrop} onClose={onClose} />;
+  }
 
   return (
     <div className="bg-black/95 border border-[#106011]/50 p-6 rounded-2xl flex flex-col gap-4 text-white">

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores';
 import { useToast } from '@/components/ui/ToastContainer';
 import { CreateBulletinModal } from '../components/panels/CreateBulletinModal';
+import { ShieldAlert } from 'lucide-react';
 
 interface Analytics {
   totalUsers: number;
@@ -43,6 +44,7 @@ export default function SuperAdminDashboard() {
   const [newDropperPassword, setNewDropperPassword] = useState('');
   const [newDropperPhone, setNewDropperPhone] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
+  const [dashboardDeploymentError, setDashboardDeploymentError] = useState<string | null>(null);
   
   const currentProfile = useAuthStore(state => state.profile);
   const { showToast } = useToast();
@@ -105,6 +107,7 @@ export default function SuperAdminDashboard() {
       return;
     }
     setCreateLoading(true);
+    setDashboardDeploymentError(null);
     
     try {
       const { data, error } = await supabase.functions.invoke('create-dropper', {
@@ -127,7 +130,13 @@ export default function SuperAdminDashboard() {
       fetchAnalytics();
     } catch (err: any) {
       console.error(err);
-      showToast(err.message || 'Failed to create dropper', { type: 'error' });
+      const errMsg = err?.message || String(err);
+      if (errMsg.includes('Failed to send a request') || errMsg.includes('Edge Function') || errMsg.includes('fetch')) {
+        setDashboardDeploymentError('EDGE_FUNCTION_NOT_DEPLOYED');
+        showToast('Configuration missing: Edge Function not deployed', { type: 'error' });
+      } else {
+        showToast(errMsg || 'Failed to create dropper', { type: 'error' });
+      }
     } finally {
       setCreateLoading(false);
     }
@@ -294,6 +303,29 @@ export default function SuperAdminDashboard() {
                   placeholder="+1234567890"
                 />
               </div>
+
+              {dashboardDeploymentError && (
+                <div className="p-4 border border-red-700/80 bg-red-950/20 rounded-xl space-y-3 font-mono text-left relative overflow-hidden">
+                  <div className="absolute top-0 right-0 py-0.5 px-2 bg-red-700/20 text-red-500 text-[7px] font-black tracking-widest border-l border-b border-red-750/30 uppercase">
+                    CONFIG_REQUIRED
+                  </div>
+                  
+                  <h4 className="text-white text-[11px] font-black tracking-widest uppercase flex items-center gap-1.5">
+                    <ShieldAlert className="w-4 h-4 text-red-500 animate-pulse shrink-0" />
+                    DEPLOYMENT NEEDED
+                  </h4>
+                  <p className="text-[9px] text-zinc-400 leading-normal uppercase">
+                    The core 'create-dropper' Edge Function payload has not been uploaded to your current active Supabase cluster yet.
+                  </p>
+
+                  <div className="space-y-1">
+                    <div className="text-[7.5px] text-[#106011] font-black uppercase tracking-wider">Execute in terminal:</div>
+                    <div className="p-2.5 bg-black/95 border border-[#106011]/30 rounded text-[9px] text-[#0ad111] select-all font-semibold overflow-x-auto break-all whitespace-pre-wrap">
+                      supabase functions deploy create-dropper
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3 mt-6">
                 <button 

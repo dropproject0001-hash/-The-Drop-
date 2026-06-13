@@ -17,6 +17,7 @@ export default function CreateDropper() {
     role: 'dropper' as 'dropper' | 'admin',
   });
   const [loading, setLoading] = useState(false);
+  const [deploymentError, setDeploymentError] = useState<string | null>(null);
 
   if (!isSuperAdmin) {
     return (
@@ -53,6 +54,7 @@ export default function CreateDropper() {
     }
 
     setLoading(true);
+    setDeploymentError(null);
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -72,8 +74,22 @@ export default function CreateDropper() {
       showToast(`Account created successfully for @${form.username}`, { type: 'success' });
       setForm({ username: '', password: '', phone: '', role: 'dropper' });
     } catch (err: any) {
-      console.error('[CreateUser] Error:', err);
-      showToast(err.message || 'Failed to initialize account', { type: 'error' });
+      console.error('[CreateUser] Detailed Error:', err);
+      
+      const errMsg = err?.message || String(err);
+      const isFetchOrDeployError = 
+        errMsg.includes('Failed to send a request to the Edge Function') || 
+        errMsg.includes('Edge Function') || 
+        errMsg.includes('fetch');
+
+      if (isFetchOrDeployError) {
+        setDeploymentError(
+          "EDGE_FUNCTION_NOT_DEPLOYED: The core 'create-dropper' Edge Function is missing or un-deployed on your current remote/sandbox Supabase instance."
+        );
+        showToast('Configuration missing: Edge Function not deployed', { type: 'error' });
+      } else {
+        showToast(`Error: ${errMsg}`, { type: 'error' });
+      }
     } finally {
       setLoading(false);
     }
@@ -268,18 +284,52 @@ export default function CreateDropper() {
              </p>
           </motion.div>
 
+          {deploymentError && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="p-4 border-2 border-red-700/80 bg-red-950/20 rounded-xl space-y-3 font-mono text-left relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 py-1 px-2.5 bg-red-700/20 text-red-500 text-[8px] font-black tracking-widest border-l border-b border-red-750/30 uppercase">
+                CONFIG_MISSING
+              </div>
+              
+              <h4 className="text-white text-xs font-black tracking-widest uppercase flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-red-500 animate-pulse shrink-0" />
+                DEPLOYMENT REQUIRED
+              </h4>
+              <p className="text-[9.5px] text-zinc-400 leading-relaxed uppercase">
+                The secure user-management backend resides on Supabase as Deno-powered Edge Functions. Your environment is fully configured, but this function payload has not been uploaded to your active project yet.
+              </p>
+
+              <div className="space-y-1.5 pt-1">
+                <div className="text-[8px] text-[#106011] font-black uppercase tracking-wider">Execute this terminal instruction:</div>
+                <div className="p-3 bg-black/90 border border-[#106011]/30 rounded-lg text-[10px] text-[#0ad111] select-all font-semibold overflow-x-auto break-all whitespace-pre-wrap">
+                  supabase functions deploy create-dropper
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="text-[8px] text-zinc-500 font-black uppercase tracking-wider">Or deploy all operational payloads:</div>
+                <div className="p-3 bg-black/90 border border-zinc-800 rounded-lg text-[10px] text-zinc-400 select-all font-semibold overflow-x-auto break-all whitespace-pre-wrap">
+                  supabase functions deploy --all
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           <motion.div variants={itemVariants} className="pt-2">
             <button
-              onClick={handleCreate}
-              disabled={loading}
-              className={`w-full py-4 rounded-xl font-display font-black tracking-[0.2em] uppercase text-xs transition-all relative overflow-hidden flex items-center justify-center gap-3 shadow-lg ${
-                loading 
-                  ? 'bg-zinc-800 text-zinc-500 cursor-wait' 
-                  : form.role === 'dropper'
-                    ? 'bg-[#106011] text-black hover:bg-[#0ad111] hover:shadow-[0_0_30px_rgba(16,96,17,0.6)] active:scale-95'
-                    : 'bg-blue-600 text-white hover:bg-blue-500 hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] active:scale-95'
-              }`}
-            >
+               onClick={handleCreate}
+               disabled={loading}
+               className={`w-full py-4 rounded-xl font-display font-black tracking-[0.2em] uppercase text-xs transition-all relative overflow-hidden flex items-center justify-center gap-3 shadow-lg ${
+                 loading 
+                   ? 'bg-zinc-800 text-zinc-500 cursor-wait' 
+                   : form.role === 'dropper'
+                     ? 'bg-[#106011] text-black hover:bg-[#0ad111] hover:shadow-[0_0_30px_rgba(16,96,17,0.6)] active:scale-95'
+                     : 'bg-blue-600 text-white hover:bg-blue-500 hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] active:scale-95'
+               }`}
+             >
               <UserPlus size={16} />
               {loading ? 'INITIALIZING...' : `COMMIT ${form.role.toUpperCase()} RECORD`}
               

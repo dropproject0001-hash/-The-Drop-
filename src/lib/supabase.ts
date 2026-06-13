@@ -32,5 +32,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+console.log('[Supabase] Initialized with URL:', supabaseUrl, 'and Configured:', hasValidCredentials);
+
 export const isSupabaseConfigured = hasValidCredentials;
 

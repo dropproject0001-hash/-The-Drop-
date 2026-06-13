@@ -3,6 +3,7 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlobalModals } from '@/components/ui/GlobalModals';
 import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart, LogOut, RefreshCw, Wifi, WifiOff, Shield, Terminal } from 'lucide-react';
+import { LocationSyncWidget } from '@/components/common/LocationSyncWidget';
 
 import { CargoBayView } from './views/CargoBayView';
 import { ChatBoxView } from './views/ChatBoxView';
@@ -741,73 +742,3 @@ function AboutDrawer({ isExpanded }: { isExpanded: boolean }) {
   );
 }
 
-function LocationSyncWidget() {
-  const { isSyncing, queueSize, flush } = useLocationOutboxStatus();
-  const [online, setOnline] = useState(navigator.onLine);
-
-  useEffect(() => {
-    const updateOnline = () => setOnline(navigator.onLine);
-    window.addEventListener('online', updateOnline);
-    window.addEventListener('offline', updateOnline);
-    return () => {
-      window.removeEventListener('online', updateOnline);
-      window.removeEventListener('offline', updateOnline);
-    };
-  }, []);
-
-  const handleManualSync = async () => {
-    if (isSyncing) return;
-    try {
-      await flush();
-    } catch (e) {
-      console.error('[LocationSyncWidget] Manual sync error:', e);
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-3">
-      {/* Mini Connection Strength Status */}
-      <div 
-        className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[9px] font-mono tracking-widest uppercase transition-all duration-300 ${
-          online 
-            ? 'border-[#106011]/30 bg-black/40 text-emerald-500' 
-            : 'border-red-900 bg-red-950/20 text-red-500 animate-pulse'
-        }`}
-      >
-        {online ? (
-          <Wifi className="w-3.5 h-3.5 text-[#0ad111]" />
-        ) : (
-          <WifiOff className="w-3.5 h-3.5 text-red-500" />
-        )}
-      </div>
-
-      {/* Main Interactive Button */}
-      <button
-        onClick={handleManualSync}
-        disabled={isSyncing || (!online && queueSize === 0)}
-        className={`h-8 rounded-xl border flex items-center justify-center px-4 font-mono text-[10px] font-bold tracking-widest transition-all duration-300 select-none relative group/sync overflow-hidden ${
-          isSyncing 
-            ? 'bg-[#106011]/15 border-[#106011] text-emerald-400' 
-            : queueSize > 0
-              ? 'bg-amber-950/20 border-amber-600/80 hover:border-amber-500 text-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.2)] font-black'
-              : 'border-[#106011]/45 bg-black/40 text-[#106011] hover:border-[#106011]/80 hover:text-[#0ad111] hover:shadow-[0_0_15px_rgba(16,96,17,0.35)]'
-        }`}
-        title="Force Telemetry Outbox Sync Now"
-      >
-        {/* Tactical HUD Corner elements on hover */}
-        <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-[#106011]/25 group-hover/sync:border-[#106011]/80 transition-colors" />
-        <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-[#106011]/25 group-hover/sync:border-[#106011]/80 transition-colors" />
-
-        {/* Dynamic Context-Aware Labels */}
-        <span className="relative z-10 hidden sm:inline tracking-widest">
-          {isSyncing 
-            ? "SYNCING..." 
-            : queueSize > 0 
-              ? `SYNC NOW (${queueSize})` 
-              : "SYNCED"
-          }
-        </span>
-      </button>
-    </div>
-  );
-}
