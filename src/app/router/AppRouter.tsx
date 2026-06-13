@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { BaseLayout } from '@/components/layout/BaseLayout';
 import { RoleSelector } from '@/components/layout/RoleSelector';
-import { ToastProvider } from '@/components/ui/ToastContainer';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Lazy load heavy page components
