@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/features/transactions/utils';
 
 interface EpicModalProps {
   isOpen: boolean;
@@ -87,7 +87,7 @@ export function EpicModal({
               <div className="flex items-center justify-between px-5 py-4 border-b">
                 {title && <h2 className="text-lg font-semibold">{title}</h2>}
                 {showCloseButton && (
-                  <button onClick={onClose} aria-label="Close modal" className="p-2 -mr-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--accent-primary]/50">
+                  <button onClick={onClose} className="p-2 -mr-2">
                     <X size={20} />
                   </button>
                 )}

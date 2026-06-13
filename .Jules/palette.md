@@ -1,3 +1,0 @@
-## 2026-06-13 - [Core UI Accessibility & Focus States]
-**Learning:** Core UI components in the "The Drop" ecosystem (EpicModal, Toast, GlowButton) frequently prioritize visual "cyberpunk" aesthetics over standard accessibility. Specifically, icon-only buttons lacked ARIA labels, and interactive elements lacked visible focus rings, hindering keyboard navigation.
-**Action:** Always audit new UI components for focus-visible states and ensure icon-only buttons have descriptive aria-labels. Use `focus-visible:ring-2` with the project's accent colors (`--accent-primary`) to maintain the tactical look while ensuring usability.

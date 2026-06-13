@@ -1,6 +1,7 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import { Package, Shield, Navigation, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export type MarkerStatus = 'pending' | 'active' | 'completed' | 'verified' | 'alert';
 export type MarkerType = 'drop' | 'pickup' | 'operative' | 'depot';
@@ -16,16 +17,9 @@ interface MapMarkerProps {
 }
 
 /**
- * ⚡ BOLT OPTIMIZATION: Icon Cache
- * Reusing Leaflet icons prevents redundant DOM creation and object allocation on every render.
- * Especially critical for real-time tracking where markers update frequently.
+ * Creates a tactical HUD-style icon based on status and type
  */
-const iconCache: Record<string, L.DivIcon> = {};
-
-const getTacticalIcon = (status: MarkerStatus, type: MarkerType = 'drop') => {
-  const cacheKey = `${status}-${type}`;
-  if (iconCache[cacheKey]) return iconCache[cacheKey];
-
+const createTacticalIcon = (status: MarkerStatus, type: MarkerType = 'drop') => {
   const colors = {
     pending: '#f59e0b', // Amber
     active: '#0ad111',  // Emerald
@@ -36,7 +30,7 @@ const getTacticalIcon = (status: MarkerStatus, type: MarkerType = 'drop') => {
 
   const selectedColor = colors[status] || colors.active;
   
-  const icon = L.divIcon({
+  return L.divIcon({
     className: 'tactical-marker-container',
     html: `
       <div class="relative flex items-center justify-center group">
@@ -68,7 +62,7 @@ const getTacticalIcon = (status: MarkerStatus, type: MarkerType = 'drop') => {
           <div class="absolute -bottom-1 -right-1 w-2 h-2 border-b-2 border-r-2 border-[${selectedColor}]"></div>
         </div>
 
-        <!-- Float Label -->
+        <!-- Float Label (Visible on hover or by default for specific types) -->
         <div class="absolute -right-2 top-0 translate-x-full ml-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
           <div class="bg-black/80 border border-[${selectedColor}]/40 px-2 py-0.5 whitespace-nowrap">
             <span class="text-[7px] font-mono text-[${selectedColor}] tracking-widest uppercase">ID: ${type.toUpperCase()}_LOG</span>
@@ -80,17 +74,9 @@ const getTacticalIcon = (status: MarkerStatus, type: MarkerType = 'drop') => {
     iconAnchor: [20, 20],
     popupAnchor: [0, -20]
   });
-
-  iconCache[cacheKey] = icon;
-  return icon;
 };
 
-/**
- * ⚡ BOLT OPTIMIZATION: React.memo
- * Prevents unnecessary re-renders of map markers during real-time updates.
- * Only re-renders if position, status, type, or label changes.
- */
-export const MapMarker = memo(function MapMarker({
+export function MapMarker({ 
   position, 
   status = 'active', 
   type = 'drop', 
@@ -99,7 +85,7 @@ export const MapMarker = memo(function MapMarker({
   description,
   onClick 
 }: MapMarkerProps) {
-  const icon = getTacticalIcon(status, type);
+  const icon = createTacticalIcon(status, type);
 
   return (
     <Marker 
@@ -139,4 +125,4 @@ export const MapMarker = memo(function MapMarker({
       </Popup>
     </Marker>
   );
-});
+}

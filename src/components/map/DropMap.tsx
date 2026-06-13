@@ -7,9 +7,10 @@ import { useLiveLocations } from '@/hooks/realtime/useLiveLocations';
 import { useDrops } from '@/hooks/useDrops';
 import { DropperTrackingControl } from '@/components/dropper/DropperTrackingControl';
 import { DropStatusBadge } from '@/components/drops/DropStatusBadge';
+import { CompassOverlay } from '@/components/map/CompassOverlay';
 import { useNavigate } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
-import { Search, X, Crosshair, MapPin, User, Navigation, Layers } from 'lucide-react';
+import { Search, X, Crosshair, MapPin, User, Navigation, Layers, Maximize, Minimize, FileEdit, Trash2 } from 'lucide-react';
 import type { Drop } from '@/types/domain';
 
 // Leaflet default icon fix
@@ -81,6 +82,32 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
   // Search input state
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Ephemeral notes state
+  const [showNotes, setShowNotes] = useState(false);
+  const [ephemeralNote, setEphemeralNote] = useState('');
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((pos) => {
@@ -130,6 +157,10 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
     setMapCenter([lat, lng]);
     setMapZoom(16); // Close-up focus
   };
+
+  const activeTargetDrop = selectedDrop || 
+    (filteredDrops.find(d => d.assigned_to === profile?.id && d.status === 'active')) || 
+    selectedDrop;
 
   return (
     <ErrorBoundary fallback={<div style={{ height }} className="w-full bg-zinc-900 flex items-center justify-center text-red-500 font-mono">MAP_RENDER_ERROR</div>}>
@@ -196,6 +227,26 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
                   </button>
                 ))}
               </div>
+
+              {/* Field Notes Toggle Button */}
+              <div className="h-4 w-[1px] bg-[#106011]/30 ml-1 mr-0.5 hidden sm:block shrink-0" />
+              <button
+                onClick={() => setShowNotes(!showNotes)}
+                className={`text-[#106011]/70 hover:text-[#0ad111] hover:bg-[#106011]/15 p-1 rounded transition-colors shrink-0 outline-none ${showNotes ? 'bg-[#106011]/20 text-[#0ad111]' : ''}`}
+                title="Field Notes"
+              >
+                <FileEdit className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Fullscreen Toggle Button */}
+              <div className="h-4 w-[1px] bg-[#106011]/30 ml-1 mr-0.5 hidden sm:block shrink-0" />
+              <button
+                onClick={toggleFullscreen}
+                className="text-[#106011]/70 hover:text-[#0ad111] hover:bg-[#106011]/15 p-1 rounded transition-colors shrink-0 outline-none"
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                {isFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
+              </button>
             </div>
           </div>
 
@@ -379,6 +430,37 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
         {isDropper && selectedDrop && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 text-emerald-400 px-4 py-1 rounded-full text-xs font-mono tracking-widest z-[500] border border-emerald-500">
             BROADCASTING • {selectedDrop.title}
+          </div>
+        )}
+
+        {/* Tactical Compass Overlay */}
+        {userPosition && activeTargetDrop && (
+          <CompassOverlay userPosition={userPosition} targetDrop={activeTargetDrop} />
+        )}
+
+        {/* Ephemeral Notepad Overlay */}
+        {showNotes && (
+          <div className="absolute top-16 right-3 sm:right-4 w-[280px] z-[900] pointer-events-auto shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
+            <div className="bg-slate-950/95 backdrop-blur-md border border-[#106011]/80 rounded-xl overflow-hidden flex flex-col">
+              <div className="p-2 border-b border-[#106011]/30 flex justify-between items-center bg-[#106011]/10">
+                 <span className="text-[9px] font-mono font-black text-[#0ad111] tracking-widest uppercase">Field Notes / Active</span>
+                 <div className="flex gap-2">
+                   <button onClick={() => setEphemeralNote('')} title="Clear Notes" className="text-slate-400 hover:text-red-400 focus:outline-none">
+                     <Trash2 className="w-3 h-3" />
+                   </button>
+                   <button onClick={() => setShowNotes(false)} title="Close" className="text-slate-400 hover:text-white focus:outline-none">
+                     <X className="w-3 h-3" />
+                   </button>
+                 </div>
+              </div>
+              <textarea
+                value={ephemeralNote}
+                onChange={(e) => setEphemeralNote(e.target.value)}
+                placeholder="Log physical markers, access codes, or drop context here. Erased upon exit."
+                className="w-full bg-transparent text-slate-200 font-mono text-[10px] p-2.5 h-32 focus:outline-none resize-none custom-scrollbar placeholder:text-[#106011]/50 leading-relaxed"
+                autoFocus
+              />
+            </div>
           </div>
         )}
       </div>

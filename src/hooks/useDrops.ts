@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Drop } from '@/types/domain';
 import { dropsService } from '@/services/drops';
+import { tacticalVibration } from '@/lib/vibration';
 
 export function useDrops() {
   const [drops, setDrops] = useState<Drop[]>([]);
@@ -16,8 +17,10 @@ export function useDrops() {
       setLoading(false);
       
       unsubscribe = dropsService.subscribeToDrops((payload) => {
-        if (payload.eventType === 'INSERT')
+        if (payload.eventType === 'INSERT') {
           setDrops((prev) => [...prev, payload.new as Drop]);
+          tacticalVibration.newDropAssignment();
+        }
         if (payload.eventType === 'UPDATE')
           setDrops((prev) =>
             prev.map((d) => (d.id === payload.new.id ? (payload.new as Drop) : d))
