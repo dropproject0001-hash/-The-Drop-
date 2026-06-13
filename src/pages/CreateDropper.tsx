@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRole } from '../context/RoleContext';
 import { useToast } from '@/components/ui/ToastContainer';
-import { Shield, UserPlus, Phone, Lock, User, ArrowLeft, Terminal, Wand2, Info, CheckCircle2 } from 'lucide-react';
+import { Shield, UserPlus, Phone, Lock, User, ArrowLeft, Terminal, Wand2, Info, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -38,10 +38,13 @@ export default function CreateDropper() {
   }
 
   const generatePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    // Generate a secure random password
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
     let pass = '';
-    for (let i = 0; i < 10; i++) {
-      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (let i = 0; i < array.length; i++) {
+        pass += charset[array[i] % charset.length];
     }
     setForm({ ...form, password: pass });
     showToast('Secure password generated', { type: 'success' });
@@ -64,7 +67,6 @@ export default function CreateDropper() {
           password: form.password,
           phone: form.phone,
           role: form.role,
-          requestedBy: user?.id,
         },
       });
 
@@ -245,7 +247,7 @@ export default function CreateDropper() {
             <motion.div variants={itemVariants} className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#106011]" />
               <input
-                type="text"
+                type="password"
                 placeholder="SECURE_TEMPORARY_TOKEN"
                 autoComplete="off"
                 value={form.password}

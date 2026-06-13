@@ -23,59 +23,17 @@ export default function SuperAdminSetup() {
     setMessage('');
 
     try {
-      // 1. Validate one-time setup token from setup_tokens table
-      const { data: tokenData, error: tokenError } = await supabase
-        .from('setup_tokens')
-        .select('*')
-        .eq('token', form.setupToken)
-        .eq('used', false)
-        .single();
-
-      if (tokenError || !tokenData) {
-        throw new Error('Invalid or already deployed one-time setup token.');
-      }
-
-      // 2. Create Super Admin user inside auth.signUp or via edge functions or direct signUp
-      // Since this is a custom signUp we can use standard email registration formatted as user@thedrop.local
-      const { data: userData, error: signupError } = await supabase.auth.signUp({
-        email: `${form.username}@thedrop.local`,
-        password: form.password,
-        options: {
-          data: {
-            username: form.username,
-            role: 'super_admin'
-          }
-        }
+      const { data, error } = await supabase.functions.invoke('bootstrap-super-admin', {
+        body: { 
+            username: form.username, 
+            password: form.password, 
+            setupToken: form.setupToken 
+        },
       });
 
-      if (signupError) throw signupError;
-      if (!userData?.user) throw new Error('Auth execution failure');
-
-      // 3. Insert or update the core profile role to super_admin
-      // Some templates might have triggers, but inserting manually ensures stability
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: userData.user.id,
-          role: 'super_admin',
-          username: form.username,
-        });
-
-      if (profileError) {
-        // If profile was already created by database trigger, let's update it to ensure roles are correct
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ role: 'super_admin', username: form.username })
-          .eq('id', userData.user.id);
-        
-        if (updateError) throw updateError;
+      if (error || data?.error) {
+        throw new Error(error?.message || data?.error || 'Operational setup failure.');
       }
-
-      // 4. Mark token as used
-      await supabase
-        .from('setup_tokens')
-        .update({ used: true })
-        .eq('id', tokenData.id);
 
       setSuccess(true);
       setMessage('Super Admin credential deployment complete! The token has been permanently invalidated.');

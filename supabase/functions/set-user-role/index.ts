@@ -53,7 +53,7 @@ serve(async (req: Request) => {
     // 3. Parse request
     const { targetUserId, newRole } = await req.json();
 
-    if (!targetUserId || !["super_admin", "admin", "client"].includes(newRole)) {
+    if (!targetUserId || !["super_admin", "admin", "client", "dropper"].includes(newRole)) {
       return new Response(JSON.stringify({ error: "Invalid input" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
