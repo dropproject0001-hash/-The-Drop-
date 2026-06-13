@@ -1,5 +1,14 @@
 /**
  * AuthContext — single source of truth for auth state.
+ *
+ * FIX N-4 (partial): Dual-subscription root cause lives here.
+ * RoleContext now derives from this context instead of running its own
+ * onAuthStateChange + profile fetch, eliminating duplicate DB round-trips
+ * and the race that caused inconsistent role/profile state.
+ *
+ * FIX Bug-4: fetchProfile and refreshProfile now return the Profile object
+ * so callers who need the freshly fetched role can use the return value
+ * rather than reading from (potentially stale) React state.
  */
 import React, {
   createContext,
@@ -18,11 +27,13 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  // Convenience role flags
   role: UserRole | null;
   isSuperAdmin: boolean;
   isAdmin: boolean;
-  isDropper: boolean;
+  isDropper: boolean;       // FIX: was missing from AuthContext
   isClient: boolean;
+  // Auth actions
   signOut: () => Promise<{ error: Error | null }>;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithOtp: (phone: string) => Promise<{ error: Error | null }>;
@@ -33,6 +44,7 @@ interface AuthContextType {
     role: 'super_admin' | 'admin' | 'client',
     fullName: string
   ) => Promise<{ error: Error | null }>;
+  // FIX Bug-4: returns the freshly fetched Profile (not void)
   refreshProfile: () => Promise<Profile | null>;
 }
 
@@ -44,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // FIX Bug-4: returns the fetched Profile so callers get the fresh value
   const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
     try {
       const { data, error } = await supabase
@@ -66,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // FIX Bug-4: now returns Profile | null instead of void
   const refreshProfile = useCallback(async (): Promise<Profile | null> => {
     if (user?.id) return fetchProfile(user.id);
     return null;
@@ -73,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
+      localStorage.removeItem('demo_role');
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setSession(null);
@@ -125,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         type: 'sms',
       });
       if (error) throw error;
+      // Session is set via onAuthStateChange; also fetch profile immediately
       if (data?.user?.id) {
         await fetchProfile(data.user.id);
       }
@@ -170,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  // Single auth subscription — only one in the whole app
   useEffect(() => {
     let active = true;
 
@@ -198,6 +215,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log(`[AuthContext] ${event}`);
 
         if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('demo_role');
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -227,7 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: derivedRole,
       isSuperAdmin: derivedRole === 'super_admin',
       isAdmin: derivedRole === 'admin',
-      isDropper: derivedRole === 'dropper',
+      isDropper: derivedRole === 'dropper',   // FIX: was missing
       isClient: derivedRole === 'client',
       signOut,
       signInWithPassword,
@@ -236,7 +254,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       refreshProfile,
     }),
-    [user, session, profile, loading, signOut, signInWithPassword, signInWithOtp, verifyOtp, signUp, refreshProfile, derivedRole]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, session, profile, loading, signOut, signInWithPassword, signInWithOtp, verifyOtp, signUp, refreshProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

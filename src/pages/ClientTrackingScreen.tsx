@@ -1,22 +1,15 @@
 import { useLiveDrops } from '../hooks/realtime/useLiveDrops';
 import { useLiveLocations } from '../hooks/realtime/useLiveLocations';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
-import { useToast } from '@/components/ui/ToastContainer';
 
 export default function ClientTrackingScreen({ clientId }: { clientId: string }) {
   const { drops } = useLiveDrops();
-  const { showToast } = useToast();
   const myDrops = drops.filter(d => d.assigned_to === clientId);
 
   const activeDrop = myDrops.find(d => d.status === 'active');
   const { locations } = useLiveLocations({});
 
   const latestLocation = activeDrop ? locations[activeDrop.assigned_to]?.slice(-1)[0] : null;
-
-  const handleLoot = () => {
-    showToast('Initializing Loot confirmation flow...', { type: 'info' });
-    // In a real app, this would navigate to a verification screen or trigger an OTP
-  };
 
   return (
     <div className="p-6 max-w-4xl mx-auto text-white">
@@ -34,7 +27,7 @@ export default function ClientTrackingScreen({ clientId }: { clientId: string })
             <div className="flex justify-between">
               <div>
                 <div className="text-sm text-zinc-400">Drop ID</div>
-                <div className="font-mono text-xl">#{activeDrop.id.slice(0, 8)}</div>
+                <div className="font-mono text-xl">#{activeDrop.id}</div>
               </div>
               <div className="text-right">
                 <div className="text-sm text-zinc-400">Status</div>
@@ -58,10 +51,10 @@ export default function ClientTrackingScreen({ clientId }: { clientId: string })
           )}
 
           {/* Confirmation Action */}
-          {(activeDrop.status as string) === 'claimed' && (
+          {activeDrop.status === 'claimed' && (
             <button 
               className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-semibold text-lg"
-              onClick={handleLoot}
+              onClick={() => alert('Confirmation flow with OTP will go here')}
             >
               Confirm Receipt (Loot)
             </button>

@@ -55,9 +55,7 @@ serve(async (req: Request) => {
       .from('profiles')
       .upsert({ 
         id: authData.user.id,
-        username, 
         role: 'super_admin',
-        alias: username.toUpperCase(),
         display_name: username 
       }, { onConflict: 'id' });
 
