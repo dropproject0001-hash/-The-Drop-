@@ -1,28 +1,18 @@
+/**
+ * @file src/services/LocationBroadcastService.ts
+ *
+ * Refactored to consolidate outbox management into LocationOutbox service.
+ * Removed internal OutboxDB to prevent database divergence.
+ */
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import Dexie, { Table } from 'dexie';
-import type { LiveLocation } from '../types/domain';
-
-// ── Offline Queue (Dexie) ─────────────────────────────────────
-interface QueuedLocation {
-  id?: number;
-  payload: any;
-  timestamp: string;
-  attempts: number;
-}
-
-class OutboxDB extends Dexie {
-  outbox!: Table<QueuedLocation>;
-  constructor() {
-    super('location-outbox-v1');
-    this.version(1).stores({ outbox: '++id, timestamp' });
-  }
-}
-const outboxDB = new OutboxDB();
+import { LiveLocation } from '../types/domain';
+import { LocationOutbox } from './LocationOutbox';
 
 // ── Main Service ──────────────────────────────────────────────
 class LocationBroadcastService {
   private watchId: number | null = null;
-  private presenceChannel: any = null;
+  private presenceChannel: RealtimeChannel | null = null;
   private isBroadcasting = false;
 
   // Public state
@@ -35,6 +25,11 @@ class LocationBroadcastService {
   constructor() {
     this.setupNetworkListeners();
     this.startQueueFlusher();
+
+    // Sync queue size with LocationOutbox
+    LocationOutbox.subscribe((state) => {
+      this.queueSize = state.queueSize;
+    });
   }
 
   private setupNetworkListeners() {
@@ -75,25 +70,19 @@ class LocationBroadcastService {
       if (error) throw error;
 
       return { success: true };
-    } catch (err: any) {
-      // Queue if network-related or edge function fetch / connection error
-      const errorMessage = err.message?.toLowerCase() || '';
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase();
       const isConnectionError =
         !navigator.onLine ||
         errorMessage.includes('fetch') ||
         errorMessage.includes('network') ||
         errorMessage.includes('request') ||
         errorMessage.includes('edge function') ||
-        err.name === 'FunctionsFetchError';
+        (err as any).name === 'FunctionsFetchError';
 
       if (isConnectionError) {
-        await outboxDB.outbox.add({
-          payload,
-          timestamp: new Date().toISOString(),
-          attempts: 0,
-        });
-        this.queueSize = (await outboxDB.outbox.count());
-        console.log('[LocationBroadcastService] Telemetry offline or edge function unreachable. Queued in IndexDB.');
+        await LocationOutbox.queue(payload as unknown as Record<string, unknown>);
+        console.log('[LocationBroadcastService] Telemetry offline or edge function unreachable. Queued in IndexDB via LocationOutbox.');
         return { success: false, queued: true };
       }
 
@@ -105,7 +94,7 @@ class LocationBroadcastService {
   private async getBatteryLevel(): Promise<number | null> {
     if ('getBattery' in navigator) {
       try {
-        const battery: any = await (navigator as any).getBattery();
+        const battery = await (navigator as any).getBattery();
         return battery.level;
       } catch {
         return null;
@@ -116,7 +105,7 @@ class LocationBroadcastService {
 
   async startTracking(options: {
     onUpdate?: (location: LiveLocation) => void;
-    onError?: (error: any) => void;
+    onError?: (error: GeolocationPositionError) => void;
     dropId?: string | null;
   } = {}) {
     if (this.watchId !== null) return; // already tracking
@@ -136,9 +125,9 @@ class LocationBroadcastService {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
             accuracy: position.coords.accuracy,
-            heading: position.coords.heading,
-            speed: position.coords.speed,
-            altitude: position.coords.altitude,
+            heading: position.coords.heading ?? undefined,
+            speed: position.coords.speed ?? undefined,
+            altitude: position.coords.altitude ?? undefined,
             drop_id: options.dropId ?? null,
           };
 
@@ -203,7 +192,7 @@ class LocationBroadcastService {
     await this.presenceChannel
       .on('presence', { event: 'sync' }, () => {})
       .subscribe(async (status: string) => {
-        if (status === 'SUBSCRIBED') {
+        if (status === 'SUBSCRIBED' && this.presenceChannel) {
           await this.presenceChannel.track({
             user_id: user.id,
             drop_id: dropId,
@@ -225,34 +214,16 @@ class LocationBroadcastService {
 
   // ── Offline Queue Flush ────────────────────────────────────
   public async clearQueue() {
-    await outboxDB.outbox.clear();
-    this.queueSize = 0;
+    await LocationOutbox.clear();
   }
 
   public async flushQueue() {
     if (!navigator.onLine) return;
-
-    const items = await outboxDB.outbox.orderBy('timestamp').toArray();
-
-    for (const item of items) {
-      try {
-        const { error } = await supabase.functions.invoke('broadcast-location', {
-          body: item.payload,
-        });
-
-        if (!error) {
-          await outboxDB.outbox.delete(item.id!);
-        } else {
-          await outboxDB.outbox.update(item.id!, {
-            attempts: item.attempts + 1,
-          });
-        }
-      } catch {
-        // keep in queue
-      }
+    try {
+      await LocationOutbox.flush();
+    } catch (err) {
+      console.warn('[LocationBroadcastService] Flush failed:', err);
     }
-
-    this.queueSize = await outboxDB.outbox.count();
   }
 
   isCurrentlyBroadcasting() {

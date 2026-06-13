@@ -1,8 +1,8 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': Deno.env.get('APP_URL') || '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -22,8 +22,15 @@ serve(async (req: Request) => {
     });
 
     // ✅ SECURE: Use caller's JWT
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing Authorization header" }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: req.headers.get("Authorization")! } },
+      global: { headers: { Authorization: authHeader } },
     });
 
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
@@ -51,6 +58,13 @@ serve(async (req: Request) => {
         return new Response(JSON.stringify({ error: "Invalid role" }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // FIX MED-5: Fetch target profile before updating for accurate audit log
+    const { data: targetProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
     // Update role
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
@@ -70,7 +84,7 @@ serve(async (req: Request) => {
       action: 'assign_role',
       entity_type: 'profile',
       entity_id: userId,
-      meta: { new_role: newRole, previous_role: callerProfile?.role }
+      meta: { new_role: newRole, previous_role: targetProfile?.role || 'unknown' }
     });
 
     return new Response(JSON.stringify({ success: true, message: `Role updated to ${newRole}` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

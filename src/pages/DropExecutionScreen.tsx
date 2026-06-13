@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import QRCode from "qrcode";
 import { useLiveLocations } from "../hooks/realtime/useLiveLocations";
 import { useLiveDrops } from "../hooks/realtime/useLiveDrops";
 import { useToast } from "@/components/ui/ToastContainer";
+import { useProfile } from "../hooks/useProfile";
 import DropConfirmationModal from "../components/DropConfirmationModal";
 
 export default function DropExecutionScreen({ dropId }: { dropId: string }) {
@@ -13,10 +14,14 @@ export default function DropExecutionScreen({ dropId }: { dropId: string }) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { locations } = useLiveLocations({});
   const { updateDropStatus } = useLiveDrops();
+  const { profile } = useProfile();
 
-  // In a real app we'd fetch the specific dropper's uid. Here we just take the first marker or wait for a proper Drop execution model.
-  const assignedAgentId = "latest"; 
-  const latestLocation = locations[assignedAgentId]?.[0] || null;
+  // FIX HIGH-5: Resolve the current user's location if they are a dropper
+  const latestLocation = useMemo(() => {
+    if (!profile?.id) return null;
+    const userLocations = locations[profile.id];
+    return userLocations && userLocations.length > 0 ? userLocations[0] : null;
+  }, [locations, profile?.id]);
 
   const generateQR = async () => {
     const data = {
@@ -24,8 +29,13 @@ export default function DropExecutionScreen({ dropId }: { dropId: string }) {
       timestamp: new Date().toISOString(),
       location: latestLocation,
     };
-    const qr = await QRCode.toDataURL(JSON.stringify(data));
-    setQrCode(qr);
+    try {
+      const qr = await QRCode.toDataURL(JSON.stringify(data));
+      setQrCode(qr);
+      showToast("Secure QR Code generated with current telemetry.", { type: 'success' });
+    } catch (err) {
+      showToast("Failed to generate QR code.", { type: 'error' });
+    }
   };
 
   const handleExecuteDrop = async () => {
@@ -44,11 +54,11 @@ export default function DropExecutionScreen({ dropId }: { dropId: string }) {
 
   return (
     <div className="p-6 max-w-5xl mx-auto text-white">
-      <h1 className="text-3xl font-bold mb-6">Execute Drop #{dropId}</h1>
+      <h1 className="text-3xl font-bold mb-6 tracking-widest uppercase font-mono">Execute Drop <span className="text-blue-500">#{dropId.slice(0, 8)}</span></h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Map */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden h-[420px]">
+        <div className="bg-zinc-900 border border-blue-500/20 rounded-2xl overflow-hidden h-[420px] shadow-[0_0_15px_rgba(59,130,246,0.1)]">
           <MapContainer
             center={
               latestLocation
@@ -67,21 +77,26 @@ export default function DropExecutionScreen({ dropId }: { dropId: string }) {
 
         {/* Controls */}
         <div className="space-y-6">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+          <div className="bg-zinc-900 border border-blue-500/20 rounded-2xl p-6">
             <button
               onClick={generateQR}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl mb-4"
+              className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl mb-4 font-mono font-bold tracking-widest transition-all"
             >
-              Generate Secure QR Code
+              GENERATE SECURE QR
             </button>
 
             {qrCode && (
-              <div className="flex justify-center">
-                <img
-                  src={qrCode}
-                  alt="Drop QR"
-                  className="w-48 h-48 bg-white p-2"
-                />
+              <div className="flex flex-col items-center gap-4">
+                <div className="bg-white p-3 rounded-xl">
+                  <img
+                    src={qrCode}
+                    alt="Drop QR"
+                    className="w-48 h-48"
+                  />
+                </div>
+                <p className="text-[10px] font-mono text-blue-400 uppercase tracking-widest animate-pulse">
+                  Telemetry encoded in payload
+                </p>
               </div>
             )}
           </div>
@@ -89,9 +104,9 @@ export default function DropExecutionScreen({ dropId }: { dropId: string }) {
           <button
             onClick={() => setShowConfirmModal(true)}
             disabled={isExecuting}
-            className="w-full py-4 bg-red-600 hover:bg-red-700 rounded-2xl font-semibold text-lg disabled:bg-zinc-700 transition"
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-bold text-lg disabled:bg-zinc-700 transition-all font-mono tracking-widest"
           >
-            {isExecuting ? "Executing..." : "CONFIRM DROP  EXECUTION"}
+            {isExecuting ? "EXECUTING..." : "CONFIRM EXECUTION"}
           </button>
         </div>
       </div>

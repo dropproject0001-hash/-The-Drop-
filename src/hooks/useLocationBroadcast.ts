@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { LocationOutbox } from '../services/LocationOutbox';
 
-interface BroadcastPayload {
+export interface BroadcastPayload {
   lat: number;
   lng: number;
   accuracy?: number;
@@ -40,7 +40,7 @@ export function useLocationBroadcast() {
         err.name === 'FunctionsFetchError';
 
       if (isConnectionError) {
-        await LocationOutbox.queue(payload);
+        await LocationOutbox.queue(payload as unknown as Record<string, unknown>);
         console.log('[LocationOutbox] Telemetry offline or edge function unreachable. Queued location for offline sync.');
       } else {
         const message = err.message || 'Failed to broadcast location';

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 
 interface QueuedLocation {
   id?: number;
-  payload: any;
+  payload: Record<string, unknown>;
   timestamp: string;
   attempts: number;
 }
@@ -59,7 +59,7 @@ export const LocationOutbox = {
     notify();
   },
 
-  async queue(payload: any) {
+  async queue(payload: Record<string, unknown>) {
     await db.outbox.add({
       payload,
       timestamp: new Date().toISOString(),
@@ -103,7 +103,9 @@ export const LocationOutbox = {
           if (error) throw error;
           await LocationOutbox.remove(item.id!);
         } catch (err) {
-          await LocationOutbox.incrementAttempts(item.id!);
+          if (item.id !== undefined) {
+            await LocationOutbox.incrementAttempts(item.id);
+          }
           errorOccurred = true;
         }
       }

@@ -272,30 +272,35 @@ export interface Database {
         Row: {
           id: string;
           phone: string;
-          code: string;
+          code_hash: string;
           purpose: string;
           expires_at: string;
           used: boolean;
+          attempts: number;
+          max_attempts: number;
           created_at: string;
         };
         Insert: {
           id?: string;
           phone: string;
-          code: string;
+          code_hash: string;
           purpose?: string;
           expires_at: string;
           used?: boolean;
+          attempts?: number;
+          max_attempts?: number;
           created_at?: string;
         };
         Update: {
           used?: boolean;
+          attempts?: number;
         };
       };
     };
     Views: Record<never, never>;
     Functions: Record<never, never>;
     Enums: {
-      user_role: 'super_admin' | 'admin' | 'client';
+      user_role: 'super_admin' | 'admin' | 'client' | 'dropper';
       drop_status: 'active' | 'claimed' | 'expired';
       pickup_method: 'qr_scan' | 'manual';
     };

@@ -18,6 +18,7 @@ class CaptureService {
   private stream: MediaStream | null = null;
   private mediaRecorder: MediaRecorder | null = null;
   private recordedChunks: Blob[] = [];
+  private activeUrls: Set<string> = new Set();
 
   /**
    * Initializes the camera and microphone stream.
@@ -70,6 +71,8 @@ class CaptureService {
         }
 
         const url = URL.createObjectURL(blob);
+        this.activeUrls.add(url);
+
         resolve({
           blob,
           url,
@@ -118,6 +121,7 @@ class CaptureService {
       this.mediaRecorder.onstop = () => {
         const blob = new Blob(this.recordedChunks, { type: this.mediaRecorder?.mimeType || 'video/webm' });
         const url = URL.createObjectURL(blob);
+        this.activeUrls.add(url);
         
         resolve({
           blob,
@@ -136,6 +140,24 @@ class CaptureService {
   }
 
   /**
+   * Revokes a specific Object URL to free memory.
+   */
+  revokeUrl(url: string): void {
+    if (this.activeUrls.has(url)) {
+      URL.revokeObjectURL(url);
+      this.activeUrls.delete(url);
+    }
+  }
+
+  /**
+   * Revokes all active Object URLs.
+   */
+  clearAllUrls(): void {
+    this.activeUrls.forEach(url => URL.revokeObjectURL(url));
+    this.activeUrls.clear();
+  }
+
+  /**
    * Stops all tracks in the stream and cleans up.
    */
   stopStream(): void {
@@ -145,6 +167,7 @@ class CaptureService {
     }
     this.mediaRecorder = null;
     this.recordedChunks = [];
+    this.clearAllUrls();
     console.log(' [CaptureService] Media stream stopped and cleaned up');
   }
 

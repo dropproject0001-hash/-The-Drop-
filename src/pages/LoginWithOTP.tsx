@@ -2,14 +2,23 @@ import { useState } from 'react';
 import { useOTP } from '@/hooks/useOTP';
 import { Shield, Key, Phone, Terminal, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { isValidE164Phone } from '@/utils/validation';
 
 export default function LoginWithOTP() {
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [localError, setLocalError] = useState<string | null>(null);
   const { otp, setOtp, loading, error, requestOTP, verifyOTP } = useOTP();
 
   const handleSendOTP = async () => {
+    setLocalError(null);
     if (!phone) return;
+
+    if (!isValidE164Phone(phone)) {
+      setLocalError("Invalid format. Use E.164 (e.g. +639123456789)");
+      return;
+    }
+
     const result = await requestOTP(phone);
     if (result.success) {
       setStep('otp');
@@ -17,14 +26,10 @@ export default function LoginWithOTP() {
   };
 
   const handleVerify = async () => {
+    setLocalError(null);
     const result = await verifyOTP(phone, otp);
     if (result.success) {
       // In a real production app, we would now swap to a session-based auth.
-      // Since this is a temporary fix for the login, we will bypass the AuthContext
-      // by setting a demo role and going back to the portal selector (DEV only).
-      if (import.meta.env.DEV) {
-        localStorage.setItem('demo_role', 'client'); 
-      }
       window.location.href = '/'; 
     }
   };
@@ -129,9 +134,9 @@ export default function LoginWithOTP() {
             </div>
           )}
 
-          {error && (
+          {(error || localError) && (
             <div className="mt-4 p-3 bg-red-950/20 border border-red-900/40 rounded-xl text-[11px] font-mono text-red-400 text-center uppercase tracking-wider">
-              🚨 {error}
+              🚨 {error || localError}
             </div>
           )}
         </div>

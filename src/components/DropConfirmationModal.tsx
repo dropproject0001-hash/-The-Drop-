@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useOTP } from '@/hooks/useOTP';
 import { X, Shield, Lock, AlertTriangle, Terminal, Key } from 'lucide-react';
+import { isValidE164Phone } from '@/utils/validation';
 
 interface DropConfirmationModalProps {
   dropId: string;
@@ -11,10 +12,18 @@ interface DropConfirmationModalProps {
 export default function DropConfirmationModal({ dropId, onConfirm, onClose }: DropConfirmationModalProps) {
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [localError, setLocalError] = useState<string | null>(null);
   const { otp, setOtp, loading, error, requestOTP, verifyOTP } = useOTP();
 
   const handleSendOTP = async () => {
+    setLocalError(null);
     if (!phone) return;
+
+    if (!isValidE164Phone(phone)) {
+      setLocalError("Invalid format. Use E.164 (e.g. +639123456789)");
+      return;
+    }
+
     const result = await requestOTP(phone);
     if (result.success) {
       setStep('otp');
@@ -22,6 +31,7 @@ export default function DropConfirmationModal({ dropId, onConfirm, onClose }: Dr
   };
 
   const handleVerifyAndConfirm = async () => {
+    setLocalError(null);
     const result = await verifyOTP(phone, otp);
     if (result.success) {
       onConfirm(); // Proceed with drop confirmation
@@ -59,7 +69,7 @@ export default function DropConfirmationModal({ dropId, onConfirm, onClose }: Dr
         <div className="bg-black/80 border border-[#106011]/30 rounded-xl p-3.5 space-y-2 font-mono text-xs">
           <div className="flex justify-between">
             <span className="text-slate-400 uppercase tracking-wider text-[10px]">DROP REFERENCE:</span>
-            <span className="text-white font-bold tracking-widest">{dropId}</span>
+            <span className="text-white font-bold tracking-widest">{dropId.slice(0, 12)}...</span>
           </div>
           <div className="flex justify-between items-center text-[10px] text-yellow-500 bg-yellow-950/15 border border-yellow-900/30 px-2 py-1.5 rounded">
             <span className="flex items-center gap-1.5 font-bold">
@@ -129,9 +139,9 @@ export default function DropConfirmationModal({ dropId, onConfirm, onClose }: Dr
           </div>
         )}
 
-        {error && (
+        {(error || localError) && (
           <div className="p-3 bg-red-950/20 border border-red-900/40 rounded-xl text-[11px] font-mono text-red-400 text-center uppercase tracking-wider">
-            🚨 {error}
+            🚨 {error || localError}
           </div>
         )}
 

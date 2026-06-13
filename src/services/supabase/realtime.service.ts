@@ -1,7 +1,7 @@
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 
-type SubscriptionCallback<T = any> = (payload: RealtimePostgresChangesPayload<T>) => void;
+type SubscriptionCallback<T extends { [key: string]: any } = any> = (payload: RealtimePostgresChangesPayload<T>) => void;
 
 interface SubscriptionOptions {
   optimisticUpdate?: boolean;
@@ -12,14 +12,14 @@ interface SubscriptionOptions {
 class RealtimeService {
   private channels: Map<string, {
     channel: RealtimeChannel;
-    callbacks: Set<SubscriptionCallback>;
+    callbacks: Set<SubscriptionCallback<any>>;
   }> = new Map();
   private retries: Map<string, number> = new Map();
 
   /**
    * Subscribe to table changes
    */
-  subscribeToTable<T>(
+  subscribeToTable<T extends { [key: string]: any }>(
     table: string,
     event: 'INSERT' | 'UPDATE' | 'DELETE' | '*',
     callback: SubscriptionCallback<T>,
@@ -41,7 +41,7 @@ class RealtimeService {
     }
 
     // Create a new entry immediately to prevent race conditions during synchronous setup
-    const callbacks = new Set<SubscriptionCallback>();
+    const callbacks = new Set<SubscriptionCallback<any>>();
     callbacks.add(callback);
     
     const channel = supabase.channel(channelName);

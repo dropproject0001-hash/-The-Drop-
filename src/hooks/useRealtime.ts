@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { realtimeService } from '@/services/supabase/realtime.service';
 
-interface UseRealtimeOptions<T = any> {
+interface UseRealtimeOptions<T extends { [key: string]: any } = any> {
   table: string;
   event?: '*' | 'INSERT' | 'UPDATE' | 'DELETE';
   filter?: string;                    // e.g. "status=eq.active"
@@ -11,7 +11,7 @@ interface UseRealtimeOptions<T = any> {
   enabled?: boolean;
 }
 
-export function useRealtime<T = any>({
+export function useRealtime<T extends { [key: string]: any } = any>({
   table,
   event = '*',
   filter,

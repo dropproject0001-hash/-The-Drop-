@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 serve(async (req) => {
@@ -7,18 +7,36 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  const { data, error } = await supabase
+  const now = new Date().toISOString();
+
+  // 1. Expire drops
+  const { data: expiredDrops, error: dropError } = await supabase
     .from('drops')
     .update({ status: 'expired' })
     .eq('status', 'active')
-    .lt('expires_at', new Date().toISOString());
+    .lt('expires_at', now)
+    .select('id');
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  if (dropError) {
+    console.error('Error expiring drops:', dropError);
+  }
+
+  // 2. Clean up old/used OTP codes (FIX MED-6)
+  // Prune anything older than 24 hours OR already used
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const { error: otpError } = await supabase
+    .from('otp_codes')
+    .delete()
+    .or(`used.eq.true,expires_at.lt.${yesterday}`);
+
+  if (otpError) {
+    console.error('Error pruning OTP codes:', otpError);
   }
 
   return new Response(JSON.stringify({ 
     success: true, 
-    expired_count: data?.length || 0 
-  }));
+    expired_count: expiredDrops?.length || 0,
+    otp_cleanup: !otpError
+  }), { headers: { 'Content-Type': 'application/json' } });
 });

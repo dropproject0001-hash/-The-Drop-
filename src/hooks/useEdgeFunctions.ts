@@ -1,10 +1,8 @@
 /**
  * @file src/hooks/useEdgeFunctions.ts
  *
- * FIX H-6: Each call now gets its own isolated loading/error state via
- *           useCallback-wrapped helpers, preventing last-writer-wins races.
- *           The hook still exposes a shared `loading` + `error` for simple
- *           single-call consumers, but resets correctly between invocations.
+ * Refactored to use supabase.functions.invoke() which automatically
+ * handles authentication by attaching the user's JWT.
  */
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -15,32 +13,20 @@ export function useEdgeFunctions() {
 
   const callFunction = useCallback(async <T>(
     functionName: string,
-    body: unknown
+    body: Record<string, unknown>
   ): Promise<T> => {
     setLoading(true);
     setError(null);
 
     try {
-      // Tactical workaround: Use fetch directly for better control
-      const baseUrl = ((supabase as any).supabaseUrl || '').replace(/\/+$/, '');
-      const anonKey = (supabase as any).supabaseKey;
-
-      const response = await fetch(`${baseUrl}/functions/v1/${functionName}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${anonKey}`,
-          'apikey': anonKey,
-        },
-        body: JSON.stringify(body),
+      const { data, error: funcError } = await supabase.functions.invoke(functionName, {
+        body,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: response.statusText }));
-        throw new Error(errorData.error || `Function ${functionName} failed`);
+      if (funcError) {
+        throw funcError;
       }
 
-      const data = await response.json();
       return data as T;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -62,7 +48,7 @@ export function useEdgeFunctions() {
     ),
 
     validateDrop: useCallback(
-      <T = { valid: boolean; errors: string[] }>(dropData: unknown) =>
+      <T = { valid: boolean; errors: string[] }>(dropData: Record<string, unknown>) =>
         callFunction<T>('validate-drop', { dropData }),
       [callFunction]
     ),

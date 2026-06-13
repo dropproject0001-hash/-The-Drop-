@@ -13,6 +13,7 @@ export function validateEnv(): EnvValidationResult {
 
   const supabaseUrl = ((import.meta as any).env.VITE_SUPABASE_URL || '').trim();
   const supabaseKey = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY || '').trim();
+  const encryptionKey = ((import.meta as any).env.VITE_ENCRYPTION_KEY || '').trim();
 
   // Critical checks
   if (!supabaseUrl) {
@@ -25,6 +26,12 @@ export function validateEnv(): EnvValidationResult {
     errors.push('VITE_SUPABASE_ANON_KEY is missing');
   } else if (supabaseKey.length < 30) {
     errors.push('VITE_SUPABASE_ANON_KEY appears too short');
+  }
+
+  if (!encryptionKey) {
+    errors.push('VITE_ENCRYPTION_KEY is missing');
+  } else if (encryptionKey.length < 16) {
+    errors.push('VITE_ENCRYPTION_KEY is too short (min 16 chars)');
   }
 
   // Optional but recommended
@@ -43,5 +50,3 @@ export function validateEnv(): EnvValidationResult {
 export function getEnvValidationResult(): EnvValidationResult {
   return validateEnv();
 }
-
-// Removed validateEnvOnStartup as it was causing crashes. Use getEnvValidationResult instead.

@@ -61,7 +61,7 @@ export default function SuperAdminDashboard() {
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'dropper'),
       supabase.from('drops').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      supabase.from('drops').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
+      supabase.from('drops').select('*', { count: 'exact', head: true }).eq('status', 'claimed'),
     ]);
 
     setAnalytics({

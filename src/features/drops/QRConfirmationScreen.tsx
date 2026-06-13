@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { captureService } from '@/services/CaptureService';
@@ -15,6 +15,22 @@ export default function QRConfirmationScreen() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [proof, setProof] = useState<any>(null);
+  const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
+
+  useEffect(() => {
+    // Attempt to get current location for the claim
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => console.warn('Geolocation denied or unavailable for QR claim.')
+      );
+    }
+
+    return () => {
+      // Cleanup Object URLs on unmount
+      captureService.clearAllUrls();
+    };
+  }, []);
 
   const handleCaptureProof = async (type: 'photo' | 'video') => {
     try {
@@ -37,13 +53,17 @@ export default function QRConfirmationScreen() {
     setIsProcessing(true);
 
     try {
-      // Record location
+      // Record location (FIX MED-3: Use null if coords unavailable)
       try {
-        await locationBroadcastService.broadcast({
-          lat: 0, lng: 0, drop_id: dropId,
-        });
+        if (coords) {
+          await locationBroadcastService.broadcast({
+            lat: coords.lat,
+            lng: coords.lng,
+            drop_id: dropId,
+          });
+        }
       } catch {
-        showToast('Could not record location', { type: 'warning' });
+        showToast('Could not record location telemetry', { type: 'warning' });
       }
 
       // Update drop status
@@ -98,7 +118,7 @@ export default function QRConfirmationScreen() {
         <button
           onClick={handleClaimDrop}
           disabled={isProcessing}
-          className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-700 rounded-2xl font-mono tracking-widest text-lg transition mt-4"
+          className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-700 rounded-2xl font-mono tracking-widest text-lg transition mt-4 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
         >
           {isProcessing ? 'CLAIMING DROP...' : 'CONFIRM & CLAIM DROP'}
         </button>

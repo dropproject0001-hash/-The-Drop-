@@ -1,3 +1,4 @@
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import type { Drop, DropStatus } from '@/types/domain';
 
@@ -73,7 +74,7 @@ export const dropsService = {
     return { success: true };
   },
 
-  subscribeToDrops(onPayload: (payload: any) => void) {
+  subscribeToDrops(onPayload: (payload: RealtimePostgresChangesPayload<Drop>) => void) {
     const channel = supabase
       .channel(`drops-realtime-${Math.random().toString(36).substring(7)}`)
       .on(
