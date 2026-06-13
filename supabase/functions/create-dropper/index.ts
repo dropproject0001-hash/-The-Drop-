@@ -22,8 +22,9 @@ serve(async (req: Request) => {
     });
 
     // ✅ SECURE: Use caller's JWT from Authorization header
+    const authHeader = req.headers.get("Authorization")!;
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: req.headers.get("Authorization")! } },
+      global: { headers: { Authorization: authHeader } },
     });
 
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
@@ -34,19 +35,23 @@ serve(async (req: Request) => {
     }
 
     // Verify caller is actually super_admin
-    const { data: callerProfile } = await supabaseAdmin
+    const { data: callerProfile, error: profileFetchError } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
 
-    if (callerProfile?.role !== 'super_admin') {
+    if (profileFetchError || callerProfile?.role !== 'super_admin') {
       return new Response(JSON.stringify({ error: "Forbidden: Only Super Admin can create accounts" }), { 
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
 
     const { username, password, phone, role = 'dropper' } = await req.json();
+
+    if (!username || !password) {
+      throw new Error("Username and password are required.");
+    }
 
     const email = `${username}@internal.droppinops.local`;
 
@@ -61,7 +66,7 @@ serve(async (req: Request) => {
 
     if (authError) throw authError;
 
-    // Upsert profile (more robust)
+    // Upsert profile
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .upsert({ 
@@ -69,7 +74,8 @@ serve(async (req: Request) => {
         username, 
         role,
         alias: username.toUpperCase(),
-        display_name: username 
+        display_name: username,
+        created_by: user.id
       }, { onConflict: 'id' });
 
     if (profileError) throw profileError;
@@ -90,8 +96,11 @@ serve(async (req: Request) => {
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (error: any) {
-    console.error("[create-dropper]", error);
-    return new Response(JSON.stringify({ error: error.message }), { 
+    console.error("[create-dropper] Detailed Error:", error);
+    return new Response(JSON.stringify({
+      error: error.message || "An unexpected error occurred during account creation.",
+      details: error
+    }), {
       status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
   }
