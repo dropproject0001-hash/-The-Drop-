@@ -1,5 +1,14 @@
+/**
+ * @file src/stores/index.ts
+ *
+ * FIX H-1: devtools `enabled` now uses `import.meta.env.DEV` (Vite) instead of
+ *           `process.env.NODE_ENV` which doesn't exist in ESM/Vite builds.
+ * FIX M-3: Removed unused `LocationBroadcast` import.
+ */
 import { create } from 'zustand';
 import type { Profile, Drop } from '@/types/domain';
+
+// ── Auth Store ────────────────────────────────────────────────────────────────
 
 interface AuthState {
   session: any | null;
@@ -20,6 +29,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
   setInitialized: (initialized) => set({ initialized }),
   clear: () => set({ session: null, profile: null, initialized: true }),
 }));
+
+// ── Drop Store ────────────────────────────────────────────────────────────────
 
 interface DropState {
   drops: Drop[];

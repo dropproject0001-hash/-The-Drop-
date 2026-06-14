@@ -1,44 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Save, Crosshair, Users } from 'lucide-react';
+import { Save, Crosshair } from 'lucide-react';
 import { useToast } from '@/components/ui/ToastContainer';
 import { AfterDropModal } from './AfterDropModal';
-import { useAuth } from '@/app/providers/AuthContext';
-import type { Profile } from '@/types/domain';
-
-
-
-
-
 
 export function CreateDropPanel({ onClose }: { onClose: () => void }) {
   const { showToast } = useToast();
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [successDrop, setSuccessDrop] = useState<any>(null);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     lat: '',
     lng: '',
     assigned_to: ''
   });
-
-  useEffect(() => {
-    async function fetchProfiles() {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('display_name', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching profiles:', error);
-      } else if (data) {
-        setProfiles(data);
-      }
-    }
-    fetchProfiles();
-  }, []);
 
   const handleGetCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -71,19 +46,12 @@ export function CreateDropPanel({ onClose }: { onClose: () => void }) {
     const lng = parseFloat(formData.lng);
 
     try {
-      if (!formData.assigned_to) {
-        showToast('Please select a recipient', { type: 'error' });
-        setLoading(false);
-        return;
-      }
-
       const { data, error } = await supabase.from('drops').insert({
         title: formData.title,
         lat,
         lng,
-        assigned_to: formData.assigned_to,
-        status: 'active',
-        created_by: user?.id
+        assigned_to: formData.assigned_to || null,
+        status: 'active'
       }).select().single();
 
       if (error) throw error;
@@ -153,23 +121,13 @@ export function CreateDropPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         <label className="flex flex-col gap-1">
-          <span className="text-[10px] uppercase font-mono text-slate-400">Assign To Operative</span>
-          <div className="relative">
-            <select
-              required
-              className="w-full bg-[#106011]/10 border border-[#106011]/30 rounded p-2 text-sm font-mono focus:border-[#106011] outline-none appearance-none cursor-pointer"
-              value={formData.assigned_to}
-              onChange={e => setFormData({...formData, assigned_to: e.target.value})}
-            >
-              <option value="" className="bg-zinc-950">-- SELECT AGENT --</option>
-              {profiles.map(p => (
-                <option key={p.id} value={p.id} className="bg-zinc-950">
-                  {p.display_name || p.username || p.phone || p.id.substring(0, 8)} ({p.role})
-                </option>
-              ))}
-            </select>
-            <Users size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#106011] pointer-events-none" />
-          </div>
+          <span className="text-[10px] uppercase font-mono text-slate-400">Assign To (User ID)</span>
+          <input 
+            type="text" 
+            className="bg-[#106011]/10 border border-[#106011]/30 rounded p-2 text-sm font-mono focus:border-[#106011] outline-none"
+            value={formData.assigned_to}
+            onChange={e => setFormData({...formData, assigned_to: e.target.value})}
+          />
         </label>
 
         <button 

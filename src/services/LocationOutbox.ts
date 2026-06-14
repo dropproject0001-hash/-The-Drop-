@@ -16,10 +16,30 @@ class LocationOutboxDB extends Dexie {
     this.version(1).stores({
       outbox: '++id, timestamp',
     });
+    
+    // Request persistent storage if supported
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().then(granted => {
+        if (granted) {
+          console.log('[LocationOutbox] Persistent storage granted.');
+        } else {
+          console.log('[LocationOutbox] Persistent storage denied (may be evicted under memory pressure).');
+        }
+      }).catch(err => {
+        console.error('[LocationOutbox] Error requesting persistent storage:', err);
+      });
+    }
   }
 }
 
 const db = new LocationOutboxDB();
+
+// Log restored items on boot
+getQueueSize().then(size => {
+  if (size > 0) {
+    console.log(`[LocationOutbox] Restored ${size} queued locations from IndexedDB after refresh.`);
+  }
+});
 
 const listeners = new Set<(state: { isSyncing: boolean; queueSize: number }) => void>();
 let isSyncingState = false;

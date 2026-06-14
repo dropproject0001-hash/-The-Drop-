@@ -3,10 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { BaseLayout } from '@/components/layout/BaseLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { RoleRouter } from "./RoleRouter";
 
-// Lazy loaded heavy components
-const RoleSelector = React.lazy(() => import('@/components/layout/RoleSelector').then(m => ({ default: m.RoleSelector })));
+import { RoleRouter } from "./RoleRouter";
 const AuthFlow = React.lazy(() => import('@/pages/AuthFlow'));
 const ClientRegistration = React.lazy(() => import('@/pages/ClientRegistration'));
 const SuperAdminSetup = React.lazy(() => import('@/pages/SuperAdminSetup'));

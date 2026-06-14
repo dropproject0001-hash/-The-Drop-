@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { locationBroadcastService } from '../../services/LocationBroadcastService';
 import { usePresenceTracking } from '../../hooks/realtime/usePresenceTracking';
 import { useLocationOutboxStatus } from '../../hooks/useLocationOutboxStatus';
+import { LocationOutbox } from '../../services/LocationOutbox';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface DebugPanelProps {
   visible?: boolean;
@@ -14,17 +16,47 @@ export function LocationDebugPanel({ visible = true }: DebugPanelProps) {
   const [lastBroadcast, setLastBroadcast] = useState<string | null>(null);
   const [showPanel, setShowPanel] = useState(visible);
   const [isMinimized, setIsMinimized] = useState(() => localStorage.getItem('location_debug_minimized') === 'true');
+  const [history, setHistory] = useState<{ time: string; count: number; kb: number }[]>([]);
 
   const { activeBroadcasters } = usePresenceTracking();
 
   // Poll service state
   useEffect(() => {
-    const interval = setInterval(() => {
+    const statusInterval = setInterval(() => {
       setIsOnline(locationBroadcastService.isOnline);
       setIsBroadcasting(locationBroadcastService.isCurrentlyBroadcasting());
     }, 2000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(statusInterval);
+  }, []);
+
+  // Poll storage history
+  useEffect(() => {
+    let mounted = true;
+    const pollStorage = async () => {
+      if (!mounted) return;
+      try {
+        const items = await LocationOutbox.getAll();
+        const count = items.length;
+        const bytes = new Blob([JSON.stringify(items)]).size;
+        const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
+        
+        setHistory(prev => {
+          const next = [...prev, { time, count, kb: Number((bytes / 1024).toFixed(2)) }];
+          if (next.length > 15) return next.slice(next.length - 15);
+          return next;
+        });
+      } catch (e) {
+        console.error("Storage diagnostic polling error:", e);
+      }
+    };
+
+    pollStorage();
+    const storageInterval = setInterval(pollStorage, 3000);
+    return () => {
+      mounted = false;
+      clearInterval(storageInterval);
+    };
   }, []);
 
   const toggleMinimized = () => {
@@ -91,7 +123,7 @@ export function LocationDebugPanel({ visible = true }: DebugPanelProps) {
       </div>
 
       {!isMinimized && (
-        <div className="p-4 space-y-4 text-[11px]">
+        <div className="p-4 space-y-4 text-[11px] max-h-[85vh] overflow-y-auto w-[100%]">
           {/* Status Grid */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-black/60 border border-zinc-800 rounded-lg p-3">
@@ -124,10 +156,51 @@ export function LocationDebugPanel({ visible = true }: DebugPanelProps) {
             </div>
           </div>
 
+          {/* Diagnostic Chart */}
+          <div className="bg-black/60 border border-zinc-800 rounded-lg p-3">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-zinc-500 text-[9px] tracking-widest">STORAGE DIAGNOSTIC (IndexedDB)</span>
+              <span className="text-emerald-400 text-[10px]">{history.length > 0 ? `${history[history.length-1].kb} KB` : '0 KB'}</span>
+            </div>
+            <div className="h-24 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={history} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                  <XAxis dataKey="time" hide />
+                  <YAxis 
+                    yAxisId="left" 
+                    stroke="#10b981" 
+                    tick={{ fontSize: 9, fill: '#10b981' }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right" 
+                    stroke="#f59e0b" 
+                    tick={{ fontSize: 9, fill: '#f59e0b' }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                  />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', fontSize: '10px' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Line yAxisId="left" type="monotone" dataKey="kb" stroke="#10b981" strokeWidth={2} dot={false} isAnimationActive={false} />
+                  <Line yAxisId="right" type="monotone" dataKey="count" stroke="#f59e0b" strokeWidth={2} dot={false} isAnimationActive={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex justify-between mt-1 px-1">
+              <span className="text-[8px] text-emerald-500">── Size (KB)</span>
+              <span className="text-[8px] text-amber-500">── Count</span>
+            </div>
+          </div>
+
           {/* Active Broadcasters */}
           <div>
             <div className="text-[#106011] text-[9px] tracking-[2px] mb-1.5">ACTIVE FIELD AGENTS ({activeBroadcasters.length})</div>
-            <div className="max-h-24 overflow-auto bg-black/60 border border-zinc-800 rounded-lg p-2 text-[10px] space-y-1">
+            <div className="max-h-20 overflow-auto bg-black/60 border border-zinc-800 rounded-lg p-2 text-[10px] space-y-1">
               {activeBroadcasters.length === 0 && (
                 <div className="text-zinc-500 italic">No active broadcasters</div>
               )}
@@ -145,31 +218,31 @@ export function LocationDebugPanel({ visible = true }: DebugPanelProps) {
             <button
               onClick={handleStartTracking}
               disabled={isBroadcasting}
-              className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-700 text-black text-[10px] font-bold tracking-widest rounded-lg transition"
+              className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-700 text-black text-[10px] font-bold tracking-widest rounded-lg transition"
             >
-              START TRACKING
+              START
             </button>
             
             <button
               onClick={handleStopTracking}
               disabled={!isBroadcasting}
-              className="flex-1 py-2 bg-red-600/80 hover:bg-red-600 disabled:bg-zinc-700 text-white text-[10px] font-bold tracking-widest rounded-lg transition"
+              className="flex-1 py-1.5 bg-red-600/80 hover:bg-red-600 disabled:bg-zinc-700 text-white text-[10px] font-bold tracking-widest rounded-lg transition"
             >
-              STOP TRACKING
+              STOP
             </button>
 
             <button
               onClick={handleFlushQueue}
-              className="flex-1 py-2 bg-amber-600/80 hover:bg-amber-600 text-black text-[10px] font-bold tracking-widest rounded-lg transition"
+              className="flex-1 py-1.5 bg-amber-600/80 hover:bg-amber-600 text-black text-[10px] font-bold tracking-widest rounded-lg transition"
             >
-              FLUSH QUEUE
+              FLUSH
             </button>
 
             <button
               onClick={handleClearQueue}
-              className="flex-1 py-2 bg-zinc-700 hover:bg-zinc-600 text-white text-[10px] font-bold tracking-widest rounded-lg transition"
+              className="flex-1 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-white text-[10px] font-bold tracking-widest rounded-lg transition"
             >
-              CLEAR QUEUE
+              CLEAR
             </button>
           </div>
 

@@ -13,7 +13,7 @@ interface Profile {
   alias: string | null;
   display_name: string | null;
   phone: string | null;
-  is_suspended: boolean;
+  status: 'active' | 'suspended';
   is_online: boolean;
   last_seen: string;
   created_at: string;
@@ -50,115 +50,151 @@ export function UserRosterView() {
     }
   };
 
-  const handleRoleUpdate = async (id: string, newRole: string) => {
+  const handleRoleUpdate = async (userId: string, newRole: Profile['role']) => {
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ role: newRole })
-        .eq('id', id);
+        .eq('id', userId);
 
       if (error) throw error;
-      showToast('Role updated successfully', { type: 'success' });
-      fetchUsers();
+      
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      showToast(`User role updated to ${newRole}`, { type: 'success' });
     } catch (err: any) {
-      showToast(err.message || 'Failed to update role', { type: 'error' });
+      showToast(err.message || 'Update failed', { type: 'error' });
     }
   };
 
-  const handleStatusUpdate = async (id: string, isSuspended: boolean) => {
+  const handleStatusUpdate = async (userId: string, newStatus: Profile['status']) => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_suspended: isSuspended })
-        .eq('id', id);
+        .update({ status: newStatus })
+        .eq('id', userId);
 
       if (error) throw error;
-      showToast(isSuspended ? 'User suspended' : 'User restored', { type: 'success' });
-      fetchUsers();
+      
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+      showToast(`User status updated to ${newStatus}`, { type: 'success' });
     } catch (err: any) {
-      showToast(err.message || 'Failed to update status', { type: 'error' });
+      showToast(err.message || 'Update failed', { type: 'error' });
     }
   };
 
   const handleDeleteAccount = async (user: Profile) => {
-    if (!window.confirm(`Are you sure you want to purge ${user.display_name || user.username || 'this user'}?`)) return;
-    try {
-      const { error } = await supabase.from('profiles').delete().eq('id', user.id);
-      if (error) throw error;
-      showToast('User record purged', { type: 'success' });
-      fetchUsers();
-    } catch (err: any) {
-      showToast(err.message || 'Failed to delete user', { type: 'error' });
-    }
-  };
+    const confirm = window.confirm(`DANGER: Permanently delete operative ${user.username || user.id}? This action cannot be undone.`);
+    if (!confirm) return;
 
-  const getRoleBadge = (role: string) => {
-    switch (role) {
-      case 'super_admin': return { color: 'border-red-500 text-red-500', icon: <Shield size={10} />, label: 'OVERLORD' };
-      case 'admin': return { color: 'border-blue-500 text-blue-500', icon: <Terminal size={10} />, label: 'COMMAND' };
-      case 'dropper': return { color: 'border-emerald-500 text-emerald-500', icon: <Users size={10} />, label: 'OPERATIVE' };
-      case 'client': return { color: 'border-amber-500 text-amber-500', icon: <ShoppingCart size={10} />, label: 'CLIENT' };
-      default: return { color: 'border-slate-500 text-slate-500', icon: <Users size={10} />, label: 'GUEST' };
+    try {
+      // In a real app, this would call an Edge Function to delete from Auth too
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      setUsers(prev => prev.filter(u => u.id !== user.id));
+      showToast(`Record for ${user.username} purged from system`, { type: 'success' });
+    } catch (err: any) {
+      showToast(err.message || 'Delete failed', { type: 'error' });
     }
   };
 
   const filteredUsers = users.filter(u => {
-    const matchesFilter = filter === 'all' || u.role === filter;
-    const searchLower = search.toLowerCase();
-    const matchesSearch = !search ||
-      (u.username?.toLowerCase().includes(searchLower)) ||
-      (u.alias?.toLowerCase().includes(searchLower)) ||
-      (u.display_name?.toLowerCase().includes(searchLower)) ||
-      (u.phone?.includes(searchLower));
-    return matchesFilter && matchesSearch;
+    const roleMatch = filter === 'all' || u.role === filter;
+    const searchMatch = !search || 
+      u.username?.toLowerCase().includes(search.toLowerCase()) || 
+      u.alias?.toLowerCase().includes(search.toLowerCase()) ||
+      u.id.includes(search);
+    return roleMatch && searchMatch;
   });
 
   const getTimeAgo = (date: string) => {
     const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
-    if (seconds < 60) return 'JUST NOW';
+    if (seconds < 60) return 'JUST_NOW';
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}M AGO`;
+    if (minutes < 60) return `${minutes}M_AGO`;
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}H AGO`;
-    return new Date(date).toLocaleDateString();
+    if (hours < 24) return `${hours}H_AGO`;
+    const days = Math.floor(hours / 24);
+    return `${days}D_AGO`;
+  };
+
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'super_admin': 
+        return { color: 'border-red-600 bg-red-950/20 text-red-500', icon: <Shield size={10} />, label: 'SYSTEM_ROOT' };
+      case 'admin': 
+        return { color: 'border-blue-600 bg-blue-950/20 text-blue-400', icon: <Shield size={10} />, label: 'ADMIN_NODE' };
+      case 'dropper': 
+        return { color: 'border-[#106011] bg-[#106011]/20 text-emerald-400', icon: <Terminal size={10} />, label: 'DROPPER' };
+      case 'client': 
+        return { color: 'border-amber-600 bg-amber-950/20 text-amber-500', icon: <ShoppingCart size={10} />, label: 'CLIENT' };
+      default: 
+        return { color: 'border-zinc-700 bg-zinc-900 text-zinc-400', icon: <Users size={10} />, label: 'UNKNOWN' };
+    }
   };
 
   return (
-    <div className="h-full flex flex-col p-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-            <input 
-              type="text"
-              placeholder="FILTER BY CODENAME/PHONE..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-black border border-[#106011]/30 rounded-xl pl-10 pr-4 py-2 text-xs font-mono text-white focus:border-[#0ad111] outline-none transition-all"
-            />
-          </div>
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value as any)}
-            className="bg-black border border-[#106011]/30 rounded-xl px-3 py-2 text-[10px] font-mono text-[#106011] outline-none"
-          >
-            <option value="all">ALL_NODES</option>
-            <option value="admin">COMMAND</option>
-            <option value="dropper">OPERATIVES</option>
-            <option value="client">CLIENTS</option>
-          </select>
+    <div className="p-6 text-[#106011] space-y-6 select-none h-[calc(100vh-80px)] overflow-hidden flex flex-col">
+      {/* Header HUD */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#106011]/30 pb-6 relative z-10">
+        <div>
+          <span className="text-[9px] font-mono tracking-[0.25em] bg-[#106011]/15 px-2.5 py-1 rounded border border-[#106011]/30 uppercase font-black">
+            Secured Personnel Ledger
+          </span>
+          <h2 className="text-2xl font-display font-black tracking-[0.15em] uppercase text-white drop-shadow-[0_0_12px_rgba(16,96,17,0.85)] mt-2">
+            ACCOUNT ROSTER DB
+          </h2>
         </div>
 
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="relative group flex-1 md:flex-none md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600 group-focus-within:text-emerald-400 transition-colors" />
+            <input 
+              placeholder="SEARCH AGENT / ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-black/60 border-2 border-[#106011]/30 focus:border-[#106011] rounded-xl pl-10 pr-4 py-2 font-mono text-xs text-white uppercase tracking-widest outline-none transition-all placeholder:text-emerald-950 animate-glow"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 p-1 bg-black/40 border-2 border-[#106011]/30 rounded-xl">
+            {(['all', 'admin', 'dropper', 'client'] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1.5 rounded-lg font-mono text-[9px] font-black tracking-widest uppercase transition-all ${
+                  filter === f 
+                    ? 'bg-[#106011] text-black shadow-[0_0_10px_rgba(16,96,17,0.5)]' 
+                    : 'text-emerald-600 hover:text-emerald-400 hover:bg-[#106011]/10'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+
           <button 
             onClick={fetchUsers}
-            className="flex-1 md:flex-none h-10 px-4 rounded-xl border border-[#106011]/30 text-[#106011] hover:bg-[#106011]/10 flex items-center justify-center gap-2 font-mono text-[10px] tracking-widest uppercase"
+            className="p-2.5 bg-[#106011]/10 border-2 border-[#106011]/40 rounded-xl text-emerald-500 hover:bg-[#106011]/20 hover:border-[#106011] transition-all shadow-sm"
+            title="Refresh Ledger"
           >
-            REFRESH_UPLINK
+            <Users size={16} />
+          </button>
+
+          <button 
+            onClick={() => navigate('/create-dropper')}
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-[#106011]/20 border-2 border-[#106011] rounded-xl text-[9px] font-mono font-black tracking-[0.2em] text-white hover:bg-[#106011]/40 transition-all shadow-[0_0_15px_rgba(16,96,17,0.3)]"
+          >
+            <UserPlus size={14} />
+            INITIALIZE NODE
           </button>
           <button 
             onClick={() => setShowCreateBulletin(true)}
-            className="flex-1 md:flex-none h-10 px-4 rounded-xl bg-blue-900/20 border border-blue-500/50 text-blue-400 hover:bg-blue-900/40 flex items-center justify-center gap-2 font-mono text-[10px] tracking-widest uppercase shadow-[0_0_15px_rgba(30,58,138,0.3)]"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-blue-900/20 border-2 border-blue-600 rounded-xl text-[9px] font-mono font-black tracking-[0.2em] text-white hover:bg-blue-900/40 transition-all shadow-[0_0_15px_rgba(30,58,138,0.3)]"
           >
             <Megaphone size={14} />
             NEW BULLETIN
@@ -166,6 +202,7 @@ export function UserRosterView() {
         </div>
       </div>
 
+      {/* Main Roster List */}
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 relative">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 gap-3">
@@ -193,6 +230,7 @@ export function UserRosterView() {
                     exit={{ opacity: 0, scale: 0.95 }}
                     className="group bg-black/80 border-2 border-[#106011]/40 hover:border-[#106011] hover:shadow-[0_0_25px_rgba(16,96,17,0.2)] rounded-2xl p-5 transition-all relative overflow-hidden"
                   >
+                    {/* HUD Decorations */}
                     <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#106011]/30 group-hover:border-[#106011] transition-colors rounded-tl-lg"></div>
                     <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#106011]/30 group-hover:border-[#106011] transition-colors rounded-br-lg"></div>
 
@@ -214,7 +252,7 @@ export function UserRosterView() {
                                  transition={{ duration: 2, repeat: Infinity }}
                                  className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" 
                                />
-                             ) : user.is_suspended ? (
+                             ) : user.status === 'suspended' ? (
                                <div className="w-2 h-2 rounded-full bg-red-600 shadow-[0_0_8px_#dc2626]" />
                              ) : null}
                           </div>
@@ -228,10 +266,10 @@ export function UserRosterView() {
                       <div className="flex flex-col items-end gap-1">
                         <span className="text-[7px] font-mono text-zinc-600 uppercase tracking-tighter">NODE_ID: {user.id.substring(0, 8)}...</span>
                         <div className={`text-[8px] font-mono px-1.5 py-0.5 rounded border ${
-                          user.is_suspended ? 'border-red-900 text-red-500 bg-red-950/20' :
+                          user.status === 'suspended' ? 'border-red-900 text-red-500 bg-red-950/20' :
                           isOnline ? 'border-emerald-900 text-emerald-500' : 'border-zinc-700 text-zinc-500'
                         }`}>
-                          {user.is_suspended ? 'NODE_LOCKED' : isOnline ? 'UPLINK_LIVE' : 'OFFLINE'}
+                          {user.status === 'suspended' ? 'NODE_LOCKED' : isOnline ? 'UPLINK_LIVE' : 'OFFLINE'}
                         </div>
                       </div>
                     </div>
@@ -253,6 +291,7 @@ export function UserRosterView() {
                       </div>
                     </div>
 
+                    {/* Action Overlay */}
                     <div className="mt-5 flex gap-2">
                       <button 
                         onClick={() => handleRoleUpdate(user.id, user.role === 'dropper' ? 'admin' : 'dropper')}
@@ -267,17 +306,17 @@ export function UserRosterView() {
                         LEVEL SHIFT
                       </button>
                       <button 
-                        onClick={() => handleStatusUpdate(user.id, !user.is_suspended)}
+                        onClick={() => handleStatusUpdate(user.id, user.status === 'active' ? 'suspended' : 'active')}
                         disabled={user.role === 'super_admin'}
                         className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
                           user.role === 'super_admin' ? 'opacity-20 cursor-not-allowed' :
-                          !user.is_suspended
+                          user.status === 'active' 
                             ? 'border-red-900/40 text-red-900 hover:border-red-600 hover:text-red-500 shadow-[inset_0_0_10px_rgba(220,38,38,0.05)]' 
                             : 'border-emerald-600 text-emerald-500 hover:bg-emerald-600 hover:text-black'
                         }`}
-                        title={!user.is_suspended ? 'Suspend Node' : 'Restore Node'}
+                        title={user.status === 'active' ? 'Suspend Node' : 'Restore Node'}
                       >
-                        {!user.is_suspended ? <Ban size={12} /> : <CheckCircle2 size={12} />}
+                        {user.status === 'active' ? <Ban size={12} /> : <CheckCircle2 size={12} />}
                       </button>
                       <button
                         onClick={() => handleDeleteAccount(user)}
@@ -293,6 +332,7 @@ export function UserRosterView() {
                       </button>
                     </div>
 
+                    {/* Scanline effect on hover */}
                     <motion.div 
                       className="absolute inset-0 bg-gradient-to-b from-transparent via-[#106011]/5 to-transparent h-20 -top-20 pointer-events-none group-hover:block hidden"
                       animate={{ top: ['0%', '100%'] }}
@@ -306,11 +346,12 @@ export function UserRosterView() {
         )}
       </div>
 
+      {/* Footer Stats */}
       <div className="h-8 border-t border-[#106011]/30 flex items-center justify-between px-2 opacity-50">
         <div className="flex gap-4 text-[7px] font-mono tracking-widest uppercase">
           <span>Total Nodes: {users.length}</span>
           <span className="text-emerald-500">Live: {users.filter(u => u.is_online).length}</span>
-          <span className="text-red-500">Suspended: {users.filter(u => u.is_suspended).length}</span>
+          <span className="text-red-500">Suspended: {users.filter(u => u.status === 'suspended').length}</span>
         </div>
         <span className="text-[7px] font-mono tracking-widest uppercase">Encrypted Personnel Buffer v4.2.0</span>
       </div>

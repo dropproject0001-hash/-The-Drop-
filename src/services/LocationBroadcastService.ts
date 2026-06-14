@@ -270,19 +270,28 @@ class LocationBroadcastService {
 
     this.presenceChannel = supabase.channel('field-agents-presence');
 
-    await this.presenceChannel
-      .on('presence', { event: 'sync' }, () => {})
-      .subscribe(async (status: string) => {
-        if (status === 'SUBSCRIBED') {
-          await this.presenceChannel.track({
-            user_id: user.id,
-            drop_id: dropId,
-            username,
-            role,
-            timestamp: new Date().toISOString(),
-          });
-        }
-      });
+    const trackData = {
+      user_id: user.id,
+      drop_id: dropId,
+      username,
+      role,
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      // In JS, sometimes the state is represented differently. Check if track is available or just try it.
+      if (this.presenceChannel.state === 'joined') {
+        await this.presenceChannel.track(trackData);
+      } else {
+        this.presenceChannel.subscribe(async (status: string) => {
+          if (status === 'SUBSCRIBED') {
+            await this.presenceChannel.track(trackData);
+          }
+        });
+      }
+    } catch (err) {
+      console.warn('Error setting up presence tracking:', err);
+    }
   }
 
   private async untrackPresence() {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase, isMock } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Transaction, TransactionDetailModal } from './TransactionDetailModal';
 
 export function TransactionHistoryList() {
@@ -10,18 +10,18 @@ export function TransactionHistoryList() {
   useEffect(() => {
     fetchTransactions();
 
-    if (isMock) return;
+    if (!isSupabaseConfigured) return;
 
+    // Subscribe to realtime updates for transactions
     const channel = supabase
-      .channel('pickups-history')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pickups' }, (payload) => {
+      .channel('transactions-history')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, (payload) => {
         if (payload.eventType === 'INSERT') {
-          const newT = mapPickupToTransaction(payload.new);
-          setTransactions(prev => [newT, ...prev]);
+          setTransactions(prev => [payload.new as Transaction, ...prev]);
         } else if (payload.eventType === 'UPDATE') {
-          const updatedT = mapPickupToTransaction(payload.new);
-          setTransactions(prev => prev.map(t => t.id === updatedT.id ? updatedT : t));
-          setSelectedTransaction(current => current?.id === updatedT.id ? updatedT : current);
+          setTransactions(prev => prev.map(t => t.id === payload.new.id ? (payload.new as Transaction) : t));
+          // Update selected transaction if it's the one being modified
+          setSelectedTransaction(current => current?.id === payload.new.id ? (payload.new as Transaction) : current);
         } else if (payload.eventType === 'DELETE') {
           setTransactions(prev => prev.filter(t => t.id !== payload.old.id));
         }
@@ -33,20 +33,10 @@ export function TransactionHistoryList() {
     };
   }, []);
 
-  const mapPickupToTransaction = (p: any): Transaction => ({
-    id: p.id,
-    drop_id: p.drop_id,
-    amount: (p as any).amount || 0,
-    status: (p as any).status || 'granted',
-    created_at: p.confirmed_at || p.created_at,
-    gps_lat: p.scan_lat,
-    gps_lng: p.scan_lng,
-  });
-
   const fetchTransactions = async () => {
     setLoading(true);
     
-    if (isMock) {
+    if (!isSupabaseConfigured) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       setTransactions([
         {
@@ -68,6 +58,15 @@ export function TransactionHistoryList() {
           gps_lat: 15.4872,
           gps_lng: 120.9752,
           photo_url: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=600&q=80'
+        },
+        {
+          id: 't-3',
+          drop_id: 'mock-drop-3',
+          amount: 8200,
+          status: 'declined',
+          created_at: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+          gps_lat: 15.4821,
+          gps_lng: 120.9691
         }
       ]);
       setLoading(false);
@@ -76,25 +75,55 @@ export function TransactionHistoryList() {
 
     try {
       const { data, error } = await supabase
-        .from('pickups')
-        .select('*, drops(*)')
-        .order('confirmed_at', { ascending: false });
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTransactions(data.map(mapPickupToTransaction));
+      setTransactions(data as Transaction[] || []);
     } catch (err) {
-      console.error('Error fetching transactions (pickups):', err);
+      console.error('Error fetching transactions:', err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleGrant = async (id: string) => {
-    console.log('Granting transaction:', id);
+    if (!isSupabaseConfigured) {
+      setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'granted' } : t));
+      setSelectedTransaction(current => current?.id === id ? { ...current, status: 'granted' } : current);
+      return;
+    }
+
+    try {
+      const { error } = await (supabase as any)
+        .from('transactions')
+        .update({ status: 'granted' })
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error granting transaction:', err);
+    }
   };
 
   const handleDecline = async (id: string) => {
-    console.log('Declining transaction:', id);
+    if (!isSupabaseConfigured) {
+      setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'declined' } : t));
+      setSelectedTransaction(current => current?.id === id ? { ...current, status: 'declined' } : current);
+      return;
+    }
+
+    try {
+      const { error } = await (supabase as any)
+        .from('transactions')
+        .update({ status: 'declined' })
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error declining transaction:', err);
+    }
   };
 
   return (

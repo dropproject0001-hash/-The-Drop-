@@ -1,33 +1,11 @@
 
 > droppin-ops@0.1.0 dev
-> tsx server.ts
+> vite --port=3000 --host=0.0.0.0
 
-API key should be set when using the Gemini API.
-API key should be set when using the Gemini API.
-[Drop Server] Tactical operations server started online at: http://localhost:3000
-9:58:25 AM [vite] (client) hmr update /src/index.css, /src/app/providers/EnvChecker.tsx
-9:58:58 AM [vite] (client) hmr update /src/index.css, /src/app/providers/EnvChecker.tsx
-1:48:41 PM [vite] (client) hmr update /src/components/ui/EpicModal.tsx, /src/index.css
-1:48:41 PM [vite] (client) page reload src/components/icons/Icon.tsx
-1:48:41 PM [vite] (client) page reload src/components/layout/PortalNavbar.tsx
-1:48:41 PM [vite] (client) hmr update /src/components/layout/views/UserRosterView.tsx, /src/index.css
-1:48:41 PM [vite] (client) page reload src/features/transactions/TransactionHistoryList.tsx
-1:48:41 PM [vite] (client) hmr update /src/app/router/RoleRouter.tsx, /src/index.css
-1:48:41 PM [vite] (client) hmr update /src/app/router/AppRouter.tsx, /src/index.css
-1:48:41 PM [vite] (client) hmr update /src/pages/ClientRegistration.tsx, /src/index.css
-1:48:41 PM [vite] (client) page reload src/features/auth/pages/AuthPage.tsx
-1:48:41 PM [vite] (client) page reload package.json
-1:48:41 PM [vite] (client) hmr update /src/components/ui/BannerSlider.tsx, /src/index.css
-1:48:41 PM [vite] (client) page reload src/components/ui/TacticalToast.tsx
-1:48:41 PM [vite] (client) hmr update /src/components/ui/EpicModal.tsx, /src/index.css
-1:48:41 PM [vite] (client) page reload src/components/ui/GlowButton.tsx
-1:48:41 PM [vite] (client) page reload index.html
-1:48:42 PM [vite] (client) hmr update /src/index.css, /src/app/providers/AuthContext.tsx, /src/app/App.tsx, /src/components/auth/AuthObserver.tsx, /src/components/chat/TacticalAIVoiceCompanion.tsx, /src/app/router/RoleRouter.tsx, /src/components/voice/VoiceAssistantPanel.tsx, /src/pages/ClientRegistration.tsx
-1:48:42 PM [vite] (client) hmr update /src/components/auth/AuthObserver.tsx, /src/index.css
-1:48:42 PM [vite] (client) hmr update /src/app/App.tsx, /src/index.css
-1:48:42 PM [vite] (client) hmr update /src/app/providers/AuthContext.tsx, /src/index.css
-1:48:42 PM [vite] (client) hmr update /src/index.css, /src/app/providers/EnvChecker.tsx
-1:51:07 PM [vite] (client) hmr update /src/app/App.tsx, /src/index.css
-1:51:07 PM [vite] (client) hmr update /src/app/router/AppRouter.tsx, /src/index.css
-1:51:07 PM [vite] (client) hmr update /src/app/providers/AuthContext.tsx, /src/index.css
-1:54:51 PM [vite] (client) hmr update /src/index.css, /src/app/providers/EnvChecker.tsx
+
+  VITE v6.4.3  ready in 370 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: http://192.168.0.2:3000/
+6:11:27 PM [vite] (client) hmr update /src/app/router/AppRouter.tsx, /src/index.css
+6:11:27 PM [vite] (client) hmr update /src/pages/TTSVerify.tsx, /src/index.css

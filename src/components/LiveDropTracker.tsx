@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 interface LocationUpdate {
   lat: number;
   lng: number;
-  recorded_at: string;
+  timestamp: string;
 }
 
 export default function LiveDropTracker({ dropId }: { dropId: string }) {
@@ -16,10 +16,10 @@ export default function LiveDropTracker({ dropId }: { dropId: string }) {
     // Fetch historical data
     const fetchLocations = async () => {
       const { data } = await supabase
-        .from('locations')
+        .from('drop_locations')
         .select('*')
         .eq('drop_id', dropId)
-        .order('recorded_at', { ascending: true });
+        .order('timestamp', { ascending: true });
         
       if (data && data.length > 0) {
         setPositions(data);
@@ -34,7 +34,7 @@ export default function LiveDropTracker({ dropId }: { dropId: string }) {
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'locations',
+        table: 'drop_locations',
         filter: `drop_id=eq.${dropId}`
       }, (payload) => {
         const newLoc = payload.new as LocationUpdate;

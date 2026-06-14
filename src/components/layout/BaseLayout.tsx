@@ -17,8 +17,13 @@ import { QuickDropWidget } from '@/components/common/QuickDropWidget';
 import { useRole } from '@/context/RoleContext';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useLocationOutboxStatus } from '@/hooks/useLocationOutboxStatus';
+import { useMissionLogger } from '@/hooks/useMissionLogger';
+
+import { SyncProgressBar } from '@/components/common/SyncProgressBar';
+import { OfflineAlert } from '@/components/common/OfflineAlert';
 
 export function BaseLayout() {
+  useMissionLogger();
   const { isClient, role, loading, isSuperAdmin } = useRole();
   const { signOut, profile } = useAuth();
   const navigate = useNavigate();
@@ -81,6 +86,8 @@ export function BaseLayout() {
     <div 
       className="min-h-screen bg-black text-[--text-primary] flex font-sans overflow-hidden"
     >
+      <SyncProgressBar />
+      <OfflineAlert />
       
       {/* Sidebar Navigation */}
       <motion.aside 

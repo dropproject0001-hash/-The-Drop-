@@ -8,18 +8,15 @@ export function useDrops() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let cleanup: (() => void) | undefined;
-    let cancelled = false;
+    let unsubscribe: () => void;
 
     async function loadDrops() {
       setLoading(true);
       const data = await dropsService.getAllDrops();
-      if (cancelled) return;
-
       setDrops(data);
       setLoading(false);
       
-      cleanup = dropsService.subscribeToDrops((payload) => {
+      unsubscribe = dropsService.subscribeToDrops((payload) => {
         if (payload.eventType === 'INSERT') {
           setDrops((prev) => [...prev, payload.new as Drop]);
           tacticalVibration.newDropAssignment();
@@ -34,10 +31,7 @@ export function useDrops() {
     }
 
     loadDrops();
-    return () => {
-      cancelled = true;
-      cleanup?.();
-    };
+    return () => unsubscribe?.();
   }, []);
 
   return { drops, loading };

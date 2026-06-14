@@ -11,7 +11,7 @@ export function useOfflineSync() {
       for (const item of pending) {
         try {
           if (item.type === 'location') {
-            await supabase.from('locations').insert(item.payload);
+            await supabase.from('drop_locations').insert(item.payload);
           }
           // Add more types as needed
 
