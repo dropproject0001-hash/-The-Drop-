@@ -84,8 +84,10 @@ export function useLiveLocations(options: UseLiveLocationsOptions = {}) {
         const newLoc = payload.new as LiveLocation;
         
         setLocations(prev => {
+          // Performance Optimization: ISO strings are lexicographically sortable.
+          // Avoiding 'new Date()' instantiation on the hot path (real-time telemetry updates).
           const userLocs = [...(prev[newLoc.user_id] || []), newLoc]
-            .sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())
+            .sort((a, b) => b.recorded_at > a.recorded_at ? 1 : -1)
             .slice(0, 20); // keep last 20 per user
           
           return { ...prev, [newLoc.user_id]: userLocs };
