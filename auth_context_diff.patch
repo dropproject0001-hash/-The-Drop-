@@ -1,0 +1,48 @@
+<<<<<<< SEARCH
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
+import type { Profile, UserRole } from '@/types/domain';
+=======
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores';
+import type { Profile, UserRole } from '@/types/domain';
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+      setProfile(data as Profile);
+      return data as Profile;
+    } catch (err) {
+=======
+      setProfile(data as Profile);
+      useAuthStore.getState().setProfile(data as Profile);
+      return data as Profile;
+    } catch (err) {
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      return { error: null };
+=======
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      useAuthStore.getState().clear();
+      return { error: null };
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+        if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('demo_role');
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        } else if (currentSession) {
+=======
+        if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('demo_role');
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          useAuthStore.getState().clear();
+        } else if (currentSession) {
+>>>>>>> REPLACE

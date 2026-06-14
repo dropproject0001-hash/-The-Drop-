@@ -10,6 +10,7 @@ import React, {
   useMemo,
 } from 'react';
 import { User, Session } from '@supabase/supabase-js';
+import { useAuthStore } from '@/stores';
 import { supabase } from '@/lib/supabase';
 import type { Profile, UserRole } from '@/types/domain';
 
@@ -58,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
       setProfile(data as Profile);
+      useAuthStore.getState().setProfile(data as Profile);
       return data as Profile;
     } catch (err) {
       console.error('[AuthContext] Unexpected error fetching profile:', err);
@@ -79,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(null);
       setUser(null);
       setProfile(null);
+      useAuthStore.getState().clear();
       return { error: null };
     } catch (err: any) {
       console.error('[AuthContext] Sign out error:', err.message || err);
@@ -227,6 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(null);
           setUser(null);
           setProfile(null);
+          useAuthStore.getState().clear();
         } else if (currentSession) {
           setSession(currentSession);
           setUser(currentSession.user);
