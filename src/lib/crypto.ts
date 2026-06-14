@@ -1,24 +1,20 @@
-import CryptoJS from 'crypto-js';
-
-const SECRET_KEY = 'THE-DROP-SECRET-KEY-CHANGE-THIS'; // In production, this should be fetched or more complex
-
 /**
- * Simple AES encryption for chat notes and messages
- * Synchronous to match simple field ops requirements
+ * Crypto Service (Legacy/Placeholder)
+ *
+ * Note: Symmetric encryption with a hardcoded key in the client bundle
+ * provided no actual security against database breaches or MITM attacks.
+ * We now rely on Row Level Security (RLS) and TLS for transport security.
+ *
+ * For future E2E encryption, the Web Crypto API should be used with
+ * device-stored private keys.
  */
+
 export function encryptNote(note: string): string {
-  if (!note) return '';
-  return CryptoJS.AES.encrypt(note, SECRET_KEY).toString();
+  // Now returning plaintext. RLS ensures only authorized parties see this.
+  return note || '';
 }
 
 export function decryptNote(encryptedBase64: string): string {
-  if (!encryptedBase64) return '';
-  try {
-    const bytes = CryptoJS.AES.decrypt(encryptedBase64, SECRET_KEY);
-    const originalText = bytes.toString(CryptoJS.enc.Utf8);
-    return originalText || '[Encrypted]';
-  } catch (err) {
-    console.error('Decryption failed', err);
-    return '[Decryption Failed]';
-  }
+  // Now returning plaintext.
+  return encryptedBase64 || '';
 }
