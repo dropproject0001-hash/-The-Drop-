@@ -295,7 +295,7 @@ export interface Database {
     Views: Record<never, never>;
     Functions: Record<never, never>;
     Enums: {
-      user_role: 'super_admin' | 'admin' | 'client';
+      user_role: 'super_admin' | 'admin' | 'client' | 'dropper';
       drop_status: 'active' | 'claimed' | 'expired';
       pickup_method: 'qr_scan' | 'manual';
     };

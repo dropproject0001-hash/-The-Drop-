@@ -25,7 +25,7 @@ export function PortalNavbar({ title, subtitle, icon }: PortalNavbarProps) {
     super_admin: 'text-red-400',
     admin: 'text-blue-400',
     client: 'text-green-400',
-    tanod: 'text-green-400',
+    dropper: 'text-emerald-400',
   };
 
   const currentRoleColor = profile?.role ? roleColors[profile.role] : 'text-slate-400';

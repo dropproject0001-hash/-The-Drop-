@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import { locationService, LocationCoords } from '@/services/LocationService';
+import { MapBaseLayer } from './MapBaseLayer';
 import { MapMarker } from './MapMarker';
 
 // Tactical User Marker Icon (Current Position)
@@ -97,10 +98,7 @@ export function TacticalMap() {
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
+        <MapBaseLayer />
         
         {coords && (
           <>
