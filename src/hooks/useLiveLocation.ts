@@ -8,11 +8,15 @@ export function useLiveLocation(dropId: string, enabled: boolean = true) {
 
     const sendLocation = async (coords: LocationCoords) => {
       try {
-        const { error } = await supabase.from('drop_locations').insert({
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { error } = await supabase.from('locations').insert({
+          user_id: user.id,
           drop_id: dropId,
           lat: coords.latitude,
           lng: coords.longitude,
-          timestamp: new Date().toISOString(),
+          recorded_at: new Date().toISOString(),
         });
         
         if (error) console.error(" [UAV_UPLINK] Transmission Interrupted:", error.message);
