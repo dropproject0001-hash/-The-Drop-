@@ -12,6 +12,7 @@ import { useDropStatusTTS } from '@/hooks/useDropStatusTTS';
 import { useProximityTTS } from '@/hooks/useProximityTTS';
 
 import { InstallBanner } from '@/components/ui/InstallBanner';
+import { AuthObserver } from "@/components/auth/AuthObserver";
 
 function BackgroundSync() {
   useEffect(() => {
@@ -54,6 +55,7 @@ export default function App() {
               <BackgroundSync />
               <TTSHandlers />
               <InstallBanner />
+              <AuthObserver />
               <AppRouter />
               {showDebug && <LocationDebugPanel />}
             </ToastProvider>

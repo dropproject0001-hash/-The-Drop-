@@ -1,8 +1,9 @@
-// src/pages/ClientRegistration.tsx
 import { useState } from 'react';
 import { useOTP } from '@/hooks/useOTP';
 import { useToast } from '@/components/ui/ToastContainer';
 import { useNavigate } from 'react-router-dom';
+import { supabase, isMock } from '@/lib/supabase';
+import { useAuthStore } from '@/stores';
 
 export default function ClientRegistration() {
   const navigate = useNavigate();
@@ -14,6 +15,17 @@ export default function ClientRegistration() {
 
   const handleSendOTP = async () => {
     if (!phone) return;
+
+    if (!isMock) {
+        try {
+            await supabase.functions.invoke('register-client', {
+                body: { phone_number: phone }
+            });
+        } catch (err) {
+            console.warn('Registration edge function call failed:', err);
+        }
+    }
+
     const result = await requestOTP(phone);
     if (result.success) {
       setStep('otp');
@@ -26,8 +38,18 @@ export default function ClientRegistration() {
   const handleVerifyOTP = async () => {
     const result = await verifyOTP(phone, otp);
     if (result.success) {
+      if (!isMock) {
+          await supabase.auth.refreshSession();
+      } else {
+          useAuthStore.getState().setProfile({
+              id: 'mock-client',
+              role: 'client',
+              display_name: 'Mock Client',
+              phone: phone
+          } as any);
+      }
       showToast('Registration successful!', { type: 'success' });
-      navigate('/auth');
+      navigate('/');
     } else {
       showToast(error || 'Invalid OTP', { type: 'error' });
     }

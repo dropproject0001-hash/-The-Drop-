@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { cn } from '@/features/transactions/utils';
+import { cn } from '@/lib/utils';
 
 interface IconProps {
   icon: LucideIcon;

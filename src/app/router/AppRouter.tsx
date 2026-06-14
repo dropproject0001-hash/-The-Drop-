@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { BaseLayout } from '@/components/layout/BaseLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { RoleRouter } from "./RoleRouter";
 
 // Lazy loaded heavy components
 const RoleSelector = React.lazy(() => import('@/components/layout/RoleSelector').then(m => ({ default: m.RoleSelector })));
@@ -49,7 +50,7 @@ export function AppRouter() {
 
           {/* Portal Base Routing */}
           <Route path="/" element={<BaseLayout />}>
-            <Route index element={<RoleSelector />} />
+            <Route index element={<RoleRouter />} />
             
             {/* Protected Routes */}
             <Route 

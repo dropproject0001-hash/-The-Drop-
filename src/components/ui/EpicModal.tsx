@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { cn } from '@/features/transactions/utils';
+import { cn } from '@/lib/utils';
 
 interface EpicModalProps {
   isOpen: boolean;

@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
 import { LogOut } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase, isMock } from '@/lib/supabase';
 import { useAuthStore } from '@/stores';
+import { UserRole } from '@/types/domain';
 
 interface PortalNavbarProps {
   title: string;
@@ -13,15 +14,14 @@ export function PortalNavbar({ title, subtitle, icon }: PortalNavbarProps) {
   const { profile } = useAuthStore();
 
   const handleLogout = async () => {
-    const envMeta = (import.meta as any).env || {};
-    if ((supabase as any).supabaseUrl?.includes('mock') || envMeta.VITE_SUPABASE_URL?.includes('mock')) {
+    if (isMock) {
       useAuthStore.getState().clear();
     } else {
       await supabase.auth.signOut();
     }
   };
 
-  const roleColors: Record<string, string> = {
+  const roleColors: Record<UserRole, string> = {
     super_admin: 'text-red-400',
     admin: 'text-blue-400',
     client: 'text-green-400',
