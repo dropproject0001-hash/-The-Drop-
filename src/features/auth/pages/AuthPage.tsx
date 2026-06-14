@@ -1,183 +1,98 @@
-import { useState, FormEvent } from 'react';
-import { Shield, User, LogIn } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { useAuthStore } from '@/stores';
-import { ClientRegistration } from './ClientRegistration';
+import { useState } from 'react';
+import { supabase, isMock } from '@/lib/supabase';
+import { useToast } from '@/components/ui/ToastContainer';
+import { useNavigate } from 'react-router-dom';
 
-export function AuthPage() {
-  const [mode, setMode] = useState<'client' | 'staff'>('client');
-  const [staffAction, setStaffAction] = useState<'login' | 'signup'>('login');
-  
-  // Login Fields
+export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { showToast } = useToast();
+  const navigate = useNavigate();
 
-  const handleStaffLogin = async (e: FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-
-    // Developer bypass for UI preview if strictly using mock mode
-    const envMeta = (import.meta as any).env || {};
-    if ((supabase as any).supabaseUrl?.includes('mock') || envMeta.VITE_SUPABASE_URL?.includes('mock')) {
-      const isSuper = email.toLowerCase().includes('super');
-      useAuthStore.getState().setSession({ user: { id: 'mock-id' }, access_token: 'mock', refresh_token: 'mock' });
-      useAuthStore.getState().setProfile({
-        id: 'mock-id',
-        role: isSuper ? 'super_admin' : 'dropper',
-        alias: null,
-        username: null,
-        phone: null,
-        phone_verified: null,
-        created_by: null,
-        display_name: isSuper ? 'Super Admin (Mock)' : 'Dropper (Mock)',
-        avatar_url: null,
-        is_online: true,
-        last_seen: new Date().toISOString(),
-        push_endpoint: null,
-        push_keys: null,
-        created_at: new Date().toISOString()
-      });
-      setLoading(false);
-      return;
-    }
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (isMock) {
+        if (email === 'super@test.com') {
+          showToast('Mock Login Successful', { type: 'success' });
+          navigate('/');
+          return;
+        }
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
       if (error) throw error;
-      // App.tsx auth observer will handle fetching profile and setting state
+
+      showToast('Login Successful', { type: 'success' });
+      navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      showToast(err.message || 'Login failed', { type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  // Developer bypass for testing client
-  const mockClientLogin = () => {
-    useAuthStore.getState().setSession({ user: { id: 'mock-client' }, access_token: 'mock', refresh_token: 'mock' });
-    useAuthStore.getState().setProfile({
-        id: 'mock-client',
-        role: 'client',
-        alias: null,
-        username: null,
-        phone: null,
-        phone_verified: null,
-        created_by: null,
-        display_name: 'Client User (Mock)',
-        avatar_url: null,
-        is_online: true,
-        last_seen: new Date().toISOString(),
-        push_endpoint: null,
-        push_keys: null,
-        created_at: new Date().toISOString()
-    });
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-zinc-950">
+      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-2xl">
+        <h1 className="text-3xl font-bold text-white mb-8 text-center tracking-tighter">THE DROP <span className="text-emerald-500 text-xs block tracking-widest font-mono">OPERATIONAL UPLINK</span></h1>
         
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-2">The Drop 👽</h1>
-          <p className="text-amber-500 font-mono text-xs mt-2 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(245,158,11,0.55)] animate-pulse">
-            Warning: Do Not Use Personal Identity ⚠️
-          </p>
-        </div>
-
-        {/* Mode Toggle */}
-        <div className="flex bg-slate-900 rounded-xl p-1 mb-8">
-          <button
-            onClick={() => setMode('client')}
-            className={`flex-1 flex justify-center items-center gap-2 py-3 rounded-lg text-sm font-medium transition ${
-              mode === 'client' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-300'
-            }`}
-          >
-            <User size={18} /> Client Admission
-          </button>
-          <button
-            onClick={() => {
-              setMode('staff');
-              setError('');
-            }}
-            className={`flex-1 flex justify-center items-center gap-2 py-3 rounded-lg text-sm font-medium transition ${
-              mode === 'staff' ? 'bg-primary text-white shadow' : 'text-slate-400 hover:text-slate-300'
-            }`}
-          >
-            <Shield size={18} /> Dropper/Boss Logins☢️
-          </button>
-        </div>
-
-        {/* Content */}
-        {mode === 'client' ? (
-          <div className="space-y-4">
-            <ClientRegistration />
-            {((supabase as any).supabaseUrl?.includes('mock') || ((import.meta as any).env || {}).VITE_SUPABASE_URL?.includes('mock')) && (
-               <button onClick={mockClientLogin} className="w-full text-center text-sm text-slate-500 hover:text-slate-400 mt-4 underline">
-                 Wait, I just want to bypass as a test Client
-               </button>
-             )}
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <label className="block text-xs font-mono uppercase text-zinc-500 mb-2 tracking-widest">Identifier (Email)</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none transition"
+              placeholder="agent@ops.net"
+              required
+            />
           </div>
-        ) : (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Shield size={20} className="text-primary" /> 
-                Dropper & Boss Logins
-              </h2>
+          <div>
+            <label className="block text-xs font-mono uppercase text-zinc-500 mb-2 tracking-widest">Passkey</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none transition"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-black font-black py-4 rounded-xl transition uppercase tracking-widest text-sm disabled:opacity-50 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+          >
+            {loading ? 'AUTHENTICATING...' : 'ESTABLISH UPLINK'}
+          </button>
+        </form>
+
+        <div className="mt-8 pt-8 border-t border-zinc-800 flex flex-col gap-4">
+            <button
+                onClick={() => navigate('/register')}
+                className="text-zinc-500 hover:text-emerald-500 text-xs font-mono uppercase tracking-widest transition"
+            >
+                Request New operative status (Register)
+            </button>
+        </div>
+
+        {isMock && (
+            <div className="mt-4 p-3 bg-emerald-950/20 border border-emerald-900/30 rounded-lg">
+                <p className="text-[10px] font-mono text-emerald-500/70 uppercase text-center tracking-tighter">
+                    Mock Mode Active: super@test.com
+                </p>
             </div>
-
-            {staffAction === 'login' && (
-              <form onSubmit={handleStaffLogin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Email / Username</label>
-                  <input
-                    type="text"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@droppin.ops"
-                    className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:outline-none text-white text-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:outline-none text-white text-sm"
-                    required
-                  />
-                </div>
-                
-                {error && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-500">{error}</div>}
-                {((supabase as any).supabaseUrl?.includes('mock') || ((import.meta as any).env || {}).VITE_SUPABASE_URL?.includes('mock')) && (
-                   <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-xs text-yellow-500">
-                     Mock Mode Active: Enter "super@test.com" for Super Admin. Dropper accounts must be created by Super Admin.
-                   </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-medium transition disabled:opacity-50 text-sm"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                     <LogIn size={16} />
-                    {loading ? 'Authenticating...' : 'Sign In'}
-                  </span>
-                </button>
-              </form>
-            )}
-          </div>
         )}
-
       </div>
     </div>
   );

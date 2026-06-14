@@ -34,7 +34,7 @@ export function validateEnv(): EnvValidationResult {
   }
 
   return {
-    isValid: errors.length === 0,
+    isValid: errors.length === 0 || ((import.meta as any).env.VITE_MOCK_MODE === "true"),
     errors,
     warnings,
   };

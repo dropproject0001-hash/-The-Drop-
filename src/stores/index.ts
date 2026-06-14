@@ -1,33 +1,25 @@
-/**
- * @file src/stores/index.ts
- *
- * FIX H-1: devtools `enabled` now uses `import.meta.env.DEV` (Vite) instead of
- *           `process.env.NODE_ENV` which doesn't exist in ESM/Vite builds.
- * FIX M-3: Removed unused `LocationBroadcast` import.
- */
 import { create } from 'zustand';
 import type { Profile, Drop } from '@/types/domain';
 
-// ── Auth Store ────────────────────────────────────────────────────────────────
-
 interface AuthState {
-  /** Raw Supabase session object (typed loosely to avoid supabase-js type coupling). */
-  session: unknown | null;
+  session: any | null;
   profile: Profile | null;
-  setSession: (session: unknown | null) => void;
+  initialized: boolean;
+  setSession: (session: any | null) => void;
   setProfile: (profile: Profile | null) => void;
+  setInitialized: (initialized: boolean) => void;
   clear: () => void;
 }
 
 export const useAuthStore = create<AuthState>()((set) => ({
   session: null,
   profile: null,
+  initialized: false,
   setSession: (session) => set({ session }),
   setProfile: (profile) => set({ profile }),
-  clear: () => set({ session: null, profile: null }),
+  setInitialized: (initialized) => set({ initialized }),
+  clear: () => set({ session: null, profile: null, initialized: true }),
 }));
-
-// ── Drop Store ────────────────────────────────────────────────────────────────
 
 interface DropState {
   drops: Drop[];

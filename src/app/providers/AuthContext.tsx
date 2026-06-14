@@ -134,21 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // In this specialized system, the verify-otp Edge Function handles user creation.
-      // We might need to "sign in" the user client-side if the Edge Function returns a session.
-      // For now, we follow the existing pattern of fetching the profile if verify-otp says OK.
-
       if (data?.user?.id) {
-        // Since we don't have a real Supabase Auth session here (Edge Function bypassed it),
-        // we might need to mock it or handle it.
-        // However, if verify-otp created an auth user, we can try to "login" them
-        // or just rely on the fact that we have the user ID now.
-        // For the sake of this tactical fix, we'll assume the client-side session
-        // management handles the mock session if not using real Supabase Auth.
-
-        // If we want to use REAL Supabase Auth, we'd need verify-otp to return a JWT
-        // and use supabase.auth.setSession().
-
         await fetchProfile(data.user.id);
         return { error: null, user: data.user as User };
       }
@@ -171,15 +157,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: fullName, role } },
+          options: { data: { display_name: fullName, role } },
         });
         if (authError) throw authError;
 
         if (authData?.user) {
           const { error: profileError } = await supabase.from('profiles').insert({
             id: authData.user.id,
-            email,
-            full_name: fullName,
+            display_name: fullName,
             role,
           });
           if (profileError) {
