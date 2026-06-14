@@ -43,11 +43,25 @@ export default function QRConfirmationScreen() {
     try {
       // Record location
       try {
+        await speak("Acquiring secure location lock.");
+
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          });
+        });
+
         await speak("Location broadcast confirmed.");
         await locationBroadcastService.broadcast({
-          lat: 0, lng: 0, drop_id: dropId,
-        });
-      } catch {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          drop_id: dropId,
+        }, true); // force broadcast
+      } catch (err) {
+        console.error('[QRConfirmationScreen] Location error:', err);
         showToast('Could not record location', { type: 'warning' });
       }
 
