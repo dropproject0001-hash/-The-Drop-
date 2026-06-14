@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, memo } from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { createPortal } from 'react-dom';
@@ -27,18 +27,20 @@ const colors = {
   alert: '#ef4444',    // Red
 };
 
-// Create a transparent div icon container as Leaflet's render root
-const createFramerIcon = () => {
-  return L.divIcon({
-    className: 'framer-tactical-marker-root',
-    html: '<div class="framer-portal-root w-10 h-10 flex items-center justify-center"></div>',
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
-    popupAnchor: [0, -20]
-  });
-};
+// BOLT OPTIMIZATION: Move static icon creation outside component to prevent
+// unnecessary Leaflet icon re-instantiation on every React render.
+const tacticalFramerIcon = L.divIcon({
+  className: 'framer-tactical-marker-root',
+  html: '<div class="framer-portal-root w-10 h-10 flex items-center justify-center"></div>',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20]
+});
 
-export function MapMarker({ 
+// BOLT OPTIMIZATION: Memoize the MapMarker component.
+// Since it contains complex Framer Motion animations and is used in lists (SuperAdmin dashboard),
+// preventing unnecessary re-renders provides significant main-thread relief during map interactions.
+export const MapMarker = memo(function MapMarker({
   position, 
   status = 'active', 
   type = 'drop', 
@@ -85,7 +87,7 @@ export function MapMarker({
       <Marker 
         ref={markerRef}
         position={position} 
-        icon={createFramerIcon()}
+        icon={tacticalFramerIcon}
         eventHandlers={{
           click: onClick,
         }}
@@ -221,4 +223,4 @@ export function MapMarker({
       )}
     </>
   );
-}
+});
