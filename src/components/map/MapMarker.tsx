@@ -27,16 +27,15 @@ const colors = {
   alert: '#ef4444',    // Red
 };
 
-// Create a transparent div icon container as Leaflet's render root
-const createFramerIcon = () => {
-  return L.divIcon({
-    className: 'framer-tactical-marker-root',
-    html: '<div class="framer-portal-root w-10 h-10 flex items-center justify-center"></div>',
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
-    popupAnchor: [0, -20]
-  });
-};
+// Performance Optimization: Instantiating the Leaflet icon once at the top level
+// to prevent redundant object creation and internal Leaflet state updates on every re-render.
+const TACTICAL_MARKER_ICON = L.divIcon({
+  className: 'framer-tactical-marker-root',
+  html: '<div class="framer-portal-root w-10 h-10 flex items-center justify-center"></div>',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20]
+});
 
 export function MapMarker({ 
   position, 
@@ -85,7 +84,7 @@ export function MapMarker({
       <Marker 
         ref={markerRef}
         position={position} 
-        icon={createFramerIcon()}
+        icon={TACTICAL_MARKER_ICON}
         eventHandlers={{
           click: onClick,
         }}
