@@ -75,7 +75,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      localStorage.removeItem('demo_role');
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setSession(null);
@@ -211,7 +210,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log(`[AuthContext] ${event}`);
 
         if (event === 'SIGNED_OUT') {
-          localStorage.removeItem('demo_role');
           setSession(null);
           setUser(null);
           setProfile(null);

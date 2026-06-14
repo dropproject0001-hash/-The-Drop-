@@ -1,6 +1,6 @@
 import CryptoJS from 'crypto-js';
 
-const SECRET_KEY = 'THE-DROP-SECRET-KEY-CHANGE-THIS'; // In production, this should be fetched or more complex
+const SECRET_KEY = import.meta.env.VITE_CRYPTO_SECRET || 'THE-DROP-DEFAULT-DEVELOPMENT-KEY-99'; // In production, this should be fetched or more complex
 
 /**
  * Simple AES encryption for chat notes and messages
