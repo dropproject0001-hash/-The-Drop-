@@ -48,7 +48,7 @@ export function PortalNavbar({ title, subtitle, icon }: PortalNavbarProps) {
          </div>
          <button 
            onClick={handleLogout}
-           className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition text-sm font-medium text-slate-200"
+           className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition text-sm font-medium text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
          >
            <LogOut size={16} /> Logout
          </button>

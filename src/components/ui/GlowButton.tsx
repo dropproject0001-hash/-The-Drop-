@@ -15,6 +15,7 @@ export function GlowButton({ className, children, ...props }: GlowButtonProps) {
         "relative px-6 py-3 rounded-lg font-medium text-white transition-all",
         "bg-[--accent-primary]/10 border border-[--accent-primary]/30",
         "hover:bg-[--accent-primary]/20 hover:shadow-[0_0_15px_rgba(34,197,94,0.3)]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--accent-primary] focus-visible:ring-offset-2 focus-visible:ring-offset-black",
         className
       )}
       {...props}

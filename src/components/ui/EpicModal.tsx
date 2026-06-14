@@ -87,7 +87,7 @@ export function EpicModal({
               <div className="flex items-center justify-between px-5 py-4 border-b">
                 {title && <h2 className="text-lg font-semibold">{title}</h2>}
                 {showCloseButton && (
-                  <button onClick={onClose} className="p-2 -mr-2">
+                  <button onClick={onClose} className="p-2 -mr-2" aria-label="Close modal">
                     <X size={20} />
                   </button>
                 )}

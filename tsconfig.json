@@ -28,6 +28,8 @@
     "supabase/**/*",
     "authfix_out/**/*",
     "node_modules",
-    "dist"
+    "dist",
+    "verify_ui.spec.ts",
+    "verify_ui.ts"
   ]
 }

@@ -13,8 +13,12 @@ export function LoadingSpinner({ size = 'md', text }: LoadingSpinnerProps) {
   }[size];
 
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-8">
-      <div className={`${sizeClass} border-2 border-[#106011] border-t-transparent rounded-full animate-spin`} />
+    <div
+      className="flex flex-col items-center justify-center gap-3 py-8"
+      role="status"
+      aria-label={text || "Loading"}
+    >
+      <div className={`${sizeClass} border-2 border-[#106011] border-t-transparent rounded-full animate-spin`} aria-hidden="true" />
       {text && <p className="text-sm text-zinc-400 font-mono tracking-widest">{text}</p>}
     </div>
   );
