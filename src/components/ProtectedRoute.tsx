@@ -12,6 +12,8 @@ export default function ProtectedRoute({
   allowedRoles 
 }: ProtectedRouteProps) {
   const { role, loading } = useRole();
+  
+  console.log('[ProtectedRoute] Role:', role, 'Loading:', loading);
 
   if (loading) {
     return (

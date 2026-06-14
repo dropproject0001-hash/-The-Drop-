@@ -36,8 +36,15 @@ type LoginMode = 'client' | 'staff';
 export default function AuthFlow() {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { signInWithPassword } = useAuth();
+  const { signInWithPassword, user } = useAuth();
   const { refreshRole } = useRole();
+
+  useEffect(() => {
+    if (user) {
+      console.log('[AuthFlow] User already logged in, redirecting...');
+      handleSuccessfulLogin();
+    }
+  }, [user]);
 
   const [showIntro, setShowIntro] = useState(true);
   const [mode, setMode] = useState<LoginMode>('client');

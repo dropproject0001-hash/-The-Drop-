@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { locationBroadcastService } from '../../services/LocationBroadcastService';
 import { usePresenceTracking } from '../../hooks/realtime/usePresenceTracking';
+import { useLocationOutboxStatus } from '../../hooks/useLocationOutboxStatus';
 
 interface DebugPanelProps {
   visible?: boolean;
 }
 
 export function LocationDebugPanel({ visible = true }: DebugPanelProps) {
-  const [queueSize, setQueueSize] = useState(0);
+  const { queueSize, flush, clear } = useLocationOutboxStatus();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [lastBroadcast, setLastBroadcast] = useState<string | null>(null);
@@ -19,7 +20,6 @@ export function LocationDebugPanel({ visible = true }: DebugPanelProps) {
   // Poll service state
   useEffect(() => {
     const interval = setInterval(() => {
-      setQueueSize(locationBroadcastService.queueSize);
       setIsOnline(locationBroadcastService.isOnline);
       setIsBroadcasting(locationBroadcastService.isCurrentlyBroadcasting());
     }, 2000);
@@ -36,13 +36,11 @@ export function LocationDebugPanel({ visible = true }: DebugPanelProps) {
   };
 
   const handleFlushQueue = async () => {
-    await locationBroadcastService.flushQueue();
-    setQueueSize(locationBroadcastService.queueSize);
+    await flush();
   };
 
   const handleClearQueue = async () => {
-    await locationBroadcastService.clearQueue();
-    setQueueSize(0);
+    await clear();
   };
 
   const handleStartTracking = async () => {

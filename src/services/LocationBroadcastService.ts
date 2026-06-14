@@ -1,23 +1,6 @@
 import { supabase } from '../lib/supabase';
-import Dexie, { Table } from 'dexie';
 import type { LiveLocation } from '../types/domain';
-
-// ── Offline Queue (Dexie) ─────────────────────────────────────
-interface QueuedLocation {
-  id?: number;
-  payload: any;
-  timestamp: string;
-  attempts: number;
-}
-
-class OutboxDB extends Dexie {
-  outbox!: Table<QueuedLocation>;
-  constructor() {
-    super('location-outbox-v1');
-    this.version(1).stores({ outbox: '++id, timestamp' });
-  }
-}
-const outboxDB = new OutboxDB();
+import { LocationOutbox } from './LocationOutbox';
 
 // ── Main Service ──────────────────────────────────────────────
 class LocationBroadcastService {
@@ -33,7 +16,6 @@ class LocationBroadcastService {
   } | null = null;
 
   // Public state
-  public queueSize = 0;
   public isOnline = navigator.onLine;
 
   private lastBroadcastTime = 0;
@@ -118,13 +100,8 @@ class LocationBroadcastService {
         err.name === 'FunctionsFetchError';
 
       if (isConnectionError) {
-        await outboxDB.outbox.add({
-          payload,
-          timestamp: new Date().toISOString(),
-          attempts: 0,
-        });
-        this.queueSize = (await outboxDB.outbox.count());
-        console.log('[LocationBroadcastService] Telemetry offline or edge function unreachable. Queued in IndexDB.');
+        await LocationOutbox.queue(payload);
+        console.log('[LocationBroadcastService] Telemetry offline or edge function unreachable. Queued in LocationOutbox.');
         return { success: false, queued: true };
       }
 
@@ -318,34 +295,12 @@ class LocationBroadcastService {
 
   // ── Offline Queue Flush ────────────────────────────────────
   public async clearQueue() {
-    await outboxDB.outbox.clear();
-    this.queueSize = 0;
+    await LocationOutbox.clear();
   }
 
   public async flushQueue() {
     if (!navigator.onLine) return;
-
-    const items = await outboxDB.outbox.orderBy('timestamp').toArray();
-
-    for (const item of items) {
-      try {
-        const { error } = await supabase.functions.invoke('broadcast-location', {
-          body: item.payload,
-        });
-
-        if (!error) {
-          await outboxDB.outbox.delete(item.id!);
-        } else {
-          await outboxDB.outbox.update(item.id!, {
-            attempts: item.attempts + 1,
-          });
-        }
-      } catch {
-        // keep in queue
-      }
-    }
-
-    this.queueSize = await outboxDB.outbox.count();
+    await LocationOutbox.flush();
   }
 
   isCurrentlyBroadcasting() {

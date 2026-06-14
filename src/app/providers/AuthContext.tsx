@@ -198,14 +198,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth
       .getSession()
       .then(({ data: { session: initialSession } }) => {
+        console.log('[AuthContext] Initial session:', !!initialSession);
         if (!active) return;
         if (initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
           fetchProfile(initialSession.user.id).then(() => {
+            console.log('[AuthContext] Initial profile fetched');
             if (active) setLoading(false);
           });
         } else {
+          console.log('[AuthContext] No initial session');
           setLoading(false);
         }
       })

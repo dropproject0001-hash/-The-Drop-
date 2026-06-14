@@ -13,6 +13,7 @@ import { StocksAnalysisView } from './views/StocksAnalysisView';
 import { ControlSettingsView } from './views/ControlSettingsView';
 import { TacticalAIVoiceCompanion } from '../chat/TacticalAIVoiceCompanion';
 import VoiceAssistantPanel from '@/components/voice/VoiceAssistantPanel';
+import { QuickDropWidget } from '@/components/common/QuickDropWidget';
 import { useRole } from '@/context/RoleContext';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useLocationOutboxStatus } from '@/hooks/useLocationOutboxStatus';
@@ -543,6 +544,8 @@ export function BaseLayout() {
       </div>
 
       <GlobalModals />
+      
+      <QuickDropWidget />
 
       {/* Mini Interactive Floating JARVIS Trigger Button (Absolute non-obtrusive) */}
       <motion.button
