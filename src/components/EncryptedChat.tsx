@@ -36,13 +36,13 @@ export default function EncryptedChat({ dropId }: { dropId: string }) {
     }
 
     // Decrypt messages
-    const decrypted = data.map((msg: any) => ({
+    const decrypted = await Promise.all(data.map(async (msg: any) => ({
       id: msg.id,
       room_id: msg.room_id,
-      content: decryptNote(msg.body), // Aligned with DB 'body' column
+      content: await decryptNote(msg.body), // Aligned with DB 'body' column
       sender_id: msg.sender_id,
       created_at: msg.created_at,
-    }));
+    })));
 
     setMessages(decrypted);
   };
@@ -61,12 +61,12 @@ export default function EncryptedChat({ dropId }: { dropId: string }) {
           table: 'messages',
           filter: `room_id=eq.${roomId}`,
         },
-        (payload) => {
+        async (payload) => {
           const raw = payload.new as any;
           const newMsg: Message = {
             id: raw.id,
             room_id: raw.room_id,
-            content: decryptNote(raw.body),
+            content: await decryptNote(raw.body),
             sender_id: raw.sender_id,
             created_at: raw.created_at,
           };
@@ -87,7 +87,7 @@ export default function EncryptedChat({ dropId }: { dropId: string }) {
     setLoading(true);
 
     try {
-      const encryptedContent = encryptNote(newMessage.trim());
+      const encryptedContent = await encryptNote(newMessage.trim());
 
       const { error } = await supabase.from('messages').insert({
         room_id: roomId,
