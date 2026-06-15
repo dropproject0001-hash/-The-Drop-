@@ -21,11 +21,12 @@ export function RoleRouter() {
     return <Navigate to="/unauthorized" replace />;
   }
 
+  // Boss Hierarchy: super_admin and admin are same role
+  if (profile.role === 'super_admin' || profile.role === 'admin') {
+    return <Navigate to="/super-admin/dashboard" replace />;
+  }
+
   switch (profile.role) {
-    case 'super_admin':
-      return <Navigate to="/super-admin/dashboard" replace />;
-    case 'admin':
-      return <Navigate to="/admin" replace />;
     case 'dropper':
       return <Navigate to="/dropper" replace />;
     case 'client':
