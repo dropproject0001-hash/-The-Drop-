@@ -88,7 +88,7 @@ export default function AdminAnalytics() {
         <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
           <h3 className="font-mono tracking-widest mb-6 text-emerald-600 text-xs uppercase">Drops by Status</h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
               <BarChart data={stats.statusBreakdown}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
                 <XAxis dataKey="name" stroke="#71717a" fontSize={10} />
@@ -103,7 +103,7 @@ export default function AdminAnalytics() {
         <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
           <h3 className="font-mono tracking-widest mb-6 text-emerald-600 text-xs uppercase">7-Day Trend</h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
               <LineChart data={stats.trendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
                 <XAxis dataKey="name" stroke="#71717a" fontSize={10} />

@@ -75,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
+      localStorage.removeItem('demo_role');
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setSession(null);
@@ -115,7 +116,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.functions.invoke('send-otp', {
         body: { phone, purpose: 'login' }
       });
-      if (error) throw error;
+      if (error) {
+        let errorMsg = error.message;
+        if (error.context && typeof error.context.json === 'function') {
+          try {
+            const errData = await error.context.json();
+            if (errData && errData.error) errorMsg = errData.error;
+          } catch(e) {}
+        }
+        throw new Error(errorMsg);
+      }
       if (data?.error) throw new Error(data.error);
       return { error: null };
     } catch (err: any) {
@@ -130,7 +140,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.functions.invoke('verify-otp', {
         body: { phone_number: phone, otp_code: token, purpose: 'login' }
       });
-      if (error) throw error;
+      if (error) {
+        let errorMsg = error.message;
+        if (error.context && typeof error.context.json === 'function') {
+          try {
+            const errData = await error.context.json();
+            if (errData && errData.error) {
+               errorMsg = errData.error;
+               if (errData.attempts_remaining !== undefined) {
+                 errorMsg += ` (${errData.attempts_remaining} attempts left)`;
+               }
+            }
+          } catch(e) {}
+        }
+        throw new Error(errorMsg);
+      }
       if (data?.error) throw new Error(data.error);
 
       if (data?.user?.id) {
@@ -210,6 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log(`[AuthContext] ${event}`);
 
         if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('demo_role');
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -238,8 +263,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       profile,
       loading,
       role: derivedRole,
-      isSuperAdmin: derivedRole === 'super_admin',
-      isAdmin: derivedRole === 'admin',
+      isSuperAdmin: derivedRole === 'super_admin' || derivedRole === 'admin',
+      isAdmin: derivedRole === 'super_admin' || derivedRole === 'admin',
       isDropper: derivedRole === 'dropper',
       isClient: derivedRole === 'client',
       signOut,

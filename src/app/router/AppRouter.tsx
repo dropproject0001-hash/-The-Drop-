@@ -9,11 +9,11 @@ const AuthFlow = React.lazy(() => import('@/pages/AuthFlow'));
 const ClientRegistration = React.lazy(() => import('@/pages/ClientRegistration'));
 const SuperAdminSetup = React.lazy(() => import('@/pages/SuperAdminSetup'));
 const Unauthorized = React.lazy(() => import('@/pages/Unauthorized'));
-const SuperAdminDashboard = React.lazy(() => import('@/pages/SuperAdminDashboard'));
 
 const SuperAdminPanel = React.lazy(() => import('@/components/panels/SuperAdminPanel').then(m => ({ default: m.SuperAdminPanel })));
 const DropperPanel = React.lazy(() => import('@/components/panels/DropperPanel').then(m => ({ default: m.DropperPanel })));
 const ClientPanel = React.lazy(() => import('@/components/panels/ClientPanel').then(m => ({ default: m.ClientPanel })));
+const AdminPortal = React.lazy(() => import('@/features/portals/AdminPortal'));
 const QRConfirmationScreen = React.lazy(() => import('@/features/drops/QRConfirmationScreen'));
 const CreateDropper = React.lazy(() => import('@/pages/CreateDropper'));
 const LoginWithOTP = React.lazy(() => import('@/pages/LoginWithOTP'));
@@ -30,6 +30,7 @@ function LoadingFallback() {
 }
 
 export function AppRouter() {
+  console.log('AppRouter rendering');
   return (
     <BrowserRouter>
       <Suspense fallback={<LoadingFallback />}>
@@ -37,37 +38,38 @@ export function AppRouter() {
           {/* Public Routes */}
           <Route path="/auth" element={<AuthFlow />} />
           <Route path="/register" element={<ClientRegistration />} />
-
-          {/* Setup (Admin Only path) */}
+          {/* Obfuscated Setup */}
           <Route path={import.meta.env.VITE_SETUP_ROUTE || "/hidden-super-admin-setup-42"} element={<SuperAdminSetup />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-
-          {/* Test Routes (Dev Only) */}
-          {import.meta.env.DEV && (
-            <>
-              <Route path="/capture" element={<CaptureTest />} />
-              <Route path="/location" element={<LocationTest />} />
-              <Route path="/map" element={<MapTest />} />
-              <Route path="/login-otp" element={<LoginWithOTP />} />
-            </>
-          )}
+          <Route path="/capture" element={<CaptureTest />} />
+          <Route path="/location" element={<LocationTest />} />
+          <Route path="/map" element={<MapTest />} />
 
           {/* Portal Base Routing */}
           <Route path="/" element={<BaseLayout />}>
             <Route index element={<RoleRouter />} />
             
-            {/* Boss Portals */}
-            <Route path="super-admin/dashboard" element={<Navigate to="/super-admin" replace />} />
+            {/* Protected Routes */}
             <Route 
-              path="super-admin"
+              path="super-admin" 
               element={
                 <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
-                  <SuperAdminDashboard />
+                  <SuperAdminPanel />
                 </ProtectedRoute>
               } 
             />
-
-            {/* Dropper Portals */}
+            <Route 
+              path="super-admin/dashboard" 
+              element={<Navigate to="/super-admin" replace />} 
+            />
+            <Route 
+              path="admin" 
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <AdminPortal />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="dropper" 
               element={
@@ -76,8 +78,6 @@ export function AppRouter() {
                 </ProtectedRoute>
               } 
             />
-
-            {/* Client Portals */}
             <Route 
               path="client" 
               element={
@@ -94,8 +94,6 @@ export function AppRouter() {
                 </ProtectedRoute>
               } 
             />
-
-            {/* Management */}
             <Route 
               path="create-dropper" 
               element={
@@ -104,6 +102,7 @@ export function AppRouter() {
                 </ProtectedRoute>
               } 
             />
+            {import.meta.env.DEV && <Route path="login-otp" element={<LoginWithOTP />} />}
           </Route>
         </Routes>
       </Suspense>

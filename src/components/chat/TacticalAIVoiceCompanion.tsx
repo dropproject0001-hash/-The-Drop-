@@ -92,7 +92,7 @@ export function TacticalAIVoiceCompanion() {
 
   const toggleVoiceRecording = () => {
     if (!recognitionRef.current) {
-      console.warn("Voice speech recognition is not supported in this browser.");
+      alert("Voice speech recognition is not supported in this browser. Please use keyboard terminal entry.");
       return;
     }
 

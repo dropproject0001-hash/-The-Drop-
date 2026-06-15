@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useAuthStore } from '@/stores';
+import { useLocationOutboxStatus } from '@/hooks/useLocationOutboxStatus';
 import { useLiveLocations } from '@/hooks/realtime/useLiveLocations';
 import { useDrops } from '@/hooks/useDrops';
 import { DropperTrackingControl } from '@/components/dropper/DropperTrackingControl';
@@ -86,7 +87,7 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
   const navigate = useNavigate();
 
   // === ALL HOOKS AT TOP LEVEL ===
-  const isSuperAdmin = profile?.role === 'super_admin';
+  const isSuperAdmin = profile?.role === 'super_admin' || profile?.role === 'admin';
   const isDropper = profile?.role === 'dropper';
 
   // Always load live drops and locations
@@ -95,8 +96,25 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
   
   const { locations: liveLocations, status: liveStatus } = useLiveLocations();
 
+  const { isSyncing: outboxSaving, queueSize: outboxQueueSize, flush: flushOutbox } = useLocationOutboxStatus();
+  const [browserOnline, setBrowserOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setBrowserOnline(navigator.onLine);
+    const handleOffline = () => setBrowserOnline(navigator.onLine);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+  const [userAccuracy, setUserAccuracy] = useState<number | null>(null);
 
   // Map state controlling actual map bounds dynamically
   const [mapCenter, setMapCenter] = useState<[number, number]>([15.4865, 120.9734]);
@@ -135,13 +153,40 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
   };
 
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
+    if (!navigator.geolocation) return;
+
+    const handleSuccess = (pos: GeolocationPosition) => {
+      const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+      setUserPosition(coords);
+      setUserAccuracy(pos.coords.accuracy);
+    };
+
+    const handleError = (err: GeolocationPositionError) => {
+      console.warn('[DropMap] Geolocation stream active lookup warning:', err);
+    };
+
+    // Fast initial coordinates resolution
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
         const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         setUserPosition(coords);
+        setUserAccuracy(pos.coords.accuracy);
         setMapCenter(coords);
-      });
-    }
+      },
+      handleError,
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+
+    // Watch dynamic telemetry accuracy updates
+    const watchId = navigator.geolocation.watchPosition(
+      handleSuccess,
+      handleError,
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
   }, []);
 
   // === Handlers ===
@@ -460,6 +505,134 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
               ))
           )}
         </MapContainer>
+
+        {/* === GPS PRECISION METER OVERLAY === */}
+        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-[1000] pointer-events-auto max-w-[280px]">
+          <div className="bg-slate-950/90 backdrop-blur-md border border-[#106011]/80 rounded-xl p-2.5 sm:p-3 shadow-[0_0_20px_rgba(16,96,17,0.4)] flex flex-col gap-1.5 font-mono select-none">
+            <div className="flex items-center gap-1.5 border-b border-[#106011]/20 pb-1.5">
+              <div className="relative">
+                <span className={`absolute -inset-0.5 rounded-full blur-[1px] ${
+                  userAccuracy === null ? 'bg-red-500 animate-pulse' :
+                  userAccuracy <= 5 ? 'bg-[#0ad111] animate-ping' :
+                  userAccuracy <= 15 ? 'bg-emerald-400 animate-pulse' :
+                  userAccuracy <= 30 ? 'bg-yellow-500' : 'bg-red-500'
+                }`} style={{ animationDuration: '2s' }} />
+                <span className={`relative w-2 h-2 rounded-full block border border-black ${
+                  userAccuracy === null ? 'bg-red-600' :
+                  userAccuracy <= 5 ? 'bg-[#0ad111]' :
+                  userAccuracy <= 15 ? 'bg-emerald-400' :
+                  userAccuracy <= 30 ? 'bg-yellow-500' : 'bg-red-500'
+                }`} />
+              </div>
+              <span className="text-[9px] font-black tracking-widest text-[#106011]">SYS_GPS_INTEGRITY</span>
+            </div>
+
+            <div className="flex items-end justify-between gap-4">
+              <div className="flex flex-col">
+                <span className="text-[8px] tracking-wider text-slate-500 uppercase">GPS_SIGNAL_METRE</span>
+                {userAccuracy !== null ? (
+                  <span className={`text-[15px] font-bold tracking-tight leading-none ${
+                    userAccuracy <= 5 ? 'text-[#0ad111]' :
+                    userAccuracy <= 15 ? 'text-emerald-400' :
+                    userAccuracy <= 30 ? 'text-yellow-500' : 'text-red-400'
+                  }`}>
+                    ±{userAccuracy.toFixed(1)} <span className="text-[9px] font-normal uppercase tracking-wider text-slate-400">meters</span>
+                  </span>
+                ) : (
+                  <span className="text-[13px] text-red-500 tracking-widest uppercase animate-pulse leading-none">SEARCHING...</span>
+                )}
+              </div>
+
+              {/* Dynamic level bars visualizer */}
+              <div className="flex items-end gap-0.5 h-3">
+                <div className={`w-1 rounded-sm ${userAccuracy !== null ? 'h-1.5 bg-[#106011]' : 'h-1.5 bg-zinc-800'}`} />
+                <div className={`w-1 rounded-sm ${userAccuracy !== null && userAccuracy <= 30 ? 'h-2 bg-[#106011]' : 'h-2 bg-zinc-800'}`} />
+                <div className={`w-1 rounded-sm ${userAccuracy !== null && userAccuracy <= 15 ? 'h-2.5 bg-emerald-500' : 'h-2.5 bg-zinc-800'}`} />
+                <div className={`w-1 rounded-sm ${userAccuracy !== null && userAccuracy <= 5 ? 'h-3.5 bg-[#0ad111]' : 'h-3.5 bg-zinc-800'}`} />
+              </div>
+            </div>
+
+            <div className="flex flex-col pt-1 border-t border-[#106011]/10 text-[8px] tracking-wider leading-relaxed">
+              <span className={`uppercase font-bold ${
+                userAccuracy === null ? 'text-red-500' :
+                userAccuracy <= 5 ? 'text-[#0ad111]' :
+                userAccuracy <= 15 ? 'text-emerald-400' :
+                userAccuracy <= 30 ? 'text-yellow-500' : 'text-red-500'
+              }`}>
+                {userAccuracy === null ? 'NO LOCK • SECURE EXT_DEV' :
+                 userAccuracy <= 5 ? 'OPTIMAL DETECT • DROP LOCKED' :
+                 userAccuracy <= 15 ? 'ADEQUATE DISPATCH LOCK APPROVED' :
+                 userAccuracy <= 30 ? 'MARGINAL DRIFT • RETRACKING' :
+                 'DEGRADED OPTICS • ACCESS HIGHER'}
+              </span>
+              <span className="text-[7px] text-slate-500 mt-0.5 tracking-normal leading-tight">
+                {userAccuracy === null 
+                  ? 'Request device geolocation configuration.' 
+                  : userAccuracy <= 15 
+                    ? 'GPS threshold aligned. Drop execution highly accurate.' 
+                    : 'Sub-optimal lock. Try shifting position or open sky.'}
+              </span>
+            </div>
+
+            {/* === BACKGROUND OUTBOX TELEMETRY === */}
+            <div className="border-t border-[#106011]/25 pt-2 mt-1 flex flex-col gap-1 select-none">
+              <div className="flex items-center gap-1.5 justify-between">
+                <span className="text-[9px] font-black tracking-widest text-[#106011]">SYS_DATA_OUTBOX</span>
+                <span className={`text-[7px] font-mono px-1 rounded uppercase tracking-wider ${
+                  !browserOnline 
+                    ? 'bg-red-950/40 text-red-500 border border-red-900/30 animate-pulse' 
+                    : 'bg-[#106011]/15 text-[#0ad111] border border-[#106011]/30'
+                }`}>
+                  {browserOnline ? 'ONLINE' : 'OFFLINE'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2.5 mt-0.5">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[8px] tracking-wider text-slate-500 uppercase">SYNC_STATUS</span>
+                  {outboxQueueSize > 0 ? (
+                    <span className="text-[12px] font-bold text-amber-500 tracking-tight leading-none truncate uppercase flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping shrink-0" />
+                      BUFFERED ({outboxQueueSize} PTS)
+                    </span>
+                  ) : (
+                    <span className="text-[12px] font-bold text-[#0ad111] tracking-tight leading-none truncate uppercase flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0ad111] shrink-0" />
+                      TELEMETRY SYNCED
+                    </span>
+                  )}
+                </div>
+
+                {outboxQueueSize > 0 && browserOnline ? (
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      await flushOutbox();
+                    }}
+                    disabled={outboxSaving}
+                    className={`px-1.5 py-0.5 rounded border border-[#0ad111]/40 hover:border-[#0ad111] bg-[#106011]/20 hover:bg-[#106011]/40 text-[#0ad111] font-bold font-mono text-[8px] uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                      outboxSaving ? 'animate-pulse pointer-events-none text-slate-500 border-zinc-800 bg-transparent' : ''
+                    }`}
+                  >
+                    {outboxSaving ? 'FLUSHING...' : 'FORCE SYNC'}
+                  </button>
+                ) : outboxQueueSize > 0 && !browserOnline ? (
+                  <span className="text-[7px] text-red-500 uppercase font-bold tracking-wider animate-pulse">QUEUED_OFFLINE</span>
+                ) : (
+                  <span className="text-[8.5px] text-[#106011] tracking-widest font-black uppercase">STANDBY</span>
+                )}
+              </div>
+
+              <div className="text-[7.5px] text-slate-500 mt-1 leading-tight select-text">
+                {outboxQueueSize > 0 
+                  ? !browserOnline 
+                    ? 'Device connection lost. Outbox telemetry holds local cache.'
+                    : 'Unsynchronized field locations queued. Sync now.'
+                  : 'Constant handshake active. HQ tracking connection green.'}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Status indicators */}
         {isSuperAdmin && liveStatus.mode === 'polling' && (

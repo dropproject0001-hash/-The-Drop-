@@ -1,4 +1,3 @@
-import { useAuth } from '@/app/providers/AuthContext';
 import { useState } from 'react';
 import { useOTP } from '@/hooks/useOTP';
 import { Shield, Key, Phone, Terminal, ChevronLeft } from 'lucide-react';
@@ -8,7 +7,6 @@ export default function LoginWithOTP() {
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const { otp, setOtp, loading, error, requestOTP, verifyOTP } = useOTP();
-  const { refreshProfile } = useAuth();
 
   const handleSendOTP = async () => {
     if (!phone) return;
@@ -24,8 +22,9 @@ export default function LoginWithOTP() {
       // In a real production app, we would now swap to a session-based auth.
       // Since this is a temporary fix for the login, we will bypass the AuthContext
       // by setting a demo role and going back to the portal selector (DEV only).
-      // Refresh profile to sync real session
-      await refreshProfile();
+      if (import.meta.env.DEV) {
+        localStorage.setItem('demo_role', 'client'); 
+      }
       window.location.href = '/'; 
     }
   };

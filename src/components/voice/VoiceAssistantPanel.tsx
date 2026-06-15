@@ -101,7 +101,7 @@ export default function VoiceAssistantPanel({
     const config = getErrorConfig(error);
     let displayMessage = error.message;
 
-    if (profile?.role === 'super_admin') {
+    if (profile?.role === 'super_admin' || profile?.role === 'admin') {
       displayMessage = `[DIRECTOR] ${error.message}`;
     } else if (profile?.role === 'dropper' && error.type === 'offline') {
       displayMessage = "Offline mode active. Locations will sync when signal returns.";

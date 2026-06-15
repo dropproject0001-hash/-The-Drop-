@@ -34,7 +34,6 @@ export interface Database {
           avatar_url: string | null;
           is_online: boolean;
           last_seen: string;
-          tracking_locked: boolean;
           push_endpoint: string | null;
           push_keys: Json | null;
           created_at: string;
@@ -51,7 +50,6 @@ export interface Database {
           avatar_url?: string | null;
           is_online?: boolean;
           last_seen?: string;
-          tracking_locked?: boolean;
           push_endpoint?: string | null;
           push_keys?: Json | null;
           created_at?: string;
@@ -68,7 +66,6 @@ export interface Database {
           avatar_url?: string | null;
           is_online?: boolean;
           last_seen?: string;
-          tracking_locked?: boolean;
           push_endpoint?: string | null;
           push_keys?: Json | null;
           created_at?: string;

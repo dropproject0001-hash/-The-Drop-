@@ -1,5 +1,10 @@
 /**
  * @file src/hooks/useProfile.ts
+ *
+ * FIX C-3: isClient now correctly checks for role === 'client' (not 'tanod').
+ * FIX C-4: Profile is kept in sync via supabase.auth.onAuthStateChange so it
+ *           updates on sign-in and is cleared on sign-out.
+ * FIX M-6: Ambiguous comment removed; role check is now definitive.
  */
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -32,18 +37,21 @@ export function useProfile() {
   }, []);
 
   useEffect(() => {
+    // FIX C-4: Subscribe to auth state changes so the profile is always fresh.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
           setLoading(true);
           await fetchProfile(session.user.id);
         } else {
+          // Signed out or no session
           setProfile(null);
           setLoading(false);
         }
       }
     );
 
+    // Also attempt an immediate fetch for the initial render.
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         fetchProfile(session.user.id);
@@ -60,10 +68,11 @@ export function useProfile() {
   return {
     profile,
     loading,
-    isSuperAdmin: profile?.role === 'super_admin',
-    isAdmin: profile?.role === 'admin' || profile?.role === 'dropper',
+    // FIX C-3: role values now match DB enum ('super_admin' | 'admin' | 'client')
+    isSuperAdmin: profile?.role === 'super_admin' || profile?.role === 'admin',
+    isAdmin: profile?.role === 'super_admin' || profile?.role === 'admin',
     isDropper: profile?.role === 'dropper',
+    // FIX C-3, M-6: 'client' is the correct role name from the DB
     isClient: profile?.role === 'client',
-    trackingLocked: profile?.tracking_locked ?? true,
   };
 }

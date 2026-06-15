@@ -1,3 +1,4 @@
+// src/components/EncryptedChat.tsx
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/ToastContainer';
@@ -12,19 +13,17 @@ interface Message {
   created_at: string;
 }
 
-export default function EncryptedChat({ dropId, customRoomId }: { dropId?: string, customRoomId?: string }) {
+export default function EncryptedChat({ dropId }: { dropId: string }) {
   const { showToast } = useToast();
   const { profile } = useAuthStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Determine room ID
-  const roomId = customRoomId || (dropId === 'hq' ? `boss_dropper_${profile?.id}` : `drop_${dropId}`);
+  const roomId = `drop_${dropId}`; // Consistent room identifier
 
   // Fetch messages
   const fetchMessages = async () => {
-    if (!roomId) return;
     const { data, error } = await supabase
       .from('messages')
       .select('*')
@@ -40,7 +39,7 @@ export default function EncryptedChat({ dropId, customRoomId }: { dropId?: strin
     const decrypted = data.map((msg: any) => ({
       id: msg.id,
       room_id: msg.room_id,
-      content: decryptNote(msg.body),
+      content: decryptNote(msg.body), // Aligned with DB 'body' column
       sender_id: msg.sender_id,
       created_at: msg.created_at,
     }));
@@ -50,8 +49,6 @@ export default function EncryptedChat({ dropId, customRoomId }: { dropId?: strin
 
   useEffect(() => {
     fetchMessages();
-
-    if (!roomId) return;
 
     // Subscribe to real-time messages
     const channel = supabase
@@ -85,7 +82,7 @@ export default function EncryptedChat({ dropId, customRoomId }: { dropId?: strin
   }, [roomId]);
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !profile || !roomId) return;
+    if (!newMessage.trim() || !profile) return;
 
     setLoading(true);
 
@@ -94,7 +91,7 @@ export default function EncryptedChat({ dropId, customRoomId }: { dropId?: strin
 
       const { error } = await supabase.from('messages').insert({
         room_id: roomId,
-        body: encryptedContent,
+        body: encryptedContent, // Using 'body' from schema
         sender_id: profile.id,
       });
 
@@ -110,21 +107,15 @@ export default function EncryptedChat({ dropId, customRoomId }: { dropId?: strin
   };
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col h-[500px] shadow-xl">
-      <div className="p-4 border-b border-zinc-800 font-semibold font-mono tracking-widest text-[#106011] uppercase flex items-center justify-between">
-        <div className="flex items-center gap-2">
-           <div className="w-2 h-2 rounded-full bg-[#106011] animate-pulse" />
-           {roomId.startsWith('boss_dropper') ? 'HQ COMMAND CHANNEL' : `SECURE CHANNEL • DROP #${dropId}`}
-        </div>
-        <span className="text-[8px] opacity-40">AES_256_ACTIVE</span>
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col h-[500px]">
+      <div className="p-4 border-b border-zinc-800 font-semibold font-mono tracking-widest text-[#106011] uppercase">
+        Secure Channel • Drop #{dropId}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-slate-600 font-mono text-[10px] uppercase tracking-[0.3em] gap-3">
-            <div className="w-12 h-[1px] bg-zinc-800" />
-            AWAITING SECURE TRANSMISSION
-            <div className="w-12 h-[1px] bg-zinc-800" />
+          <div className="flex items-center justify-center h-full text-slate-600 font-mono text-xs uppercase tracking-widest">
+            Awaiting secure transmission...
           </div>
         )}
 
@@ -133,37 +124,33 @@ export default function EncryptedChat({ dropId, customRoomId }: { dropId?: strin
           return (
             <div
               key={msg.id}
-              className={`max-w-[85%] p-3 rounded-xl text-sm font-mono break-words shadow-sm ${
+              className={`max-w-[80%] p-3 rounded-xl text-sm font-mono break-words ${
                 isMine
-                  ? 'bg-[#106011]/20 border border-[#106011]/30 ml-auto text-emerald-100'
+                  ? 'bg-emerald-950 border border-emerald-800 ml-auto text-emerald-100'
                   : 'bg-zinc-950 border border-zinc-800 text-slate-300'
               }`}
             >
-              <div className="text-[9px] opacity-30 mb-1 flex justify-between gap-4">
-                <span>{isMine ? 'YOU' : 'PARTICIPANT'}</span>
-                <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-              </div>
               {msg.content}
             </div>
           );
         })}
       </div>
 
-      <div className="p-4 border-t border-zinc-800 flex gap-2 bg-black/40">
+      <div className="p-4 border-t border-zinc-800 flex gap-2">
         <input
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
           placeholder="Type secure message..."
-          className="flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-2 font-mono text-sm text-white focus:border-[#106011] focus:outline-none transition-colors"
+          className="flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-2 font-mono text-sm text-white focus:border-[#106011] focus:outline-none"
           disabled={loading}
         />
         <button
           onClick={sendMessage}
           disabled={loading || !newMessage.trim()}
-          className="px-6 bg-[#106011] hover:bg-emerald-700 disabled:bg-zinc-700 text-white font-mono uppercase tracking-widest text-xs font-bold rounded-xl transition-all shadow-lg"
+          className="px-6 bg-[#106011] hover:bg-emerald-700 disabled:bg-zinc-700 text-white font-mono uppercase tracking-widest text-xs font-bold rounded-xl transition"
         >
-          {loading ? '...' : 'SEND'}
+          {loading ? '...' : 'Send'}
         </button>
       </div>
     </div>

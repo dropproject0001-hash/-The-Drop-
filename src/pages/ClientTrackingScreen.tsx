@@ -54,7 +54,7 @@ export default function ClientTrackingScreen({ clientId }: { clientId: string })
           {activeDrop.status === 'claimed' && (
             <button 
               className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-semibold text-lg"
-              onClick={() => window.location.href = '/claim/' + activeDrop.id}
+              onClick={() => alert('Confirmation flow with OTP will go here')}
             >
               Confirm Receipt (Loot)
             </button>

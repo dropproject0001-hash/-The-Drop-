@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { createPortal } from 'react-dom';
@@ -27,7 +27,18 @@ const colors = {
   alert: '#ef4444',    // Red
 };
 
-export const MapMarker = React.memo(({
+// Create a transparent div icon container as Leaflet's render root
+const createFramerIcon = () => {
+  return L.divIcon({
+    className: 'framer-tactical-marker-root',
+    html: '<div class="framer-portal-root w-10 h-10 flex items-center justify-center"></div>',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+    popupAnchor: [0, -20]
+  });
+};
+
+export function MapMarker({ 
   position, 
   status = 'active', 
   type = 'drop', 
@@ -36,18 +47,8 @@ export const MapMarker = React.memo(({
   description,
   onClick,
   children
-}: MapMarkerProps) => {
+}: MapMarkerProps) {
   const [portalElement, setPortalElement] = useState<HTMLElement | null>(null);
-
-  // Performance optimization: Stabilize the Leaflet icon object inside useMemo
-  // to avoid recreation on every render while remaining SSR safe.
-  const tacticalIcon = useMemo(() => L.divIcon({
-    className: 'framer-tactical-marker-root',
-    html: '<div class="framer-portal-root w-10 h-10 flex items-center justify-center"></div>',
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
-    popupAnchor: [0, -20]
-  }), []);
 
   // Callback ref guarantees the Leaflet DOM element is captured the moment it mounts
   const markerRef = useCallback((node: L.Marker | null) => {
@@ -84,7 +85,7 @@ export const MapMarker = React.memo(({
       <Marker 
         ref={markerRef}
         position={position} 
-        icon={tacticalIcon}
+        icon={createFramerIcon()}
         eventHandlers={{
           click: onClick,
         }}
@@ -220,19 +221,4 @@ export const MapMarker = React.memo(({
       )}
     </>
   );
-}, (prevProps, nextProps) => {
-  // Custom comparison to handle [lat, lng] array stability
-  // and prevent re-renders when parent state changes but marker data is identical.
-  // Including children prop check to ensure UI remains in sync when portal content changes.
-  return (
-    prevProps.position[0] === nextProps.position[0] &&
-    prevProps.position[1] === nextProps.position[1] &&
-    prevProps.status === nextProps.status &&
-    prevProps.type === nextProps.type &&
-    prevProps.label === nextProps.label &&
-    prevProps.id === nextProps.id &&
-    prevProps.description === nextProps.description &&
-    prevProps.onClick === nextProps.onClick &&
-    prevProps.children === nextProps.children
-  );
-});
+}

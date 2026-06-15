@@ -38,6 +38,7 @@ export default function CreateDropper() {
   }
 
   const generatePassword = () => {
+    // Generate a secure random password
     const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
     const array = new Uint8Array(16);
     crypto.getRandomValues(array);
@@ -58,6 +59,8 @@ export default function CreateDropper() {
     setLoading(true);
     setDeploymentError(null);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       const { data, error } = await supabase.functions.invoke('create-dropper', {
         body: {
           username: form.username,
@@ -67,38 +70,27 @@ export default function CreateDropper() {
         },
       });
 
-      if (error) {
-         // This is usually a network error or 404 if function not found
-         console.error('[CreateUser] Network/Invoke Error:', error);
-         throw error;
-      }
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      if (data?.error) {
-         // This is a logic error returned by the function (e.g. 400, 403)
-         console.error('[CreateUser] Function Logic Error:', data.error);
-         throw new Error(data.error);
-      }
-
-      showToast(`${form.role.toUpperCase()} account created successfully for @${form.username}`, { type: 'success' });
+      showToast(`Account created successfully for @${form.username}`, { type: 'success' });
       setForm({ username: '', password: '', phone: '', role: 'dropper' });
     } catch (err: any) {
       console.error('[CreateUser] Detailed Error:', err);
       
       const errMsg = err?.message || String(err);
-
-      // Better detection for deployment vs logic errors
-      const isDeploymentMissing =
+      const isFetchOrDeployError = 
         errMsg.includes('Failed to send a request to the Edge Function') || 
-        errMsg.includes('404') ||
-        errMsg.toLowerCase().includes('not found');
+        errMsg.includes('Edge Function') || 
+        errMsg.includes('fetch');
 
-      if (isDeploymentMissing) {
+      if (isFetchOrDeployError) {
         setDeploymentError(
           "EDGE_FUNCTION_NOT_DEPLOYED: The core 'create-dropper' Edge Function is missing or un-deployed on your current remote/sandbox Supabase instance."
         );
         showToast('Configuration missing: Edge Function not deployed', { type: 'error' });
       } else {
-        showToast(`Initialization Failed: ${errMsg}`, { type: 'error' });
+        showToast(`Error: ${errMsg}`, { type: 'error' });
       }
     } finally {
       setLoading(false);
@@ -127,15 +119,18 @@ export default function CreateDropper() {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="w-full max-w-lg bg-black/95 rounded-2xl border-2 border-[#106011] shadow-[0_0_60px_rgba(16,96,17,0.25)] overflow-hidden relative select-none"
       >
+        {/* Tactical HUD Background Pattern */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-0" 
              style={{ backgroundImage: 'radial-gradient(#106011 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
         
+        {/* Scanning Line Animation */}
         <motion.div 
           animate={{ top: ['0%', '100%', '0%'] }}
           transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
           className="absolute left-0 right-0 h-[1px] bg-[#106011]/20 shadow-[0_0_8px_#106011] z-10 pointer-events-none"
         />
 
+        {/* Tactical HUD Corner Brackets */}
         <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#106011] rounded-tl-xl pointer-events-none z-30 drop-shadow-[0_0_8px_#106011]"></div>
         <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#106011] rounded-tr-xl pointer-events-none z-30 drop-shadow-[0_0_8px_#106011]"></div>
         <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#106011] rounded-bl-xl pointer-events-none z-30 drop-shadow-[0_0_8px_#106011]"></div>
@@ -143,6 +138,7 @@ export default function CreateDropper() {
 
         <div className="absolute inset-1 border border-dashed border-[#106011]/20 rounded-xl pointer-events-none z-20"></div>
 
+        {/* Header */}
         <div className="flex justify-between items-center px-6 py-6 bg-[#106011]/10 border-b-2 border-[#106011]/50 relative z-20">
           <div className="flex items-center gap-3">
             <button 
@@ -179,6 +175,7 @@ export default function CreateDropper() {
           </div>
         </div>
 
+        {/* Form Body */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
@@ -187,6 +184,7 @@ export default function CreateDropper() {
         >
           
           <div className="space-y-4">
+            {/* Role Selection HUD */}
             <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4 mb-2">
               <button
                 onClick={() => setForm({ ...form, role: 'dropper' })}
@@ -337,6 +335,7 @@ export default function CreateDropper() {
               <UserPlus size={16} />
               {loading ? 'INITIALIZING...' : `COMMIT ${form.role.toUpperCase()} RECORD`}
               
+              {/* Scanline effect on button */}
               {!loading && (
                 <motion.div 
                   animate={{ x: ['-200%', '200%'] }}
@@ -349,10 +348,11 @@ export default function CreateDropper() {
 
           <motion.p variants={itemVariants} className="text-[9px] font-mono text-zinc-600 text-center uppercase tracking-widest leading-relaxed">
             All account initializations are logged and audited. <br/>
-            The operative will be registered with a temporary @internal.droppinops.local email.
+            The operative will be registered with a temporary @droppinops.com dummy email.
           </motion.p>
         </motion.div>
       </motion.div>
     </div>
   );
 }
+

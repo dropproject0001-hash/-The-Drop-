@@ -2,36 +2,64 @@ import { useState } from 'react';
 import { useLiveLocation } from '../hooks/useLiveLocation';
 import { useLiveDrops } from '../hooks/realtime/useLiveDrops';
 import EncryptedChat from '../components/EncryptedChat';
+import { useAuthStore } from '../stores';
+import { useToast } from '@/components/ui/ToastContainer';
+import { Shield, ShieldAlert, Lock, Unlock } from 'lucide-react';
 
 export default function DropperDashboard() {
   const [selectedDropId, setSelectedDropId] = useState<string | null>(null);
   const [locationSharing, setLocationSharing] = useState(true);
 
+  const profile = useAuthStore(state => state.profile);
+  const { showToast } = useToast();
+
   const { drops } = useLiveDrops();
-  const myDrops = drops.filter(d => d.status === 'active');
+  const myDrops = drops.filter(d => d.assigned_to === profile?.id && d.status === 'active');
+  const hasActiveDrops = myDrops.length > 0;
+
+  // Force location sharing on if there are active drops
+  const activeLocationSharing = hasActiveDrops ? true : locationSharing;
 
   // Live location sharing
-  useLiveLocation(selectedDropId || '', locationSharing);
+  useLiveLocation(selectedDropId || '', activeLocationSharing);
+
+  const handleToggleLocationSharing = () => {
+    if (hasActiveDrops) {
+      showToast('DISCONNECT DENIED: GPS tracker locked. All assigned drops must be fully executed.', { type: 'error' });
+      return;
+    }
+    setLocationSharing(!locationSharing);
+  };
 
   return (
-    <div className="p-6 text-white max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-6 text-white max-w-6xl mx-auto select-none">
+      <div className="flex justify-between items-center mb-8 border-b border-[#106011]/30 pb-4">
         <div>
-          <h1 className="text-3xl font-bold">DROPPER DASHBOARD</h1>
-          <p className="text-emerald-400">Field Operations</p>
+          <span className="text-[9px] font-mono tracking-[0.25em] bg-[#106011]/15 px-2.5 py-1 rounded border border-[#106011]/30 uppercase font-black">
+            Active Dropper Hub
+          </span>
+          <h1 className="text-3xl font-bold mt-2">DROPPER DASHBOARD</h1>
+          <p className="text-emerald-400">Tactical Sector Field Operations</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-sm">Location Sharing</span>
+        <div className="flex items-center gap-3 bg-zinc-950 border-2 border-[#106011]/40 rounded-xl p-2 px-4 shadow-[0_0_15px_rgba(16,96,17,0.15)]">
+          <span className="text-xs font-mono tracking-wider text-slate-300 flex items-center gap-1.5">
+            {hasActiveDrops ? (
+              <Lock className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+            ) : (
+              <Unlock className="w-3.5 h-3.5 text-slate-500" />
+            )}
+            LOCATION_UPLINK:
+          </span>
           <button
-            onClick={() => setLocationSharing(!locationSharing)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              locationSharing 
-                ? 'bg-emerald-600 text-white' 
-                : 'bg-zinc-700 text-zinc-300'
+            onClick={handleToggleLocationSharing}
+            className={`px-4 py-1.5 rounded-lg text-[10px] font-mono tracking-widest uppercase font-black transition-all ${
+              activeLocationSharing 
+                ? 'bg-emerald-600 text-black shadow-[0_0_10px_rgba(16,96,17,0.5)]' 
+                : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
             }`}
           >
-            {locationSharing ? 'ON' : 'OFF'}
+            {activeLocationSharing ? 'LOCKED_ON' : 'STANDBY'}
           </button>
         </div>
       </div>

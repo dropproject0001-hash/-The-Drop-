@@ -12,7 +12,7 @@ interface Analytics {
   completedDrops: number;
 }
 
-type Role = 'super_admin' | 'dropper' | 'client';
+type Role = 'super_admin' | 'admin' | 'dropper' | 'client';
 
 interface User {
   id: string;
@@ -147,7 +147,7 @@ export default function SuperAdminDashboard() {
     <div className="p-6 max-w-7xl mx-auto text-white">
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-4xl font-bold mb-2">SUPER ADMIN DASHBOARD</h1>
+          <h1 className="text-4xl font-bold mb-2">TACTICAL COMMAND DASHBOARD</h1>
           <p className="text-[#106011]">Droppin Ops — Command &amp; Control</p>
         </div>
         <div className="flex gap-4">

@@ -60,7 +60,13 @@ export function useMissionLogger() {
         };
         checkProximity();
       },
-      (err) => console.error('[MissionLogger] GPS Error:', err),
+      (err) => {
+        if (err.code === 1) {
+          console.warn('[MissionLogger] Geolocation permission denied or blocked by policy.');
+        } else {
+          console.error(`[MissionLogger] GPS Error [${err.code}]:`, err.message);
+        }
+      },
       { enableHighAccuracy: true }
     );
 

@@ -22,7 +22,16 @@ export function useOTP() {
         }
       });
 
-      if (invokeError) throw invokeError;
+      if (invokeError) {
+        let errorMsg = invokeError.message;
+        if (invokeError.context && typeof invokeError.context.json === 'function') {
+          try {
+             const errData = await invokeError.context.json();
+             if (errData && errData.error) errorMsg = errData.error;
+          } catch(e) {}
+        }
+        throw new Error(errorMsg);
+      }
       if (data?.error) throw new Error(data.error);
 
       await startListeningForOTP();
@@ -50,7 +59,21 @@ export function useOTP() {
         }
       });
 
-      if (invokeError) throw invokeError;
+      if (invokeError) {
+        let errorMsg = invokeError.message;
+        if (invokeError.context && typeof invokeError.context.json === 'function') {
+          try {
+             const errData = await invokeError.context.json();
+             if (errData && errData.error) {
+               errorMsg = errData.error;
+               if (errData.attempts_remaining !== undefined) {
+                 errorMsg += ` (${errData.attempts_remaining} attempts left)`;
+               }
+             }
+          } catch(e) {}
+        }
+        throw new Error(errorMsg);
+      }
       if (data?.error) throw new Error(data.error);
 
       // Note: verify-otp currently just returns success.

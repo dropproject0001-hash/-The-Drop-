@@ -163,7 +163,7 @@ export function LocationDebugPanel({ visible = true }: DebugPanelProps) {
               <span className="text-emerald-400 text-[10px]">{history.length > 0 ? `${history[history.length-1].kb} KB` : '0 KB'}</span>
             </div>
             <div className="h-24 w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <LineChart data={history} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                   <XAxis dataKey="time" hide />

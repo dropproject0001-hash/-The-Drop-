@@ -19,7 +19,13 @@ export function useProximityTTS() {
           lng: pos.coords.longitude
         };
       },
-      (err) => console.error('[useProximityTTS] GPS Error:', err),
+      (err) => {
+        if (err.code === 1) {
+          console.warn('[useProximityTTS] Geolocation permission denied or blocked by policy.');
+        } else {
+          console.error(`[useProximityTTS] GPS Error [${err.code}]:`, err.message);
+        }
+      },
       { enableHighAccuracy: true }
     );
 
