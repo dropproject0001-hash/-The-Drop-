@@ -1,96 +1,120 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+    )
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    // 1. Verify Requester is Super Admin
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized')
 
-    // ✅ SECURE: Use caller's JWT from Authorization header
-    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: req.headers.get("Authorization")! } },
-    });
-
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { 
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
-    }
-
-    // Verify caller is actually super_admin
-    const { data: callerProfile } = await supabaseAdmin
+    const { data: profile, error: profileCheckError } = await supabaseClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single();
+      .single()
 
-    if (callerProfile?.role !== 'super_admin') {
-      return new Response(JSON.stringify({ error: "Forbidden: Only Super Admin can create accounts" }), { 
-        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    if (profileCheckError || profile?.role !== 'super_admin') {
+      console.error(`[Auth] Unauthorized attempt by user ${user.id} with role ${profile?.role}`)
+      return new Response(JSON.stringify({ error: 'RESTRICTED_ACCESS: SUPER_ADMIN_ONLY' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 403,
+      })
+    }
+
+    const { username, password, phone, role } = await req.json()
+    const email = `${username}@internal.droppinops.local`
+
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    console.log(`[CreateUser] Initializing ${role} account: ${username} (${email})`)
+
+    // 2. Check if user already exists in Auth
+    let targetUserId: string | null = null;
+    const { data: { users: existingUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+
+    if (listError) throw listError;
+
+    const existingUser = existingUsers?.find(u => u.email === email);
+
+    if (existingUser) {
+      console.log(`[CreateUser] User already exists in Auth: ${existingUser.id}. Checking profile...`);
+      targetUserId = existingUser.id;
+    } else {
+      // 3. Create the User in Auth
+      const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { username, role }
+      });
+
+      if (createError) {
+        console.error(`[CreateUser] Auth creation failed:`, createError.message);
+        return new Response(JSON.stringify({ error: `AUTH_FAILURE: ${createError.message}` }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        });
+      }
+      targetUserId = authData.user.id;
+    }
+
+    // 4. Upsert Profile (Ensure record exists and has correct role)
+    const { error: upsertError } = await supabaseAdmin
+      .from('profiles')
+      .upsert({
+        id: targetUserId,
+        username: username,
+        role: role,
+        phone: phone || null,
+        display_name: username,
+        is_online: false
+      }, { onConflict: 'id' });
+
+    if (upsertError) {
+      console.error(`[CreateUser] Profile upsert failed:`, upsertError);
+      return new Response(JSON.stringify({ error: `PROFILE_FAILURE: ${upsertError.message}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
       });
     }
 
-    const { username, password, phone, role = 'dropper' } = await req.json();
-
-    const email = `${username}@internal.droppinops.local`;
-
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      phone: phone || undefined,
-      email_confirm: true,
-      user_metadata: { username, role },
-      app_metadata: { user_role: role }  // ✅ Also set app_metadata
-    });
-
-    if (authError) throw authError;
-
-    // Upsert profile (more robust)
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .upsert({ 
-        id: authData.user.id,
-        role,
-        display_name: username 
-      }, { onConflict: 'id' });
-
-    if (profileError) throw profileError;
-
-    // Audit log
+    // 5. Log activity
     await supabaseAdmin.from('activity_log').insert({
       actor_id: user.id,
       action: 'create_account',
       entity_type: 'profile',
-      entity_id: authData.user.id,
+      entity_id: targetUserId,
       meta: { username, role, email }
     });
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      user: authData.user,
-      message: `${role.toUpperCase()} account created successfully for @${username}` 
-    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true, userId: targetUserId }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    })
 
-  } catch (error: any) {
-    console.error("[create-dropper]", error);
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-    });
+  } catch (error) {
+    console.error(`[CreateUser] Critical Exception:`, error.message)
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    })
   }
-});
+})
