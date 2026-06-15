@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Save, Crosshair, Camera, Video, User } from 'lucide-react';
+import { Save, Crosshair, Camera, Video, User, Package } from 'lucide-react';
 import { useToast } from '@/components/ui/ToastContainer';
 import { AfterDropModal } from './AfterDropModal';
 import { useAuth } from '@/app/providers/AuthContext';

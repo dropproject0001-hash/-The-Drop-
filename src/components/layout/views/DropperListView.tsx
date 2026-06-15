@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Users, Shield, Radio, Lock, Unlock, MapPin, Activity, Clock } from 'lucide-react';
 import { useToast } from '@/components/ui/ToastContainer';
 
-export function DropperListView() {
+export function DropperListView({ onSwitchToChat }: { onSwitchToChat?: () => void }) {
   const [operatives, setOperatives] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();

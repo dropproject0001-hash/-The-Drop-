@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { BaseLayout } from '@/components/layout/BaseLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -57,8 +57,9 @@ export function AppRouter() {
             <Route index element={<RoleRouter />} />
             
             {/* Boss Portals */}
+            <Route path="super-admin/dashboard" element={<Navigate to="/super-admin" replace />} />
             <Route 
-              path="super-admin/dashboard" 
+              path="super-admin"
               element={
                 <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
                   <SuperAdminDashboard />

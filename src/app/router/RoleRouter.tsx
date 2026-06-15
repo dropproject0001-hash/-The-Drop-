@@ -23,7 +23,7 @@ export function RoleRouter() {
 
   // Boss Hierarchy: super_admin and admin are same role
   if (profile.role === 'super_admin' || profile.role === 'admin') {
-    return <Navigate to="/super-admin/dashboard" replace />;
+    return <Navigate to="/super-admin" replace />;
   }
 
   switch (profile.role) {
