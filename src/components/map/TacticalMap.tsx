@@ -85,7 +85,43 @@ export function TacticalMap() {
     );
   }
 
-  const mapCenter: [number, number] = coords ? [coords.latitude, coords.longitude] : [0, 0];
+  const mapCenter: [number, number] = React.useMemo(() =>
+    coords ? [coords.latitude, coords.longitude] : [0, 0],
+    [coords?.latitude, coords?.longitude]
+  );
+
+  // ⚡ PERFORMANCE OPTIMIZATION: Memoize simulated tactical asset positions
+  // Prevents recreation of coordinate arrays on every render cycle,
+  // which would trigger MapMarker re-renders despite React.memo.
+  const simulatedAssets = React.useMemo(() => {
+    if (!coords) return [];
+    return [
+      {
+        position: [coords.latitude + 0.002, coords.longitude + 0.002] as [number, number],
+        type: 'drop' as const,
+        status: 'pending' as const,
+        label: 'DROP_ALPHA',
+        id: 'DRO-7721',
+        description: 'Secure package awaiting deployment.'
+      },
+      {
+        position: [coords.latitude - 0.001, coords.longitude + 0.003] as [number, number],
+        type: 'pickup' as const,
+        status: 'verified' as const,
+        label: 'PICKUP_BETA',
+        id: 'PIC-9902',
+        description: 'Inventory verified and secured by field unit.'
+      },
+      {
+        position: [coords.latitude + 0.003, coords.longitude - 0.001] as [number, number],
+        type: 'depot' as const,
+        status: 'alert' as const,
+        label: 'SECTOR_JAMMER',
+        id: 'JAM-001',
+        description: 'CRITICAL: Signal interference detected at this coordinate.'
+      }
+    ];
+  }, [coords?.latitude, coords?.longitude]);
 
   return (
     <div className="w-full h-full tactical-map relative overflow-hidden group">
@@ -126,32 +162,17 @@ export function TacticalMap() {
             />
 
             {/* Simulated Tactical Assets */}
-            <MapMarker 
-              position={[coords.latitude + 0.002, coords.longitude + 0.002]} 
-              type="drop" 
-              status="pending" 
-              label="DROP_ALPHA" 
-              id="DRO-7721"
-              description="Secure package awaiting deployment."
-            />
-
-            <MapMarker 
-              position={[coords.latitude - 0.001, coords.longitude + 0.003]} 
-              type="pickup" 
-              status="verified" 
-              label="PICKUP_BETA" 
-              id="PIC-9902"
-              description="Inventory verified and secured by field unit."
-            />
-
-            <MapMarker 
-              position={[coords.latitude + 0.003, coords.longitude - 0.001]} 
-              type="depot" 
-              status="alert" 
-              label="SECTOR_JAMMER" 
-              id="JAM-001"
-              description="CRITICAL: Signal interference detected at this coordinate."
-            />
+            {simulatedAssets.map(asset => (
+              <MapMarker
+                key={asset.id}
+                position={asset.position}
+                type={asset.type}
+                status={asset.status}
+                label={asset.label}
+                id={asset.id}
+                description={asset.description}
+              />
+            ))}
           </>
         )}
       </MapContainer>

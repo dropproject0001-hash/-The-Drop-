@@ -27,18 +27,19 @@ const colors = {
   alert: '#ef4444',    // Red
 };
 
-// Create a transparent div icon container as Leaflet's render root
-const createFramerIcon = () => {
-  return L.divIcon({
-    className: 'framer-tactical-marker-root',
-    html: '<div class="framer-portal-root w-10 h-10 flex items-center justify-center"></div>',
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
-    popupAnchor: [0, -20]
-  });
-};
+/**
+ * Static Leaflet Icon for Framer Tactical Markers.
+ * Defined outside the component to prevent unnecessary object creation on every render.
+ */
+const FRAMER_TACTICAL_ICON = L.divIcon({
+  className: 'framer-tactical-marker-root',
+  html: '<div class="framer-portal-root w-10 h-10 flex items-center justify-center"></div>',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20]
+});
 
-export function MapMarker({ 
+function MapMarkerComponent({
   position, 
   status = 'active', 
   type = 'drop', 
@@ -85,7 +86,7 @@ export function MapMarker({
       <Marker 
         ref={markerRef}
         position={position} 
-        icon={createFramerIcon()}
+        icon={FRAMER_TACTICAL_ICON}
         eventHandlers={{
           click: onClick,
         }}
@@ -222,3 +223,26 @@ export function MapMarker({
     </>
   );
 }
+
+/**
+ * ⚡ PERFORMANCE OPTIMIZATION: React.memo with custom comparison
+ * Prevents re-renders unless coordinates or critical metadata change.
+ * Leaflet's marker system is sensitive to DOM thrashing, so this significantly
+ * reduces CPU overhead during frequent live location updates.
+ */
+export const MapMarker = React.memo(MapMarkerComponent, (prev, next) => {
+  // Check coordinate equality (value-based array comparison)
+  const posEqual = prev.position[0] === next.position[0] && prev.position[1] === next.position[1];
+
+  // Check other scalar props
+  return (
+    posEqual &&
+    prev.status === next.status &&
+    prev.type === next.type &&
+    prev.label === next.label &&
+    prev.id === next.id &&
+    prev.description === next.description &&
+    prev.onClick === next.onClick &&
+    prev.children === next.children
+  );
+});
