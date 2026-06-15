@@ -10,8 +10,8 @@
 
 | # | Task | Description | Estimated Effort | Priority | Status |
 |---|------|-------------|------------------|----------|--------|
-| 1 | **Replace remaining `alert()` calls** | Search the entire codebase for `alert(` and replace with `useToast()`. Focus on `CreateDropScreen.tsx`, error handlers, and admin flows. | Low (2–4 hours) | Critical | In Progress |
-| 2 | **Apply Database Trigger** | Run `prevent_invalid_drop_status()` trigger in Supabase SQL Editor. This is the last line of defense for drop lifecycle integrity. | Low (15 mins) | Critical | Pending |
+| 1 | **Replace remaining `alert()` calls** | Search the entire codebase for `alert(` and replace with `useToast()`. Focus on `CreateDropScreen.tsx`, error handlers, and admin flows. | Low (2–4 hours) | Critical | Done |
+| 2 | **Apply Database Trigger** | Run `prevent_invalid_drop_status()` trigger in Supabase SQL Editor. This is the last line of defense for drop lifecycle integrity. | Low (15 mins) | Critical | Done |
 | 3 | **Schedule Auto-Expiration Edge Function** | Deploy `expire-drops` function and set it to run every 6 hours using Supabase Cron or an external scheduler. | Medium (2–3 hours) | High | Skeleton Done |
 | 4 | **Strengthen PIN System** | Move from environment variable to fetching PINs from a secure `app_settings` table in Supabase (already partially implemented). | Medium (3–4 hours) | High | Partial |
 | 5 | **Add ErrorBoundary** | Wrap main routes (especially `DropMap` and dashboards) with the `ErrorBoundary` component to prevent full app crashes. | Low (1–2 hours) | High | Recommended |
