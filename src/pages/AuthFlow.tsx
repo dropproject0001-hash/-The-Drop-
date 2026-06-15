@@ -96,7 +96,7 @@ export default function AuthFlow() {
 
   const routeByRole = (role: string | null) => {
     if (role === 'super_admin' || role === 'admin') {
-      navigate('/super-admin/dashboard', { replace: true });
+      navigate('/super-admin', { replace: true });
     } else if (role === 'dropper') {
       navigate('/dropper', { replace: true });
     } else if (role === 'client') {

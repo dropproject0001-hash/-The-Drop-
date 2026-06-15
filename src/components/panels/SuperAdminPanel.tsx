@@ -5,14 +5,14 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/ToastContainer';
 import EncryptedChat from '@/components/EncryptedChat';
 
-const TacticalMap = lazy(() => import('@/components/map/TacticalMap'));
+const TacticalMap = lazy(() => import('@/components/map/TacticalMap').then(m => ({ default: m.TacticalMap })));
 const DropperListView = lazy(() => import('@/components/layout/views/DropperListView').then(m => ({ default: m.DropperListView })));
 const CargoBayView = lazy(() => import('@/components/layout/views/CargoBayView').then(m => ({ default: m.CargoBayView })));
 
 export function SuperAdminPanel() {
   const { profile } = useAuth();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'monitor' | 'operatives' | 'inventory' | 'comms'>('monitor');
+  const [activeTab, setActiveTab] = useState<'monitor' | 'operatives' | 'inventory' | 'comms' | 'settings'>('monitor');
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   return (

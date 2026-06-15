@@ -38,7 +38,7 @@ export function AuthPage() {
         is_online: true,
         last_seen: new Date().toISOString(),
         push_endpoint: null,
-        push_keys: null,
+        push_keys: null, tracking_locked: false,
         created_at: new Date().toISOString()
       });
       setLoading(false);
@@ -72,7 +72,7 @@ export function AuthPage() {
         is_online: true,
         last_seen: new Date().toISOString(),
         push_endpoint: null,
-        push_keys: null,
+        push_keys: null, tracking_locked: false,
         created_at: new Date().toISOString()
     });
   };
