@@ -1,38 +1,75 @@
 import { createClient } from '@supabase/supabase-js';
+import { secureStorage } from './secureStorage';
 
-const rawUrl = ((import.meta as any).env.VITE_SUPABASE_URL || '').trim();
-const rawKey = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY || '').trim();
+export const rawUrl = ((import.meta as any).env.VITE_SUPABASE_URL || '').trim();
+export const rawKey = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY || '').trim();
 
-// Ensure a valid URL format for Supabase client creation to avoid "Invalid URL" crash
-const isUrlValid = rawUrl.includes('.') && (rawUrl.startsWith('http') || rawUrl.length > 4);
-const supabaseUrl = isUrlValid 
-  ? (rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`)
-  : 'https://placeholder.supabase.co';
+/**
+ * Validates Supabase credentials
+ */
+export function validateSupabaseCredentials() {
+  const errors: string[] = [];
 
-const supabaseAnonKey = rawKey.length > 10 ? rawKey : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy-key';
+  if (!rawUrl) {
+    errors.push('VITE_SUPABASE_URL is missing.');
+  } else if (!rawUrl.startsWith('https://')) {
+    errors.push('VITE_SUPABASE_URL must start with https://');
+  } else if (!rawUrl.includes('.supabase.co')) {
+    errors.push('VITE_SUPABASE_URL must be a valid .supabase.co domain.');
+  }
 
-const hasValidCredentials = isUrlValid && rawUrl.includes('supabase.co') && rawKey.length > 20;
+  if (!rawKey) {
+    errors.push('VITE_SUPABASE_ANON_KEY is missing.');
+  } else if (rawKey.length < 20) {
+    errors.push('VITE_SUPABASE_ANON_KEY is too short to be a valid JWT.');
+  }
 
-if (!hasValidCredentials) {
-  console.warn(
-    '[Supabase] Missing or invalid VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY.\n' +
-    'The app is running in offline/placeholder mode.'
-  );
+  return {
+    isValid: errors.length === 0,
+    errors,
+    url: rawUrl,
+    key: rawKey
+  };
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
+const validation = validateSupabaseCredentials();
+
+if (!validation.isValid) {
+  console.error('[Supabase] CONFIGURATION ERROR(S):', validation.errors.join(' '));
+}
+
+// Custom storage adapter for Supabase that uses encrypted secureStorage
+const customStorage = {
+  getItem: (key: string) => secureStorage.getItem(key),
+  setItem: (key: string, value: string) => secureStorage.setItem(key, value),
+  removeItem: (key: string) => secureStorage.removeItem(key),
+};
+
+// Ensure the client is created even with invalid credentials to avoid breakage in early boot,
+// but it will fail on use. The EnvChecker will block the UI if invalid.
+export const supabase = createClient(
+  validation.isValid ? rawUrl : 'https://placeholder.supabase.co',
+  validation.isValid ? rawKey : 'placeholder-key-do-not-use',
+  {
+    auth: {
+      storage: customStorage as any,
+      persistSession: true,
+      autoRefreshToken: true,
     },
-  },
-});
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
+    },
+  }
+);
 
-console.log('[Supabase] Initialized with URL:', supabaseUrl, 'and Configured:', hasValidCredentials);
+console.log('[Supabase] Initialized. Configured:', validation.isValid);
 
-export const isSupabaseConfigured = hasValidCredentials;
+export const isSupabaseConfigured = validation.isValid;
+export const supabaseValidationErrors = validation.errors;
 
+export function getSupabaseErrorMessage(): string | null {
+  if (isSupabaseConfigured) return null;
+  return validation.errors.length > 0 ? `Configuration Error: ${validation.errors[0]}` : 'Unknown Configuration Error';
+}

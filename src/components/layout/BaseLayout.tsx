@@ -5,7 +5,7 @@ import { GlobalModals } from '@/components/ui/GlobalModals';
 import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart, LogOut, RefreshCw, Wifi, WifiOff, Shield, Terminal, Sparkles, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LocationSyncWidget } from '@/components/common/LocationSyncWidget';
 
-import { CargoBayView } from './views/CargoBayView';
+import CargoBayView from './views/CargoBayView';
 import { ChatBoxView } from './views/ChatBoxView';
 import { DropperListView } from './views/DropperListView';
 import { UserRosterView } from './views/UserRosterView';

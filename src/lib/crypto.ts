@@ -1,24 +1,101 @@
 import CryptoJS from 'crypto-js';
-
-const SECRET_KEY = 'THE-DROP-SECRET-KEY-CHANGE-THIS'; // In production, this should be fetched or more complex
+import { supabase } from './supabase';
 
 /**
- * Simple AES encryption for chat notes and messages
- * Synchronous to match simple field ops requirements
+ * SECURE CRYPTO UTILITY
+ * Fetches the encryption key from the database at runtime.
+ * Removes hardcoded secrets from the source code.
  */
-export function encryptNote(note: string): string {
-  if (!note) return '';
-  return CryptoJS.AES.encrypt(note, SECRET_KEY).toString();
+
+let memoizedKey: string | null = null;
+let keyFetchPromise: Promise<string | null> | null = null;
+
+/**
+ * Fetches the crypto secret from app_settings table
+ */
+async function getCryptoSecret(): Promise<string | null> {
+  if (memoizedKey) return memoizedKey;
+  if (keyFetchPromise) return keyFetchPromise;
+
+  keyFetchPromise = (async () => {
+    try {
+      // First check environment variable (for local dev override)
+      const envKey = import.meta.env.VITE_CRYPTO_SECRET;
+      if (envKey && envKey.length >= 32) {
+        memoizedKey = envKey;
+        return envKey;
+      }
+
+      // Fetch from database
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'crypto_secret_key')
+        .single();
+
+      if (error || !data) {
+        console.warn('[Crypto] Encryption key not found in database or unauthorized. Fallback to plaintext.');
+        return null;
+      }
+
+      memoizedKey = data.value;
+      return data.value;
+    } catch (err) {
+      console.error('[Crypto] Failed to fetch encryption key:', err);
+      return null;
+    } finally {
+      keyFetchPromise = null;
+    }
+  })();
+
+  return keyFetchPromise;
 }
 
-export function decryptNote(encryptedBase64: string): string {
-  if (!encryptedBase64) return '';
+/**
+ * Encrypts a note asynchronously using the fetched key
+ */
+export async function encryptNote(note: string): Promise<string> {
+  if (!note) return '';
+
+  const key = await getCryptoSecret();
+  if (!key) {
+    console.warn('[Crypto] Encryption skipped: No key available.');
+    return note;
+  }
+
   try {
-    const bytes = CryptoJS.AES.decrypt(encryptedBase64, SECRET_KEY);
+    return CryptoJS.AES.encrypt(note, key).toString();
+  } catch (err) {
+    console.error('[Crypto] Encryption failed:', err);
+    return note;
+  }
+}
+
+/**
+ * Decrypts a note asynchronously
+ */
+export async function decryptNote(encryptedBase64: string): Promise<string> {
+  if (!encryptedBase64) return '';
+
+  const key = await getCryptoSecret();
+  if (!key) {
+    return '[Encryption Key Not Available]';
+  }
+
+  try {
+    const bytes = CryptoJS.AES.decrypt(encryptedBase64, key);
     const originalText = bytes.toString(CryptoJS.enc.Utf8);
     return originalText || '[Encrypted]';
   } catch (err) {
-    console.error('Decryption failed', err);
+    console.error('[Crypto] Decryption failed:', err);
     return '[Decryption Failed]';
   }
+}
+
+/**
+ * Checks if encryption is available
+ */
+export async function isEncryptionAvailable(): Promise<boolean> {
+  const key = await getCryptoSecret();
+  return !!key;
 }
