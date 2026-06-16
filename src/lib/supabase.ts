@@ -1,34 +1,36 @@
 import { createClient } from '@supabase/supabase-js';
 import { secureStorage } from './secureStorage';
 
-export const rawUrl = ((import.meta as any).env.VITE_SUPABASE_URL || '').trim();
-export const rawKey = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY || '').trim();
+export const rawUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+export const rawKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 /**
  * Validates Supabase credentials
  */
-export function validateSupabaseCredentials() {
+export function validateSupabaseCredentials(url?: string, key?: string) {
   const errors: string[] = [];
+  const targetUrl = url !== undefined ? url : rawUrl;
+  const targetKey = key !== undefined ? key : rawKey;
 
-  if (!rawUrl) {
+  if (!targetUrl) {
     errors.push('VITE_SUPABASE_URL is missing.');
-  } else if (!rawUrl.startsWith('https://')) {
+  } else if (!targetUrl.startsWith('https://')) {
     errors.push('VITE_SUPABASE_URL must start with https://');
-  } else if (!rawUrl.includes('.supabase.co')) {
+  } else if (!targetUrl.includes('.supabase.co')) {
     errors.push('VITE_SUPABASE_URL must be a valid .supabase.co domain.');
   }
 
-  if (!rawKey) {
+  if (!targetKey) {
     errors.push('VITE_SUPABASE_ANON_KEY is missing.');
-  } else if (rawKey.length < 20) {
+  } else if (targetKey.length < 20) {
     errors.push('VITE_SUPABASE_ANON_KEY is too short to be a valid JWT.');
   }
 
   return {
     isValid: errors.length === 0,
     errors,
-    url: rawUrl,
-    key: rawKey
+    url: targetUrl,
+    key: targetKey
   };
 }
 

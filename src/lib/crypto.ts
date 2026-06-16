@@ -11,6 +11,14 @@ let memoizedKey: string | null = null;
 let keyFetchPromise: Promise<string | null> | null = null;
 
 /**
+ * Internal helper to reset memoized key (for testing only)
+ */
+export function _resetMemoizedKey() {
+  memoizedKey = null;
+  keyFetchPromise = null;
+}
+
+/**
  * Fetches the crypto secret from app_settings table
  */
 async function getCryptoSecret(): Promise<string | null> {
