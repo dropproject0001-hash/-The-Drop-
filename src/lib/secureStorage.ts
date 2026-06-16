@@ -3,9 +3,10 @@
  * Provides AES-GCM encrypted storage for sensitive data in the browser.
  * Uses the Web Crypto API (SubtleCrypto) for hardware-accelerated encryption.
  */
+import { env } from './env';
 
 const STORAGE_PREFIX = 'the-drop-secure-';
-const MASTER_KEY_SALT = 'the-drop-tactical-salt-2026';
+const DEFAULT_SALT = 'the-drop-tactical-salt-2026';
 
 /**
  * Derived key for encryption
@@ -15,9 +16,9 @@ let memoizedKey: CryptoKey | null = null;
 async function getEncryptionKey(): Promise<CryptoKey> {
   if (memoizedKey) return memoizedKey;
 
-  // In a real tactical environment, we might derive this from a user's PIN or device fingerprint
-  // For now, we use a stable derivation based on the environment
-  const baseSecret = import.meta.env.VITE_CRYPTO_SECRET || 'THE-DROP-SECURE-STORAGE-DEFAULT-SECRET';
+  // Key derivation parameters
+  const baseSecret = env.CRYPTO_SECRET || 'THE-DROP-SECURE-STORAGE-DEFAULT-SECRET';
+  const salt = env.SECURE_STORAGE_SALT || DEFAULT_SALT;
 
   const encoder = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
@@ -31,7 +32,7 @@ async function getEncryptionKey(): Promise<CryptoKey> {
   memoizedKey = await crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: encoder.encode(MASTER_KEY_SALT),
+      salt: encoder.encode(salt),
       iterations: 100000,
       hash: 'SHA-256',
     },
@@ -68,8 +69,6 @@ export const secureStorage = {
       localStorage.setItem(`${STORAGE_PREFIX}${key}`, base64);
     } catch (error) {
       console.error('[SecureStorage] Encryption failed:', error);
-      // Fallback to plain storage in non-secure contexts if absolutely necessary,
-      // but here we prefer security
       throw error;
     }
   },

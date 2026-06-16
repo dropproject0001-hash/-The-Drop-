@@ -1,4 +1,5 @@
 import { validateSupabaseCredentials } from './supabase';
+import { env } from './env';
 
 /**
  * Validates the current environment configuration.
@@ -11,8 +12,12 @@ export function validateEnv() {
   const warnings: string[] = [];
 
   // Check optional but recommended vars
-  if (!import.meta.env.VITE_CRYPTO_SECRET) {
+  if (!env.CRYPTO_SECRET) {
     warnings.push('VITE_CRYPTO_SECRET is missing. App will use database-stored key.');
+  }
+
+  if (!env.SECURE_STORAGE_SALT) {
+    warnings.push('VITE_SECURE_STORAGE_SALT is missing. Using default tactical salt.');
   }
 
   return {

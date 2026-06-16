@@ -11,6 +11,15 @@ let memoizedKey: string | null = null;
 let keyFetchPromise: Promise<string | null> | null = null;
 
 /**
+ * INTERNAL USE ONLY: Resets the memoized key state.
+ * Used for unit testing to ensure fresh key fetch logic is exercised.
+ */
+export function _resetCryptoState(): void {
+  memoizedKey = null;
+  keyFetchPromise = null;
+}
+
+/**
  * Fetches the crypto secret from app_settings table
  */
 async function getCryptoSecret(): Promise<string | null> {
@@ -85,7 +94,13 @@ export async function decryptNote(encryptedBase64: string): Promise<string> {
   try {
     const bytes = CryptoJS.AES.decrypt(encryptedBase64, key);
     const originalText = bytes.toString(CryptoJS.enc.Utf8);
-    return originalText || '[Encrypted]';
+
+    // If originalText is empty but input was not, it's a decryption failure
+    if (!originalText && encryptedBase64) {
+      return '[Decryption Failed]';
+    }
+
+    return originalText;
   } catch (err) {
     console.error('[Crypto] Decryption failed:', err);
     return '[Decryption Failed]';

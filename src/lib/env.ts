@@ -1,7 +1,9 @@
 // src/lib/env.ts
-// Cleaned: Removed all legacy variables (project migrated to Supabase)
-// FIX C-1: Harden to prevent boot-time crash. 
-// Values are still accessed, but errors are caught and validateEnv handles reporting.
+/**
+ * ENVIRONMENT VARIABLE MANAGEMENT
+ * Centralizes access to all environment variables.
+ * Handles validation and provides sensible fallbacks for development.
+ */
 
 interface EnvConfig {
   SUPABASE_URL: string;
@@ -9,6 +11,8 @@ interface EnvConfig {
   GEMINI_API_KEY?: string;
   VAPID_PUBLIC_KEY?: string;
   STADIA_API_KEY?: string;
+  CRYPTO_SECRET?: string;
+  SECURE_STORAGE_SALT?: string;
 }
 
 function getEnvVar(key: string, required = true): string {
@@ -25,16 +29,18 @@ function getEnvVar(key: string, required = true): string {
   }
 }
 
-// Module-level state; won't throw now.
+// Module-level state
 export const env: EnvConfig = {
   SUPABASE_URL: getEnvVar('VITE_SUPABASE_URL'),
   SUPABASE_ANON_KEY: getEnvVar('VITE_SUPABASE_ANON_KEY'),
   GEMINI_API_KEY: getEnvVar('GEMINI_API_KEY', false),
   VAPID_PUBLIC_KEY: getEnvVar('VITE_VAPID_PUBLIC_KEY', false),
   STADIA_API_KEY: getEnvVar('VITE_STADIA_API_KEY', false),
+  CRYPTO_SECRET: getEnvVar('VITE_CRYPTO_SECRET', false),
+  SECURE_STORAGE_SALT: getEnvVar('VITE_SECURE_STORAGE_SALT', false),
 };
 
-// Optional: Runtime validation helper
+// Runtime validation helper
 export interface EnvValidationResult {
   ok: boolean;
   missing: string[];
