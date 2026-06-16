@@ -38,7 +38,7 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   return R * c;
 }
 
-export function CompassOverlay({ userPosition, targetDrop }: CompassOverlayProps) {
+function CompassOverlayComponent({ userPosition, targetDrop }: CompassOverlayProps) {
   const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(
     typeof (DeviceOrientationEvent as any)?.requestPermission === 'function' ? null : true
@@ -190,3 +190,10 @@ export function CompassOverlay({ userPosition, targetDrop }: CompassOverlayProps
     </div>
   );
 }
+
+/**
+ * ⚡ PERFORMANCE OPTIMIZATION: React.memo
+ * Prevents re-calculation of trigonometric bearings and re-rendering
+ * of the compass dial unless the operative's position or target changes.
+ */
+export const CompassOverlay = React.memo(CompassOverlayComponent);
