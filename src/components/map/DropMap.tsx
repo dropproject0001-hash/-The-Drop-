@@ -156,9 +156,15 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
     if (!navigator.geolocation) return;
 
     const handleSuccess = (pos: GeolocationPosition) => {
-      const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-      setUserPosition(coords);
-      setUserAccuracy(pos.coords.accuracy);
+      const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+
+      setUserPosition(prev => {
+        // ⚡ PERFORMANCE OPTIMIZATION: Maintain stable array reference
+        // if coordinates haven't changed to prevent cascading re-renders.
+        if (prev && prev[0] === lat && prev[1] === lng) return prev;
+        return [lat, lng];
+      });
+      setUserAccuracy(accuracy);
     };
 
     const handleError = (err: GeolocationPositionError) => {
@@ -168,9 +174,14 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
     // Fast initial coordinates resolution
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-        setUserPosition(coords);
-        setUserAccuracy(pos.coords.accuracy);
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        const coords: [number, number] = [lat, lng];
+
+        setUserPosition(prev => {
+          if (prev && prev[0] === lat && prev[1] === lng) return prev;
+          return coords;
+        });
+        setUserAccuracy(accuracy);
         setMapCenter(coords);
       },
       handleError,
