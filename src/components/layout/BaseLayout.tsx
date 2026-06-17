@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlobalModals } from '@/components/ui/GlobalModals';
-import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart, LogOut, RefreshCw, Wifi, WifiOff, Shield, Terminal, Sparkles, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Settings, Map as MapIcon, Package, MessageSquare, Activity, Users, ShieldAlert, Lock, Unlock, ShoppingCart, LogOut, RefreshCw, Wifi, WifiOff, Shield, Terminal, Sparkles, Volume2, ChevronLeft, ChevronRight, Radio } from 'lucide-react';
 import { LocationSyncWidget } from '@/components/common/LocationSyncWidget';
 
-import CargoBayView from './views/CargoBayView';
+import { CargoBayView } from './views/CargoBayView';
 import { ChatBoxView } from './views/ChatBoxView';
 import { DropperListView } from './views/DropperListView';
 import { UserRosterView } from './views/UserRosterView';
@@ -18,6 +18,9 @@ import { useRole } from '@/context/RoleContext';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useLocationOutboxStatus } from '@/hooks/useLocationOutboxStatus';
 import { useMissionLogger } from '@/hooks/useMissionLogger';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
+
+import SuperAdminLiveDashboard from '@/pages/SuperAdminLiveDashboard';
 
 import { SyncProgressBar } from '@/components/common/SyncProgressBar';
 import { OfflineAlert } from '@/components/common/OfflineAlert';
@@ -26,11 +29,12 @@ export function BaseLayout() {
   useMissionLogger();
   const { isClient, role, loading, isSuperAdmin } = useRole();
   const { signOut, profile } = useAuth();
+  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
   const navigate = useNavigate();
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [activeTab, setActiveTab] = useState<'map' | 'cargo' | 'chat' | 'droppers' | 'stocks' | 'settings' | 'roster' | 'copilot'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'cargo' | 'chat' | 'droppers' | 'stocks' | 'settings' | 'roster' | 'copilot' | 'live'>('map');
   const [voicePanelOpen, setVoicePanelOpen] = useState(false);
   const [voiceTriggerVisible, setVoiceTriggerVisible] = useState(false);
   
@@ -38,7 +42,7 @@ export function BaseLayout() {
 
   // Auto-redirect if client tries to access restricted tabs
   useEffect(() => {
-    if (!loading && isClient && (activeTab === 'cargo' || activeTab === 'stocks' || activeTab === 'droppers')) {
+    if (!loading && isClient && (activeTab === 'cargo' || activeTab === 'stocks' || activeTab === 'droppers' || activeTab === 'live')) {
       setActiveTab('map');
     }
   }, [activeTab, isClient, loading]);
@@ -192,6 +196,9 @@ export function BaseLayout() {
           )}
           {isSuperAdmin && (
             <NavItem icon={<Users className="w-5 h-5" />} active={activeTab === 'roster'} tooltip="Account Roster" label="SECURE ROSTER" isExpanded={isExpanded} onClick={() => setActiveTab('roster')} badge="FULL CONTROL" badgeStyle="border-red-900 bg-red-950/40 text-red-500 animate-pulse" />
+          )}
+          {isSuperAdmin && (
+            <NavItem icon={<Radio className="w-5 h-5" />} active={activeTab === 'live'} tooltip="God's Eye Live Operations" label="GODS EYE LIVE" isExpanded={isExpanded} onClick={() => setActiveTab('live')} badge="UPLINK" badgeStyle="border-emerald-500 bg-emerald-950/40 text-emerald-400 font-bold" />
           )}
         </nav>
         
@@ -422,6 +429,17 @@ export function BaseLayout() {
           </motion.div>
           
           <div className="flex items-center gap-5 relative z-10 pr-2">
+            
+            {isInstallable && (
+              <button
+                onClick={promptInstall}
+                className="flex items-center gap-1.5 px-2 py-1 bg-[#106011]/30 hover:bg-[#106011]/50 border border-[#0ad111]/50 hover:border-[#0ad111] text-[#0ad111] font-mono text-[9px] uppercase tracking-widest rounded-lg shadow-[0_0_10px_rgba(10,209,17,0.3)] transition-all"
+              >
+                <Terminal size={12} />
+                <span className="hidden sm:inline">INSTALL</span>
+              </button>
+            )}
+
             <LocationSyncWidget />
             
             {/* Account Login Indicator Badge */}
@@ -539,6 +557,7 @@ export function BaseLayout() {
                 {activeTab === 'stocks' && <StocksAnalysisView />}
                 {activeTab === 'settings' && <ControlSettingsView />}
                 {activeTab === 'roster' && isSuperAdmin && <UserRosterView />}
+                {activeTab === 'live' && isSuperAdmin && <SuperAdminLiveDashboard />}
                 {activeTab === 'copilot' && (
                   <div className="p-4 md:p-6 h-full flex flex-col justify-center max-w-2xl mx-auto w-full relative z-10">
                     <TacticalAIVoiceCompanion />

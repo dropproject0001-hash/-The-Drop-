@@ -1,38 +1,47 @@
-import { validateSupabaseCredentials } from './supabase';
+// src/lib/validateEnv.ts
+// Dedicated environment validation module (Supabase-only)
 
-/**
- * Validates the current environment configuration.
- * Used by the EnvChecker and CI/CD tools.
- */
-export function validateEnv() {
-  const supabase = validateSupabaseCredentials();
+export interface EnvValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
 
-  const errors: string[] = [...supabase.errors];
+export function validateEnv(): EnvValidationResult {
+  const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check optional but recommended vars
-  if (!import.meta.env.VITE_CRYPTO_SECRET) {
-    warnings.push('VITE_CRYPTO_SECRET is missing. App will use database-stored key.');
+  const supabaseUrl = ((import.meta as any).env.VITE_SUPABASE_URL || '').trim();
+  const supabaseKey = ((import.meta as any).env.VITE_SUPABASE_ANON_KEY || '').trim();
+
+  // Critical checks
+  if (!supabaseUrl) {
+    errors.push('VITE_SUPABASE_URL is missing');
+  } else if (!supabaseUrl.includes('supabase.co')) {
+    errors.push('VITE_SUPABASE_URL does not look like a valid Supabase URL');
+  }
+
+  if (!supabaseKey) {
+    errors.push('VITE_SUPABASE_ANON_KEY is missing');
+  } else if (supabaseKey.length < 30) {
+    errors.push('VITE_SUPABASE_ANON_KEY appears too short');
+  }
+
+  // Optional but recommended
+  const geminiKey = ((import.meta as any).env.GEMINI_API_KEY || '').trim();
+  if (!geminiKey) {
+    warnings.push('GEMINI_API_KEY is not set (AI features may be limited)');
   }
 
   return {
     isValid: errors.length === 0,
     errors,
-    warnings
+    warnings,
   };
 }
 
-// Allow running as a standalone script via tsx
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const result = validateEnv();
-  if (result.isValid) {
-    console.log('✅ [Env] Configuration is valid.');
-    if (result.warnings.length > 0) {
-      console.warn('⚠️ [Env] Warnings:', result.warnings);
-    }
-    process.exit(0);
-  } else {
-    console.error('❌ [Env] Configuration errors:', result.errors);
-    process.exit(1);
-  }
+export function getEnvValidationResult(): EnvValidationResult {
+  return validateEnv();
 }
+
+// Removed validateEnvOnStartup as it was causing crashes. Use getEnvValidationResult instead.

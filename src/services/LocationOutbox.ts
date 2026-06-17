@@ -135,7 +135,7 @@ export const LocationOutbox = {
     }
 
     if (errorOccurred) {
-      throw new Error('Some outbox items failed to sync to base.');
+      console.warn('[LocationOutbox] Some outbox items failed to sync to base. They will be retried automatically.');
     }
   }
 };

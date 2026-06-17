@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, Marker, Popup, Polyline } from 'react-leaflet';
+import { CachedTileLayer } from '@/components/map/CachedTileLayer';
 import { supabase } from '../lib/supabase';
 
 interface LocationUpdate {
@@ -57,7 +58,7 @@ export default function LiveDropTracker({ dropId }: { dropId: string }) {
         LIVE TELEMETRY
       </div>
       <MapContainer center={currentPosition} zoom={16} className="h-full w-full">
-        <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+        <CachedTileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
         
         {pathPositions.length > 0 && (
           <Polyline positions={pathPositions} color="#10b981" weight={3} />

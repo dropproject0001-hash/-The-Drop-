@@ -11,6 +11,7 @@ const SuperAdminSetup = React.lazy(() => import('@/pages/SuperAdminSetup'));
 const Unauthorized = React.lazy(() => import('@/pages/Unauthorized'));
 
 const SuperAdminPanel = React.lazy(() => import('@/components/panels/SuperAdminPanel').then(m => ({ default: m.SuperAdminPanel })));
+const SuperAdminLiveDashboard = React.lazy(() => import('@/pages/SuperAdminLiveDashboard'));
 const DropperPanel = React.lazy(() => import('@/components/panels/DropperPanel').then(m => ({ default: m.DropperPanel })));
 const ClientPanel = React.lazy(() => import('@/components/panels/ClientPanel').then(m => ({ default: m.ClientPanel })));
 const AdminPortal = React.lazy(() => import('@/features/portals/AdminPortal'));
@@ -55,6 +56,14 @@ export function AppRouter() {
               element={
                 <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
                   <SuperAdminPanel />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="super-admin/live" 
+              element={
+                <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                  <SuperAdminLiveDashboard />
                 </ProtectedRoute>
               } 
             />

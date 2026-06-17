@@ -1,121 +1,244 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores';
-import { useToast } from '@/components/ui/ToastContainer';
-import { encryptNote, decryptNote } from '@/lib/crypto';
-import { 
-  Package, MapPin, Lock, Unlock, QrCode, Search, Filter, Plus, Eye,
-  ChevronUp, Image, Video, Play, CornerDownRight
-} from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { encryptNote, decryptNote } from '@/lib/crypto';
+import { useToast } from '@/components/ui/ToastContainer';
+import { 
+  Package, ShieldCheck, Plus, Minus, FilePlus, RefreshCw, 
+  Lock, Unlock, Image, Video, MapPin, Upload, QrCode, 
+  Eye, CornerDownRight, CheckCircle2, AlertTriangle, Play 
+} from 'lucide-react';
 
-// Domain Types
-interface Drop {
+interface SystemCargo {
+  id: string;
+  name: string;
+  category: string;
+  qty: number;
+  location: string;
+  security: string;
+}
+
+interface DBDrop {
   id: string;
   title: string;
   lat: number;
   lng: number;
+  assigned_to: string | null;
   status: 'active' | 'claimed' | 'expired';
-  notes_encrypted: string | null;
   photo_url: string | null;
   video_url: string | null;
+  notes_encrypted: string | null;
   created_at: string;
 }
 
-export default function CargoBayView() {
+export function CargoBayView() {
   const { profile } = useAuthStore();
   const { showToast } = useToast();
   
-  // Local state for UI
-  const [drops, setDrops] = useState<Drop[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
-  const [decryptedNotes, setDecryptedNotes] = useState<Record<string, string>>({});
+  // View Modes: 'depot' (original system) vs 'locker' (covert evidence vault)
+  const [viewMode, setViewMode] = useState<'depot' | 'locker'>('locker');
   
-  // Create Drop Form state
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formTitle, setFormTitle] = useState('');
+  // --- STATE FOR ORIGINAL DEPOT STOCKS ---
+  const [cargo, setCargo] = useState<SystemCargo[]>([
+    { id: 'CRG-A01', name: 'Premium Supply Bundle', category: 'Tactical', qty: 15, location: 'Nueva Ecija Depot Area A', security: 'Level 4' },
+    { id: 'CRG-B04', name: 'Secured Rations Pack', category: 'Rations', qty: 42, location: 'Nueva Ecija West S1', security: 'Level 2' },
+    { id: 'CRG-C09', name: 'Emergency Transceiver Unit', category: 'Hardware', qty: 6, location: 'Cabanatuan Terminal B', security: 'Level 5' },
+    { id: 'CRG-D12', name: 'Encrypted Drop Locator Tag', category: 'GPS Tracker', qty: 29, location: 'Gapan Tactical Base', security: 'Level 4' },
+  ]);
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemCategory, setNewItemCategory] = useState('Tactical');
+  const [newItemQty, setNewItemQty] = useState(1);
+  const [logs, setLogs] = useState<string[]>([]);
+
+  // --- STATE FOR SECURE COVERT LOCKER (REAL EVIDENCE) ---
+  const [dbDrops, setDbDrops] = useState<DBDrop[]>([]);
+  const [loadingDrops, setLoadingDrops] = useState(false);
+  const [selectedDrop, setSelectedDrop] = useState<DBDrop | null>(null);
+  const [decryptedNotes, setDecryptedNotes] = useState<{ [key: string]: string }>({});
+  
+  // Create dropdown options
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [formName, setFormName] = useState('');
+  const [formLat, setFormLat] = useState('');
+  const [formLng, setFormLng] = useState('');
+  const [formPhoto, setFormPhoto] = useState<string | null>(null);
+  const [formVideo, setFormVideo] = useState<string | null>(null);
   const [formNotes, setFormNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Stats
-  const activeCount = drops.filter(d => d.status === 'active').length;
-  const claimedCount = drops.filter(d => d.status === 'claimed').length;
-
-  useEffect(() => {
-    fetchDrops();
-    
-    // Real-time subscription
-    const channel = supabase
-      .channel('cargo-bay-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'drops' }, () => {
-        fetchDrops();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const fetchDrops = async () => {
+  // Fetch real drops assigned to dropper or any drop if admin
+  const fetchCovertLockerDrops = async () => {
+    if (!profile) return;
+    setLoadingDrops(true);
     try {
-      const { data, error } = await supabase
-        .from('drops')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      let query = supabase.from('drops').select('*');
+      
+      const isUserAdmin = profile.role === 'super_admin' || profile.role === 'admin';
+      
+      if (!isUserAdmin) {
+        // Droppers only see their own assigned or created drops
+        query = query.or(`assigned_to.eq.${profile.id},created_by.eq.${profile.id}`);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      
       if (error) throw error;
-      setDrops(data || []);
+      setDbDrops((data || []) as DBDrop[]);
     } catch (err: any) {
-      console.error('Error fetching cargo:', err);
-      showToast('Failed to sync cargo manifest', { type: 'error' });
+      console.error('[CargoBay] Error fetching real drops:', err);
+      showToast('Vault decryption failed', { type: 'error' });
     } finally {
-      setLoading(false);
+      setLoadingDrops(false);
     }
   };
 
-  const handleCreateDrop = async (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchCovertLockerDrops();
+  }, [profile?.id, profile?.role]);
+
+  // Handle Photo File Select
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // File size filter (2MB Max)
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('Photo size must be under 2MB', { type: 'error' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setFormPhoto(event.target?.result as string);
+      showToast('Photo evidence staged', { type: 'success' });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle Video File Select
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // File size filter (5MB Max for PWA performance)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Video size must be under 5MB', { type: 'error' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setFormVideo(event.target?.result as string);
+      showToast('Video evidence staged', { type: 'success' });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // GPS pin retrieval
+  const handleGPSRetrieve = () => {
+    if (!navigator.geolocation) {
+      showToast('PWA GPS unavailable', { type: 'error' });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setFormLat(pos.coords.latitude.toFixed(6));
+        setFormLng(pos.coords.longitude.toFixed(6));
+        showToast('Precision GPS acquired', { type: 'success' });
+      },
+      (err) => {
+        showToast('GPS lock blocked by security policy', { type: 'error' });
+      }
+    );
+  };
+
+  // Create real Drop from Locker Form
+  const handleCreateLockerDrop = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formTitle.trim()) return;
+    if (!formName.trim() || !formLat || !formLng || !profile) return;
 
-    setIsSubmitting(true);
+    setUploadLoading(true);
     try {
-      // Fetch current location for drop creation
-      const pos = await new Promise<GeolocationPosition>((res, rej) => {
-        navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true });
-      });
+      const latNum = parseFloat(formLat);
+      const lngNum = parseFloat(formLng);
+      
+      const encryptedNotesBody = formNotes.trim() ? encryptNote(formNotes.trim()) : null;
 
-      const encryptedNotesBody = formNotes.trim() ? await encryptNote(formNotes.trim()) : null;
-
-      const { error } = await supabase.from('drops').insert({
-        title: formTitle.trim(),
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
+      const newDropPayload = {
+        title: formName.trim().toUpperCase(),
+        lat: latNum,
+        lng: lngNum,
+        status: 'active' as const,
+        photo_url: formPhoto,
+        video_url: formVideo,
         notes_encrypted: encryptedNotesBody,
-        created_by: profile?.id,
-        status: 'active'
-      });
+        assigned_to: profile.id,
+        created_by: profile.id
+      };
+
+      const { data, error } = await supabase
+        .from('drops')
+        .insert(newDropPayload)
+        .select()
+        .single();
 
       if (error) throw error;
 
-      showToast('New drop registered in manifest', { type: 'success' });
-      setFormTitle('');
+      showToast('Drop evidence uploaded successfully!', { type: 'success' });
+      
+      // Clear form
+      setFormName('');
+      setFormLat('');
+      setFormLng('');
+      setFormPhoto(null);
+      setFormVideo(null);
       setFormNotes('');
-      setShowCreateForm(false);
-      fetchDrops();
+      
+      // Refetch
+      fetchCovertLockerDrops();
     } catch (err: any) {
-      console.error('Drop creation failed:', err);
-      showToast(err.message || 'Transmission failed', { type: 'error' });
+      console.error(err);
+      showToast(err.message || 'Locker upload failed', { type: 'error' });
     } finally {
-      setIsSubmitting(false);
+      setUploadLoading(false);
     }
+  };
+
+  // Handle Qty Adjust for original system
+  const handleQtyAdjust = (id: string, dir: 'inc' | 'dec', name: string) => {
+    setCargo(prev => prev.map(c => {
+      if (c.id === id) {
+        const nextQty = dir === 'inc' ? c.qty + 1 : Math.max(0, c.qty - 1);
+        setLogs(prevLogs => [`[${new Date().toLocaleTimeString()}] UPDATE: ${name} qty modified to ${nextQty} units.`, ...prevLogs]);
+        return { ...c, qty: nextQty };
+      }
+      return c;
+    }));
+  };
+
+  // Original registration system
+  const handleOriginalRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItemName.trim()) return;
+
+    const newID = `CRG-${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(100 + Math.random() * 900)}`;
+    const fresh: SystemCargo = {
+      id: newID,
+      name: newItemName,
+      category: newItemCategory,
+      qty: newItemQty,
+      location: 'Nueva Ecija Central Vault',
+      security: 'Level 4'
+    };
+
+    setCargo(prev => [...prev, fresh]);
+    setLogs(prevLogs => [`[${new Date().toLocaleTimeString()}] REGISTRATION SUCCESS: ${newItemName} added with ID ${newID}`, ...prevLogs]);
+    setNewItemName('');
+    setNewItemQty(1);
   };
 
   // Decrypt particular notes
-  const toggleNotesDecryption = async (dropId: string, encrypted: string | null) => {
+  const toggleNotesDecryption = (dropId: string, encrypted: string | null) => {
     if (!encrypted) return;
     if (decryptedNotes[dropId]) {
       // already decrypted, collapse it
@@ -123,16 +246,10 @@ export default function CargoBayView() {
       delete updated[dropId];
       setDecryptedNotes(updated);
     } else {
-      const dec = await decryptNote(encrypted);
+      const dec = decryptNote(encrypted);
       setDecryptedNotes({ ...decryptedNotes, [dropId]: dec });
     }
   };
-
-  const filteredDrops = drops.filter(d => {
-    const matchesSearch = d.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || d.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
 
   return (
     <div className="p-4 md:p-6 text-[#106011] space-y-6 select-none relative custom-scrollbar overflow-y-auto h-[calc(100vh-80px)]">
@@ -142,169 +259,396 @@ export default function CargoBayView() {
         className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#106011]/40 p-4 pb-6 shrink-0 z-10 relative overflow-hidden rounded-2xl"
         style={{ backgroundImage: `url('/coverphoto002.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center' }}
       >
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px] z-[-1]" />
+        <div className="absolute inset-0 bg-black/85 z-0 pointer-events-none" />
         
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(16,96,17,0.2)]">
-            <Package className="w-6 h-6 text-[#106011]" />
-          </div>
-          <div>
-            <h1 className="text-xl font-black font-mono tracking-tighter text-white uppercase">Cargo Bay Alpha</h1>
-            <p className="text-[10px] font-mono text-zinc-400 tracking-widest uppercase">Secure Logistics & Asset Registry</p>
-          </div>
+        <div className="relative z-10">
+          <span className="text-[9px] font-mono tracking-[0.25em] bg-[#106011]/20 text-[#0ad111] px-2.5 py-1 rounded border border-[#106011]/40 uppercase font-black">
+            STATION VAULT DEPOT
+          </span>
+          <h2 className="text-2xl font-display font-black tracking-[0.15em] uppercase text-white drop-shadow-[0_0_12px_rgba(16,96,17,0.85)] mt-2">
+            LOCKER DRAWER
+          </h2>
         </div>
-
-        <div className="flex items-center gap-3 bg-black/50 p-2 rounded-xl border border-[#106011]/20">
-          <div className="flex flex-col items-end">
-            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest font-black">Live Inventory</span>
-            <div className="flex gap-4">
-              <span className="text-xs font-mono font-black text-white">{activeCount} <span className="text-zinc-500">ACTIVE</span></span>
-              <span className="text-xs font-mono font-black text-white">{claimedCount} <span className="text-zinc-500">SECURED</span></span>
-            </div>
-          </div>
-          <div className="w-px h-8 bg-[#106011]/20" />
+        
+        {/* Toggle Mode View Selector Buttons */}
+        <div className="flex gap-2.5 relative z-10">
           <button
-            onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-2 bg-[#106011] hover:bg-[#0ad111] text-black px-4 py-2 rounded-lg font-mono font-black text-[11px] uppercase tracking-tighter transition shadow-[0_0_20px_rgba(16,96,17,0.3)]"
+            onClick={() => setViewMode('locker')}
+            className={`px-4 py-2 font-mono text-[10px] uppercase font-bold tracking-widest rounded-lg border-2 transition-all ${
+              viewMode === 'locker' 
+                ? 'border-[#0ad111] bg-[#106011]/25 text-white shadow-[0_0_12px_rgba(10,209,17,0.45)]' 
+                : 'border-zinc-800 bg-black/85 text-zinc-400 hover:border-zinc-700'
+            }`}
           >
-            <Plus size={16} /> New Manifest
+            🔒 Covert Locker
+          </button>
+          <button
+            onClick={() => setViewMode('depot')}
+            className={`px-4 py-2 font-mono text-[10px] uppercase font-bold tracking-widest rounded-lg border-2 transition-all ${
+              viewMode === 'depot' 
+                ? 'border-[#0ad111] bg-[#106011]/25 text-white shadow-[0_0_12px_rgba(10,209,17,0.45)]' 
+                : 'border-zinc-800 bg-black/85 text-zinc-400 hover:border-zinc-700'
+            }`}
+          >
+            📦 Depot Stocks
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <div className="flex flex-col md:flex-row gap-4 items-center bg-zinc-950/40 p-4 rounded-2xl border border-[#106011]/15">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="SEARCH MANIFEST REGISTRY..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-black/60 border border-[#106011]/20 rounded-xl py-2 pl-10 pr-4 text-xs font-mono text-white placeholder:text-zinc-700 focus:outline-none focus:border-[#106011]/50 transition uppercase"
-            />
+      {viewMode === 'depot' ? (
+        // --- VIEW 1: ORIGINAL DEPOT LOGS ---
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 relative z-10">
+          {/* Left Side: Register Cargo */}
+          <div className="bg-black/95 p-6 rounded-2xl border-2 border-[#106011] shadow-[0_0_20px_rgba(16,96,17,0.3)] relative overflow-hidden h-fit">
+            <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-[#106011] rounded-tl-xl drop-shadow-[0_0_8px_#106011]"></div>
+            <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-[#106011] rounded-tr-xl drop-shadow-[0_0_8px_#106011]"></div>
+            <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-[#106011] rounded-bl-xl drop-shadow-[0_0_8px_#106011]"></div>
+            <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-[#106011] rounded-br-xl drop-shadow-[0_0_8px_#106011]"></div>
+            <div className="absolute inset-1 border border-dashed border-[#106011]/30 rounded-xl pointer-events-none"></div>
+
+            <div className="flex items-center gap-2 border-b border-[#106011]/30 pb-3 mb-6 relative z-10">
+              <FilePlus className="w-4.5 h-4.5 text-[#106011] drop-shadow-[0_0_5px_rgba(16,96,17,0.8)] animate-pulse" />
+              <span className="text-white font-display font-bold tracking-[0.16em] text-xs">Register Depot stock</span>
+            </div>
+
+            <form onSubmit={handleOriginalRegister} className="space-y-4 relative z-10 text-slate-300 font-mono text-xs uppercase tracking-wide">
+              <div className="space-y-1.5 select-text">
+                <label className="text-[#106011] font-black">Codename / item description</label>
+                <input
+                  type="text"
+                  required
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  placeholder="E.G. GPS MARKER BEACON..."
+                  className="w-full h-10 border-2 border-[#106011] bg-black text-[#106011] placeholder-[#106011]/45 px-3 rounded-lg focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[#106011] font-black">Category Type</label>
+                <select
+                  value={newItemCategory}
+                  onChange={(e) => setNewItemCategory(e.target.value)}
+                  className="w-full h-10 border-2 border-[#106011] bg-black text-[#106011] px-3 rounded-lg focus:outline-none"
+                >
+                  <option value="Tactical">Tactical Crate</option>
+                  <option value="Rations">Emergency Rations</option>
+                  <option value="Hardware">Hardware / Comms</option>
+                  <option value="GPS Tracker">GPS Trackers / Tags</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[#106011] font-black">Register Quantity</label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setNewItemQty(q => Math.max(1, q - 1))}
+                    className="w-10 h-10 rounded border-2 border-[#106011] bg-black hover:bg-[#106011]/20 flex items-center justify-center text-[#106011] font-bold cursor-pointer"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="text-white font-black text-sm px-4 select-none w-12 text-center">{newItemQty}</span>
+                  <button
+                    type="button"
+                    onClick={() => setNewItemQty(q => q + 1)}
+                    className="w-10 h-10 rounded border-2 border-[#106011] bg-black hover:bg-[#106011]/20 flex items-center justify-center text-[#106011] font-bold cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full h-11 border-2 border-[#106011] rounded-xl flex items-center justify-center gap-2 font-mono text-xs font-black uppercase tracking-widest bg-black text-[#106011] hover:bg-[#106011]/20 transition-all shadow-[0_0_15px_rgba(16,96,17,0.3)] hover:shadow-[0_0_22px_rgba(16,96,17,0.6)] cursor-pointer mt-4"
+              >
+                <span>Add Stock Item</span>
+              </button>
+            </form>
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <Filter className="text-zinc-500 w-4 h-4" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-black/60 border border-[#106011]/20 rounded-xl py-2 px-4 text-xs font-mono text-white focus:outline-none focus:border-[#106011]/50 transition uppercase appearance-none cursor-pointer"
-            >
-              <option value="all">ALL STATUS</option>
-              <option value="active">ACTIVE OPS</option>
-              <option value="claimed">CLAIMED/SECURED</option>
-              <option value="expired">EXPIRED/MISSING</option>
-            </select>
+          {/* Right Side: Depot ledger and logs table */}
+          <div className="xl:col-span-2 space-y-6">
+            <div className="bg-black/95 p-6 rounded-2xl border-2 border-[#106011] shadow-[0_0_20px_rgba(16,96,17,0.3)] relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-[#106011] rounded-tl-xl drop-shadow-[0_0_8px_#106011]"></div>
+              <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-[#106011] rounded-tr-xl drop-shadow-[0_0_8px_#106011]"></div>
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-[#106011] rounded-bl-xl drop-shadow-[0_0_8px_#106011]"></div>
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-[#106011] rounded-br-xl drop-shadow-[0_0_8px_#106011]"></div>
+              <div className="absolute inset-1 border border-dashed border-[#106011]/30 rounded-xl pointer-events-none"></div>
+
+              <div className="border-b border-[#106011]/30 pb-3 mb-4 relative z-10">
+                <span className="text-white font-mono tracking-widest text-xs font-black uppercase">Depot Operations Registry</span>
+              </div>
+
+              <div className="overflow-x-auto custom-scrollbar relative z-10">
+                <table className="w-full text-left font-mono text-xs uppercase text-slate-300">
+                  <thead>
+                    <tr className="border-b border-[#106011]/20 text-[#0ad111] font-black text-[9px] tracking-wider">
+                      <th className="pb-3 pl-2">CARGO ID</th>
+                      <th className="pb-3">ITEM DESCRIPTION</th>
+                      <th className="pb-3 text-center">QUANTITY</th>
+                      <th className="pb-3 text-right">SEC LEVEL</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#106011]/15">
+                    {cargo.map((c) => (
+                      <tr key={c.id} className="hover:bg-[#106011]/10 transition-colors">
+                        <td className="py-3 pl-2 font-bold text-white">{c.id}</td>
+                        <td className="py-3">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-white">{c.name}</span>
+                            <span className="text-[9.5px] text-zinc-400">{c.location}</span>
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleQtyAdjust(c.id, 'dec', c.name)}
+                              className="w-7 h-7 rounded border border-[#106011]/60 hover:bg-[#106011]/20 hover:border-[#106011] text-[#106011] flex items-center justify-center cursor-pointer"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="text-white font-black w-8 text-center">{c.qty}</span>
+                            <button
+                              onClick={() => handleQtyAdjust(c.id, 'inc', c.name)}
+                              className="w-7 h-7 rounded border border-[#106011]/60 hover:bg-[#106011]/20 hover:border-[#106011] text-[#106011] flex items-center justify-center cursor-pointer"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </td>
+                        <td className="py-3 text-right pr-2">
+                          <span className="px-1.5 py-0.5 bg-[#106011]/15 border border-[#106011] rounded text-[9.5px] font-black">{c.security}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Logs info */}
+            <div className="bg-black/95 p-5 rounded-2xl border-2 border-[#106011] relative overflow-hidden h-40">
+              <div className="absolute inset-1 border border-dashed border-[#106011]/30 pointer-events-none rounded-xl"></div>
+              <div className="flex items-center gap-2 border-b border-[#106011]/30 pb-2 mb-3 font-mono text-[10px] text-white">
+                <RefreshCw className="w-4 h-4 text-[#106011]" />
+                <span>LEDGER TELEMETRY</span>
+              </div>
+              <div className="overflow-y-auto custom-scrollbar h-20 font-mono text-[9px] text-[#106011] space-y-1">
+                {logs.length === 0 ? (
+                  <span className="text-zinc-500">Wait state. Adjust sliders or register codenames to capture logs.</span>
+                ) : (
+                  logs.map((l, idx) => (
+                    <div key={idx} className={idx === 0 ? "text-green-400 font-bold" : "text-zinc-400"}>{l}</div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
+      ) : (
+        // --- VIEW 2: COVERT LOCKER (REAL DROP EVIDENCE / EXCLUSIVE DRAWER) ---
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+          
+          {/* Section A (Cols 1-5): Dropper upload entry / deposit form */}
+          <div className="lg:col-span-5 bg-black/95 p-6 rounded-2xl border-2 border-[#106011] shadow-[0_0_25px_rgba(16,96,17,0.3)] relative overflow-hidden h-fit">
+            <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-[#106011] rounded-tl-xl drop-shadow-[0_0_8px_#106011]"></div>
+            <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-[#106011] rounded-tr-xl drop-shadow-[0_0_8px_#106011]"></div>
+            <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-[#106011] rounded-bl-xl drop-shadow-[0_0_8px_#106011]"></div>
+            <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-[#106011] rounded-br-xl drop-shadow-[0_0_8px_#106011]"></div>
+            <div className="absolute inset-1 border border-dashed border-[#106011]/30 rounded-xl pointer-events-none"></div>
 
-        {showCreateForm && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-zinc-950 border-2 border-[#106011] rounded-3xl p-6 shadow-[0_0_50px_rgba(16,96,17,0.3)] font-mono">
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#106011]/10 border border-[#106011]/30 flex items-center justify-center">
-                    <Plus className="text-[#106011] w-4 h-4" />
-                  </div>
-                  <h2 className="text-white text-sm font-black uppercase tracking-widest">New Mission Manifest</h2>
+            <div className="flex items-center gap-2.5 border-b border-[#106011]/30 pb-3 mb-5 relative z-10">
+              <Upload className="w-5 h-5 text-[#0ad111] animate-pulse" />
+              <span className="text-white font-display font-bold tracking-[0.16em] uppercase text-xs">Stage Drop Evidence</span>
+            </div>
+
+            <p className="text-[10px] font-mono leading-relaxed uppercase space-y-1 text-zinc-400 mb-5 border-b border-[#106011]/10 pb-3">
+              📵 <span className="text-red-500 font-bold">OPERATIONAL DIRECTIVE:</span> ONLY exclusive for SuperAdmin/admin and Droppers. Store product QR tokens, GPS pins, and verification media files immediately upon drop completion.
+            </p>
+
+            <form onSubmit={handleCreateLockerDrop} className="space-y-4 relative z-10 text-slate-300 font-mono text-xs uppercase tracking-wide">
+              {/* Product description / title */}
+              <div className="space-y-1">
+                <label className="text-[#106011] font-black">Coded Product Title / Identifier</label>
+                <input
+                  type="text"
+                  required
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="E.G. GOLD COIN DEPOSIT ZONE..."
+                  className="w-full h-11 border-2 border-[#106011]/80 hover:border-[#106011] bg-black text-[#106011] font-bold placeholder-[#106011]/45 px-3 rounded-xl focus:outline-none"
+                />
+              </div>
+
+              {/* Coordinates block with custom GPS retrieval button */}
+              <div className="grid grid-cols-2 gap-3.5 relative">
+                <div className="space-y-1">
+                  <label className="text-[#106011] font-black">Latitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    value={formLat}
+                    onChange={(e) => setFormLat(e.target.value)}
+                    placeholder="15.486500"
+                    className="w-full h-11 border-2 border-[#106011]/80 bg-black text-[#106011] px-3 rounded-xl focus:outline-none"
+                  />
                 </div>
-                <button onClick={() => setShowCreateForm(false)} className="text-zinc-500 hover:text-white transition">
-                  <ChevronUp />
+                <div className="space-y-1">
+                  <label className="text-[#106011] font-black">Longitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    value={formLng}
+                    onChange={(e) => setFormLng(e.target.value)}
+                    placeholder="120.973400"
+                    className="w-full h-11 border-2 border-[#106011]/80 bg-black text-[#106011] px-3 rounded-xl focus:outline-none"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGPSRetrieve}
+                  className="absolute right-2 -top-5 text-[8px] bg-[#106011]/30 hover:bg-[#106011] border border-[#106011] text-[#0ad111] hover:text-black font-black px-2 py-0.5 rounded transition duration-200"
+                >
+                  📡 GPS Acquire
                 </button>
               </div>
 
-              <form onSubmit={handleCreateDrop} className="space-y-4">
-                <div>
-                  <label className="text-[10px] text-zinc-500 font-black uppercase tracking-widest block mb-1.5">Asset Identifier</label>
+              {/* Photo Upload Attachment Slot (Reads as base64) */}
+              <div className="space-y-1 border border-dashed border-[#106011]/30 p-2.5 rounded-xl bg-[#106011]/5">
+                <div className="flex justify-between items-center text-[#106011]">
+                  <span className="font-black flex items-center gap-1.5"><Image className="w-3.5 h-3.5" /> High-Res Photo Attachment</span>
+                  {formPhoto && <span className="text-green-500 font-black text-[9px] animate-pulse">📷 STAGED</span>}
+                </div>
+                <label className="flex flex-col items-center justify-center p-3.5 bg-black border border-[#106011]/50 hover:border-[#106011] rounded-xl cursor-pointer transition relative overflow-hidden group">
+                  <span className="text-[10px] text-zinc-400 group-hover:text-white transition uppercase">Choose Photo / Capture Evidence</span>
                   <input
-                    value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
-                    placeholder="E.G. DROP-OMEGA-01"
-                    className="w-full bg-black border border-[#106011]/20 rounded-xl py-3 px-4 text-xs text-white focus:outline-none focus:border-[#106011] transition"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoSelect}
                   />
-                </div>
-                <div>
-                  <label className="text-[10px] text-zinc-500 font-black uppercase tracking-widest block mb-1.5">Tactical Intel (Encrypted)</label>
-                  <textarea
-                    value={formNotes}
-                    onChange={(e) => setFormNotes(e.target.value)}
-                    placeholder="ENTER SECURE NOTES FOR FIELD AGENT..."
-                    className="w-full bg-black border border-[#106011]/20 rounded-xl py-3 px-4 text-xs text-white h-24 focus:outline-none focus:border-[#106011] transition resize-none"
-                  />
-                </div>
+                </label>
+                {formPhoto && (
+                  <div className="mt-2 text-center rounded border border-[#106011]/30 overflow-hidden max-h-[140px] bg-black">
+                    <img src={formPhoto} alt="Evidence Preview" className="w-auto h-28 mx-auto object-contain" />
+                  </div>
+                )}
+              </div>
 
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateForm(false)}
-                    className="flex-1 border border-zinc-800 hover:border-zinc-700 text-zinc-500 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition"
-                  >
-                    Abort
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !formTitle.trim()}
-                    className="flex-1 bg-[#106011] hover:bg-[#0ad111] text-black py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition disabled:opacity-50"
-                  >
-                    {isSubmitting ? 'TRANSMITTING...' : 'Deploy Asset'}
-                  </button>
+              {/* Short Video Upload Slot */}
+              <div className="space-y-1 border border-dashed border-[#106011]/30 p-2.5 rounded-xl bg-[#106011]/5">
+                <div className="flex justify-between items-center text-[#106011]">
+                  <span className="font-black flex items-center gap-1.5"><Video className="w-3.5 h-3.5" /> Short Video Evidence</span>
+                  {formVideo && <span className="text-green-500 font-black text-[9px] animate-pulse">📹 STAGED</span>}
                 </div>
-              </form>
-            </div>
+                <label className="flex flex-col items-center justify-center p-3.5 bg-black border border-[#106011]/50 hover:border-[#106011] rounded-xl cursor-pointer transition relative overflow-hidden group">
+                  <span className="text-[10px] text-zinc-400 group-hover:text-white transition uppercase">Choose Clip / Capture Video</span>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={handleVideoSelect}
+                  />
+                </label>
+                {formVideo && (
+                  <div className="mt-2 p-2 rounded bg-black border border-[#106011]/20 text-[9.5px] text-slate-300 flex items-center justify-center gap-2">
+                    <Video className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span className="truncate max-w-[150px]">Clip staged (Ready for upload)</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Secure Notes - encrypted via AES on insert */}
+              <div className="space-y-1">
+                <label className="text-[#106011] font-black tracking-widest flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#106011]" /> Encrypted field notes (Symmetric AES)</label>
+                <textarea
+                  rows={2}
+                  value={formNotes}
+                  onChange={(e) => setFormNotes(e.target.value)}
+                  placeholder="EXPLAIN PRECISE CORNER LOCATION OR PICKUP CODE..."
+                  className="w-full text-[11px] bg-black border-2 border-[#106011]/80 hover:border-[#106011] text-[#106011] placeholder-[#106011]/45 p-3 rounded-xl focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={uploadLoading}
+                className="w-full h-12 bg-[#0ad111] text-black hover:bg-emerald-500 flex items-center justify-center gap-2 font-mono text-xs font-black uppercase tracking-widest rounded-xl transition duration-300 shadow-[0_0_20px_rgba(10,209,17,0.3)] disabled:opacity-50 cursor-pointer mt-5"
+              >
+                <span>{uploadLoading ? 'UPLOADING...' : '🔒 DEPOSIT TO EXCLUSIVE VAULT'}</span>
+              </button>
+            </form>
           </div>
-        )}
 
-        <div className="space-y-4">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 space-y-4">
-              <div className="w-10 h-10 border-4 border-[#106011]/20 border-t-[#106011] rounded-full animate-spin" />
-              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest animate-pulse">Syncing Encrypted Uplink...</span>
-            </div>
-          ) : (
-            <div className="min-h-[400px]">
-              {filteredDrops.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-zinc-950/20 rounded-3xl border border-dashed border-[#106011]/10">
-                  <Package className="w-12 h-12 text-zinc-800 mb-4" />
-                  <span className="text-xs font-mono text-zinc-600 uppercase tracking-widest">No Cargo Detected in Current Sector</span>
+          {/* Section B (Cols 6-12): Covert Lockers / Real Drop Evidence Cards List */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="bg-black/95 p-6 rounded-2xl border-2 border-[#106011] shadow-[0_0_25px_rgba(16,96,17,0.3)] relative overflow-hidden h-[calc(100vh-270px)] overflow-y-auto custom-scrollbar">
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-[#106011] rounded-tl-xl drop-shadow-[0_0_8px_#106011]"></div>
+              <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-[#106011] rounded-tr-xl drop-shadow-[0_0_8px_#106011]"></div>
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-[#106011] rounded-bl-xl drop-shadow-[0_0_8px_#106011]"></div>
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-[#106011] rounded-br-xl drop-shadow-[0_0_8px_#106011]"></div>
+              <div className="absolute inset-1 border border-dashed border-[#106011]/30 rounded-xl pointer-events-none"></div>
+
+              <div className="border-b border-[#106011]/30 pb-4 mb-5 flex justify-between items-center relative z-10 select-text">
+                <span className="text-white font-mono text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                  📁 Covert Storage Ledger ({dbDrops.length} deposited payloads)
+                </span>
+                
+                <button
+                  onClick={fetchCovertLockerDrops}
+                  disabled={loadingDrops}
+                  className="text-[9px] bg-black/80 hover:bg-[#106011]/20 border border-[#106011] hover:border-[#0ad111] text-white px-3 py-1.5 rounded font-mono uppercase tracking-widest transition duration-300 disabled:opacity-40"
+                >
+                  {loadingDrops ? 'REFRESHING...' : 'REFRESH'}
+                </button>
+              </div>
+
+              {loadingDrops && dbDrops.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-[#106011] font-mono text-xs uppercase tracking-widest animate-pulse">
+                  Decrypting operational ledger streams...
+                </div>
+              ) : dbDrops.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
+                  <AlertTriangle className="w-10 h-10 text-yellow-500 opacity-60 animate-bounce" />
+                  <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest leading-relaxed">
+                    Operative locker is currently empty.<br/>Submit coordinate packages using the deposit terminal.
+                  </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {filteredDrops.map((drop) => {
+                <div className="space-y-5 relative z-10 pb-4">
+                  {dbDrops.map((drop) => {
                     const isNotesDecrypted = !!decryptedNotes[drop.id];
                     return (
                       <div 
                         key={drop.id} 
-                        className="bg-black/40 border border-[#106011]/15 rounded-2xl p-5 hover:border-[#106011]/40 transition duration-300 group relative overflow-hidden flex flex-col gap-4"
+                        className="bg-black/95 p-4 rounded-xl border border-[#106011]/50 hover:border-[#106011] transition duration-300 space-y-3 relative overflow-hidden shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
                       >
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
-                              drop.status === 'active' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-zinc-500/10 border-zinc-500/20'
-                            }`}>
-                              <Package className={`w-5 h-5 ${drop.status === 'active' ? 'text-emerald-500' : 'text-zinc-500'}`} />
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-black text-white font-mono uppercase tracking-tighter group-hover:text-[#0ad111] transition">{drop.title}</h3>
-                              <div className="flex items-center gap-2">
-                                <span className="text-[9px] font-mono text-zinc-500 uppercase">Sector 7-G</span>
-                                <span className="text-[14px] text-zinc-800">•</span>
-                                <span className="text-[9px] font-mono text-zinc-500 uppercase">{drop.id.slice(0, 8)}</span>
-                              </div>
-                            </div>
+                        {/* Upper Header strip */}
+                        <div className="flex justify-between items-start select-text mb-1">
+                          <div>
+                            <div className="text-[9px] font-mono text-slate-500 font-bold">PAYLOAD ID: {drop.id.toUpperCase()}</div>
+                            <h3 className="text-white font-sans font-black tracking-wide text-sm mt-0.5">{drop.title}</h3>
                           </div>
-
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-mono font-black uppercase tracking-widest border ${
-                            drop.status === 'active' ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500'
-                              : drop.status === 'claimed' ? 'border-blue-500/20 bg-blue-500/20 text-blue-400'
+                          
+                          <span className={`px-2.5 py-0.5 rounded-full font-mono text-[8px] uppercase tracking-widest border font-black ${
+                            drop.status === 'active' 
+                              ? 'border-emerald-500 bg-emerald-950/20 text-[#0ad111] shadow-[0_0_8px_rgba(16,96,17,0.3)]' 
+                              : drop.status === 'claimed'
+                              ? 'border-blue-600 bg-blue-950/20 text-blue-400' 
                               : 'border-zinc-800 bg-zinc-900 text-zinc-500'
                           }`}>
                             {drop.status}
                           </span>
                         </div>
 
+                        {/* Middle details panel: GPS and attachments presence */}
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 border-t border-[#106011]/15 pt-3 select-text">
+                          {/* Left Details: GPS coordinate stats */}
                           <div className="sm:col-span-8 flex flex-col gap-1.5 text-[10px] font-mono text-zinc-400">
                             <div className="flex items-center gap-1.5">
                               <MapPin className="w-3.5 h-3.5 text-[#106011] shrink-0" />
@@ -331,6 +675,7 @@ export default function CargoBayView() {
                             </div>
                           </div>
 
+                          {/* Right Details: Custom QR Code view block for secure operations */}
                           <div className="sm:col-span-4 flex flex-col items-center justify-center border-l sm:border-l border-dashed border-[#106011]/25 pl-0 sm:pl-3 pt-3 sm:pt-0">
                             <div className="bg-white p-1 rounded-md shrink-0 shadow-md">
                               <QRCodeSVG 
@@ -342,6 +687,7 @@ export default function CargoBayView() {
                           </div>
                         </div>
 
+                        {/* Evidence Media Preview Segment details if attachments exist */}
                         {(drop.photo_url || drop.video_url) && (
                           <div className="flex flex-wrap gap-4 border-t border-[#106011]/10 pt-3">
                             {drop.photo_url && (
@@ -370,6 +716,7 @@ export default function CargoBayView() {
                           </div>
                         )}
 
+                        {/* Expandable Encrypted field notes area */}
                         {drop.notes_encrypted && (
                           <div className="border-t border-[#106011]/10 pt-3 pb-1 select-text">
                             <div className="flex justify-between items-center text-[10px] uppercase font-mono font-black mb-1.5 text-zinc-400">
@@ -407,10 +754,12 @@ export default function CargoBayView() {
                 </div>
               )}
             </div>
-          )}
+          </div>
+          
         </div>
-      </div>
+      )}
 
+      {/* Media Inspection Lightbox Modal popup */}
       {selectedDrop && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="max-w-xl w-full bg-zinc-950 border-2 border-green-500 rounded-2xl p-6 relative overflow-hidden font-mono shadow-[0_0_50px_rgba(16,96,17,0.4)] text-[#106011]">

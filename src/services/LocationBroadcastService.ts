@@ -47,7 +47,10 @@ class LocationBroadcastService {
   private setupNetworkListeners() {
     window.addEventListener('online', () => {
       this.isOnline = true;
-      this.flushQueue();
+      const stealthMode = localStorage.getItem('setting_stealth_mode') === 'true';
+      if (!stealthMode) {
+        this.flushQueue();
+      }
     });
     window.addEventListener('offline', () => {
       this.isOnline = false;
@@ -56,6 +59,11 @@ class LocationBroadcastService {
 
   private async startQueueFlusher() {
     setInterval(() => {
+      try {
+        const stealthMode = localStorage.getItem('setting_stealth_mode') === 'true';
+        if (stealthMode) return;
+      } catch (err) {}
+
       const now = Date.now();
       if (now - this.lastQueueFlushTime >= this.queueFlushIntervalMs) {
         this.lastQueueFlushTime = now;
@@ -80,6 +88,17 @@ class LocationBroadcastService {
     }
 
     this.lastBroadcastTime = now;
+    
+    // Stealth Mode Intercept
+    try {
+      const stealthMode = localStorage.getItem('setting_stealth_mode') === 'true';
+      if (stealthMode && !force) {
+        await LocationOutbox.queue(payload);
+        console.log('[LocationBroadcastService] Stealth Mode ACTIVE. Queued telemetry locally.');
+        return { success: false, queued: true };
+      }
+    } catch {}
+
     try {
       const { error } = await supabase.functions.invoke('broadcast-location', {
         body: payload,

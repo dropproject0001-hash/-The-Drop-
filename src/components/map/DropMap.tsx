@@ -1,11 +1,11 @@
 // src/components/map/DropMap.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useAuthStore } from '@/stores';
 import { useLocationOutboxStatus } from '@/hooks/useLocationOutboxStatus';
 import { useLiveLocations } from '@/hooks/realtime/useLiveLocations';
-import { useDrops } from '@/hooks/useDrops';
+import { useLiveDrops } from '@/hooks/realtime/useLiveDrops';
 import { DropperTrackingControl } from '@/components/dropper/DropperTrackingControl';
 import { DropStatusBadge } from '@/components/drops/DropStatusBadge';
 import { CompassOverlay } from '@/components/map/CompassOverlay';
@@ -14,6 +14,9 @@ import { useNavigate } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { Search, X, Crosshair, MapPin, User, Navigation, Layers, Maximize, Minimize, FileEdit, Trash2 } from 'lucide-react';
 import type { Drop } from '@/types/domain';
+import { CachedTileLayer } from '@/components/map/CachedTileLayer';
+import { TileCacheService } from '@/services/map/TileCacheService';
+import { supabase } from '@/lib/supabase';
 
 // Leaflet default icon fix
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -46,6 +49,21 @@ const AgentLiveIcon = L.divIcon({
   `,
   iconSize: [24, 24],
   iconAnchor: [12, 12]
+});
+
+const createDropIcon = (dropType: string) => L.divIcon({
+  className: 'custom-drop-icon outline-none border-none border-0',
+  html: `
+    <div class="relative group cursor-pointer flex items-center justify-center w-10 h-10 -mt-5 -ml-5">
+      <div class="text-3xl filter drop-shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-bounce">
+        📍
+      </div>
+      <div class="absolute -bottom-1 w-4 h-1 bg-black/60 blur-[2px] rounded-[100%]"></div>
+    </div>
+  `,
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
+  popupAnchor: [0, -40],
 });
 
 // Map Controller for smooth setView transitions
@@ -91,7 +109,7 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
   const isDropper = profile?.role === 'dropper';
 
   // Always load live drops and locations
-  const { drops: fetchedDrops } = useDrops();
+  const { drops: fetchedDrops } = useLiveDrops();
   const defaultDrops = initialDrops || fetchedDrops || [];
   
   const { locations: liveLocations, status: liveStatus } = useLiveLocations();
@@ -112,6 +130,27 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
     };
   }, []);
 
+  // --- DIAGNOSTIC LOGGING FOR GODS EYE ---
+  useEffect(() => {
+    if (isSuperAdmin) {
+      console.log('[GodsEye] Initializing direct real-time diagnostic subscription for "drops" table');
+      const subscription = supabase
+        .channel('diagnostic_drops_channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'drops' }, (payload: any) => {
+          console.log('%c[GodsEye DIAGNOSTIC] RAW REAL-TIME PAYLOAD RECEIVED:', 'color: #0ad111; font-weight: bold; background: #000; padding: 4px;');
+          console.dir(payload);
+          console.log(`[GodsEye] Type: ${payload.eventType}, Drop ID: ${payload.new?.id || payload.old?.id}, Status: ${payload.new?.status}`);
+        })
+        .subscribe((status: string) => {
+          console.log(`[GodsEye DIAGNOSTIC] Subscription status: ${status}`);
+        });
+        
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [isSuperAdmin]);
+
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [userAccuracy, setUserAccuracy] = useState<number | null>(null);
@@ -131,6 +170,52 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
   const [ephemeralNote, setEphemeralNote] = useState('');
 
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const [cacheStats, setCacheStats] = useState<{ count: number; sizeMb: number }>({ count: 0, sizeMb: 0 });
+  const [seedingProgress, setSeedingProgress] = useState<{ current: number; total: number; msg: string } | null>(null);
+
+  const fetchCacheStats = async () => {
+    const stats = await TileCacheService.getCacheStats();
+    setCacheStats(stats);
+  };
+
+  useEffect(() => {
+    fetchCacheStats();
+  }, []);
+
+  const handleSeedArea = async () => {
+    if (seedingProgress) return;
+    setSeedingProgress({ current: 0, total: 0, msg: "Initializing seed..." });
+    try {
+      const zLevels = [13, 14, 15, 16]; // Critical zoom levels for high-fidelity offline map capability
+      const styleUrl = MAP_STYLE_CONFIGS[mapStyle].url;
+      const subdomains = mapStyle === 'tactical' ? 'abcd' : 'abc';
+      
+      await TileCacheService.seedCacheForArea(
+        mapCenter[0],
+        mapCenter[1],
+        1.5, // 1.5 km buffer radius
+        zLevels,
+        styleUrl,
+        subdomains,
+        (current, total, progressMsg) => {
+          setSeedingProgress({ current, total, msg: progressMsg });
+        }
+      );
+      
+      await fetchCacheStats();
+      // Auto-clear progress after 3 seconds
+      setTimeout(() => setSeedingProgress(null), 3000);
+    } catch (err) {
+      console.error("[DropMap] Failed to seed map tiles:", err);
+      setSeedingProgress(null);
+    }
+  };
+
+  const handleClearCache = async () => {
+    await TileCacheService.clearCache();
+    await fetchCacheStats();
+  };
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -156,15 +241,9 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
     if (!navigator.geolocation) return;
 
     const handleSuccess = (pos: GeolocationPosition) => {
-      const { latitude: lat, longitude: lng, accuracy } = pos.coords;
-
-      setUserPosition(prev => {
-        // ⚡ PERFORMANCE OPTIMIZATION: Maintain stable array reference
-        // if coordinates haven't changed to prevent cascading re-renders.
-        if (prev && prev[0] === lat && prev[1] === lng) return prev;
-        return [lat, lng];
-      });
-      setUserAccuracy(accuracy);
+      const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+      setUserPosition(coords);
+      setUserAccuracy(pos.coords.accuracy);
     };
 
     const handleError = (err: GeolocationPositionError) => {
@@ -174,14 +253,9 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
     // Fast initial coordinates resolution
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
-        const coords: [number, number] = [lat, lng];
-
-        setUserPosition(prev => {
-          if (prev && prev[0] === lat && prev[1] === lng) return prev;
-          return coords;
-        });
-        setUserAccuracy(accuracy);
+        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        setUserPosition(coords);
+        setUserAccuracy(pos.coords.accuracy);
         setMapCenter(coords);
       },
       handleError,
@@ -408,10 +482,11 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
           className="h-full w-full"
           zoomControl={false}
         >
-          <TileLayer
+          <CachedTileLayer
             key={mapStyle}
             url={MAP_STYLE_CONFIGS[mapStyle].url}
             attribution={MAP_STYLE_CONFIGS[mapStyle].attribution}
+            subdomains={mapStyle === 'tactical' ? 'abcd' : 'abc'}
           />
 
           {/* Sync our Map center and zoom reactively */}
@@ -462,23 +537,56 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
               ))}
 
           {/* Super Admin: Live agent locations (filtered) */}
-          {isSuperAdmin &&
-            filteredLiveLocations.map(([userId, locs]) => {
-              if (!locs || locs.length === 0) return null;
-              const latest = locs[0];
+          {isSuperAdmin && (
+            <>
+              {filteredLiveLocations.map(([userId, locs]) => {
+                if (!locs || locs.length === 0) return null;
+                const latest = locs[0];
 
-              return (
-                <Marker key={userId} position={[latest.lat, latest.lng]} icon={AgentLiveIcon}>
-                  <Popup>
-                    <div className="text-black">
-                      <strong>AGENT LIVE</strong><br />
-                      User: {userId.slice(0, 8)}...<br />
-                      Accuracy: ±{Math.round(latest.accuracy || 0)}m
+                return (
+                  <Marker key={userId} position={[latest.lat, latest.lng]} icon={AgentLiveIcon}>
+                    <Popup>
+                      <div className="text-black">
+                        <strong>AGENT LIVE</strong><br />
+                        User: {userId.slice(0, 8)}...<br />
+                        Accuracy: ±{Math.round(latest.accuracy || 0)}m
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+
+              {/* Super Admin: Pinned Active Drops */}
+              {filteredDrops.filter(d => d.status === 'active').map(drop => (
+                <Marker key={drop.id} position={[drop.lat, drop.lng]} icon={createDropIcon('active')}>
+                  <Popup className="drop-map-popup">
+                    <div className="font-mono text-xs text-black min-w-[200px]">
+                      <div className="font-bold border-b border-zinc-200 pb-2 mb-2 uppercase tracking-wide flex justify-between items-center">
+                        <span>DROP PRODUCT</span>
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded">{drop.status}</span>
+                      </div>
+                      
+                      {drop.photo_url && (
+                        <div className="mb-2 w-full h-24 bg-zinc-100 border border-zinc-200 rounded overflow-hidden">
+                          <img src={drop.photo_url} alt="Drop Product Payload" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      
+                      <div className="mb-1"><strong>PRODUCT TITLE:</strong> {drop.title}</div>
+                      
+                      <div className="mb-1 truncate text-[10px]"><strong>COORDS:</strong> {drop.lat.toFixed(5)}, {drop.lng.toFixed(5)}</div>
+                      
+                      <div className="mt-2 pt-2 border-t border-zinc-200 flex flex-col gap-1">
+                        <div className="text-[10px] truncate"><strong>DROPPER:</strong> {drop.created_by.slice(0,8)}...</div>
+                        <div className="text-[10px] truncate"><strong>ASSIGNED:</strong> {drop.assigned_to?.slice(0,8)}...</div>
+                        <div className="text-[9px] text-zinc-500 mt-1 uppercase">CREATED: {new Date(drop.created_at).toLocaleString()}</div>
+                      </div>
                     </div>
                   </Popup>
                 </Marker>
-              );
-            })}
+              ))}
+            </>
+          )}
 
           {/* Clients: Show assigned drops (filtered) */}
           {!isSuperAdmin && !isDropper && filteredDrops.length > 0 && (
@@ -641,6 +749,57 @@ export default function DropMap({ drops: initialDrops, height = '600px' }: DropM
                     : 'Unsynchronized field locations queued. Sync now.'
                   : 'Constant handshake active. HQ tracking connection green.'}
               </div>
+            </div>
+
+            {/* === TACTICAL MAP TILE CACHE === */}
+            <div className="border-t border-[#106011]/25 pt-2 mt-1 flex flex-col gap-1 select-none">
+              <div className="flex items-center gap-1.5 justify-between">
+                <span className="text-[9px] font-black tracking-widest text-[#106011]">SYS_MAP_CACHE</span>
+                <span className="text-[7px] text-slate-400 font-mono">
+                  {cacheStats.count} TILES ({cacheStats.sizeMb} MB)
+                </span>
+              </div>
+
+              {seedingProgress ? (
+                <div className="flex flex-col gap-1 mt-0.5">
+                  <div className="flex justify-between items-center text-[7px] font-mono text-amber-500 animate-pulse">
+                    <span className="truncate max-w-[170px]">{seedingProgress.msg}</span>
+                    <span>{seedingProgress.total > 0 ? Math.round((seedingProgress.current / seedingProgress.total) * 100) : 0}%</span>
+                  </div>
+                  <div className="h-1 w-full bg-slate-900 border border-[#106011]/20 rounded overflow-hidden">
+                    <div 
+                      className="h-full bg-amber-500 transition-all duration-300" 
+                      style={{ width: `${seedingProgress.total > 0 ? (seedingProgress.current / seedingProgress.total) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-1.5 mt-0.5">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSeedArea();
+                    }}
+                    className="flex-1 py-0.5 bg-[#106011]/15 hover:bg-[#106011]/30 border border-[#106011]/30 hover:border-[#0ad111]/80 text-[#0ad111] font-bold font-mono text-[7px] uppercase tracking-wider transition-all rounded cursor-pointer"
+                    title="Pre-cache map zoom levels around map center"
+                  >
+                    SEED ZONE
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm("Clear local tactical tile cache?")) {
+                        handleClearCache();
+                      }
+                    }}
+                    disabled={cacheStats.count === 0}
+                    className="px-1.5 py-0.5 border border-red-950/80 bg-red-950/10 hover:bg-red-950/30 text-red-500 disabled:opacity-30 disabled:pointer-events-none font-bold font-mono text-[7px] uppercase tracking-wider transition-all rounded cursor-pointer"
+                    title="Remove all offline cached tiles"
+                  >
+                    WIPE
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

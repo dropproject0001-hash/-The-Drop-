@@ -1,6 +1,7 @@
 import { useLiveDrops } from '../hooks/realtime/useLiveDrops';
 import { useLiveLocations } from '../hooks/realtime/useLiveLocations';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { MapContainer, Marker } from 'react-leaflet';
+import { CachedTileLayer } from '@/components/map/CachedTileLayer';
 
 export default function ClientTrackingScreen({ clientId }: { clientId: string }) {
   const { drops } = useLiveDrops();
@@ -44,7 +45,7 @@ export default function ClientTrackingScreen({ clientId }: { clientId: string })
                 zoom={15} 
                 className="h-full w-full"
               >
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <CachedTileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <Marker position={[latestLocation.lat, latestLocation.lng]} />
               </MapContainer>
             </div>

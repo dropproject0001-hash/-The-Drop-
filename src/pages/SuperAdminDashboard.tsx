@@ -107,22 +107,59 @@ export default function SuperAdminDashboard() {
       showToast('You must be logged in as Super Admin.', { type: 'error' });
       return;
     }
+
+    const trimmedUsername = newDropperUsername.trim().toLowerCase().replace(/\s/g, '_');
+    const checkedPassword = newDropperPassword;
+    let checkedPhone = newDropperPhone.trim();
+
+    if (!trimmedUsername || !checkedPassword) {
+      showToast('Username and Password are required', { type: 'error' });
+      return;
+    }
+
+    if (checkedPassword.length < 6) {
+      showToast('Password must be at least 6 characters long', { type: 'error' });
+      return;
+    }
+
+    if (checkedPhone) {
+      checkedPhone = checkedPhone.replace(/[\s\-\(\)]/g, '');
+      if (!checkedPhone.startsWith('+')) {
+        if (/^\d{10,15}$/.test(checkedPhone)) {
+          checkedPhone = '+' + checkedPhone;
+        } else {
+          showToast('Phone number must start with + followed by country code (e.g., +15551234567)', { type: 'error' });
+          return;
+        }
+      } else {
+        if (!/^\+\d{7,15}$/.test(checkedPhone)) {
+          showToast('Invalid phone format: Use + followed by country code and digits.', { type: 'error' });
+          return;
+        }
+      }
+    }
+
     setCreateLoading(true);
     setDashboardDeploymentError(null);
     
     try {
       const { data, error } = await supabase.functions.invoke('create-dropper', {
         body: {
-          username: newDropperUsername,
-          password: newDropperPassword,
-          phone: newDropperPhone,
+          username: trimmedUsername,
+          password: checkedPassword,
+          phone: checkedPhone || undefined,
           requestedBy: currentProfile.id
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        // Enforce detailed messages if available inside library's error
+        const details = (error as any)?.context?.message || error.message;
+        throw new Error(details || error.message);
+      }
+      if (data?.error) throw new Error(data.error);
       
-      showToast('Dropper account created successfully!', { type: 'success' });
+      showToast(`Dropper account created successfully for @${trimmedUsername}!`, { type: 'success' });
       setShowCreateDropper(false);
       setNewDropperUsername('');
       setNewDropperPassword('');
@@ -132,11 +169,14 @@ export default function SuperAdminDashboard() {
     } catch (err: any) {
       console.error(err);
       const errMsg = err?.message || String(err);
-      if (errMsg.includes('Failed to send a request') || errMsg.includes('Edge Function') || errMsg.includes('fetch')) {
+
+      if (errMsg.includes('already exists') || errMsg.includes('already registered')) {
+        showToast(`Error: Username or phone number is already registered in the system.`, { type: 'error' });
+      } else if (errMsg.includes('Failed to send a request') || errMsg.includes('Edge Function') || errMsg.includes('fetch') || errMsg.includes('404')) {
         setDashboardDeploymentError('EDGE_FUNCTION_NOT_DEPLOYED');
         showToast('Configuration missing: Edge Function not deployed', { type: 'error' });
       } else {
-        showToast(errMsg || 'Failed to create dropper', { type: 'error' });
+        showToast(`Error: ${errMsg}`, { type: 'error' });
       }
     } finally {
       setCreateLoading(false);

@@ -15,9 +15,6 @@
     "lint:env": "grep -rni --include='*.ts' --include='*.tsx' 'firebase\\|FIREBASE\\|Firebase' src/ 2>/dev/null | grep -v node_modules && exit 1 || echo '✅ No Firebase references found in src/'",
     "prebuild": "npm run lint:env",
     "validate:env": "node --loader tsx --no-warnings ./src/lib/validateEnv.ts",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage",
     "prepare": "husky || true"
   },
   "dependencies": {
@@ -36,6 +33,7 @@
     "crypto-js": "^4.2.0",
     "dexie": "^4.4.3",
     "dotenv": "^17.2.3",
+    "edge-tts-universal": "^1.4.0",
     "express": "^5.2.1",
     "framer-motion": "^12.40.0",
     "html5-qrcode": "^2.3.8",
@@ -44,6 +42,7 @@
     "leaflet.markercluster": "^1.5.3",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
+    "object-hash": "^3.0.0",
     "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.1",
@@ -64,18 +63,15 @@
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@vitest/coverage-v8": "^4.1.9",
     "adm-zip": "^0.5.17",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
     "husky": "^9.1.7",
-    "jsdom": "^29.1.1",
     "lint-staged": "^15.5.1",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.3",
-    "vitest": "^4.1.9"
+    "vite": "^6.2.3"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

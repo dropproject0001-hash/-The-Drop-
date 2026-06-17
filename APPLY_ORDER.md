@@ -3,7 +3,7 @@
 ## Step 1 — Secrets & Environment (FIRST, before anything else)
 
 1. **Rotate the exposed Firebase API key.**  
-   The key `AIzaSyDGmSNHQas8gRtmBzpN1pDd4loMcCKOe-o` was committed to the repo. Rotate it immediately in the Firebase Console → Project Settings → API Keys.
+   The key [REDACTED — see Firebase console] was committed to the repo. Rotate it immediately in the Firebase Console → Project Settings → API Keys.
 
 2. **Add `firebase-applet-config.json` to `.gitignore`.**
 

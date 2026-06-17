@@ -52,10 +52,25 @@ export function useProximityTTS() {
 
         // Throttle to 1 minute per drop unless distance tier changes
         if (now - lastAlert > 60000) {
+          const sensitivity = localStorage.getItem('setting_proximity_sensitivity') || 'medium';
+          
+          let approachThreshold = 200;
+          let closeThreshold = 50;
+
+          if (sensitivity === 'low') {
+            // Less sensitive: only triggers when closer, reducing false-positives
+            approachThreshold = 100;
+            closeThreshold = 25;
+          } else if (sensitivity === 'high') {
+            // More sensitive: triggers earlier
+            approachThreshold = 300;
+            closeThreshold = 75;
+          }
+
           let message = '';
-          if (distanceM < 50) {
+          if (distanceM < closeThreshold) {
             message = "Proximity alert: Drop location very close. Prepare for retrieval.";
-          } else if (distanceM < 200) {
+          } else if (distanceM < approachThreshold) {
             message = `Drop approaching. Approximately ${Math.round(distanceM)} meters away.`;
           }
 

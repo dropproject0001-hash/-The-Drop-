@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sliders, Shield, Bell, HardDrive, Volume2, Globe, WifiOff } from 'lucide-react';
+import { Sliders, Shield, Bell, HardDrive, Volume2, Globe, WifiOff, EyeOff } from 'lucide-react';
 import { locationBroadcastService } from '@/services/LocationBroadcastService';
 
 export function ControlSettingsView() {
@@ -15,8 +15,14 @@ export function ControlSettingsView() {
   const [voiceNotes, setVoiceNotes] = useState(() => {
     return localStorage.getItem('setting_voice_notes') === 'true'; // default false
   });
+  const [proximitySensitivity, setProximitySensitivity] = useState(() => {
+    return localStorage.getItem('setting_proximity_sensitivity') || 'medium';
+  });
   const [lowDataMode, setLowDataMode] = useState(() => {
     return localStorage.getItem('drop_low_data_mode') === 'true'; // default false
+  });
+  const [stealthMode, setStealthMode] = useState(() => {
+    return localStorage.getItem('setting_stealth_mode') === 'true'; // default false
   });
   const [logs, setLogs] = useState<string[]>([]);
 
@@ -111,6 +117,29 @@ export function ControlSettingsView() {
             </button>
           </div>
 
+          {/* Setting Item: Stealth / Offline Mode */}
+          <div className="flex items-center justify-between border-b border-[#106011]/15 pb-4">
+            <div className="flex items-start gap-3">
+              <EyeOff className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+              <div className="flex flex-col">
+                <span className="text-white font-bold text-xs font-display tracking-wider uppercase">Stealth / Offline Mode</span>
+                <span className="text-[10px] font-mono text-slate-400 font-semibold text-red-400">Queue all telemetry locally; disables auto-sync. Manual uplink required.</span>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => handleToggle('Stealth Mode', 'setting_stealth_mode', stealthMode, setStealthMode, (newVal) => {
+                if (!newVal) {
+                   // When stealth mode turns off, flush queue
+                   locationBroadcastService.flushQueue();
+                }
+              })}
+              className={`w-14 h-7 rounded-full border border-[#106011]/60 flex items-center px-1 cursor-pointer transition-colors duration-300 ${stealthMode ? 'bg-red-950/40 border-red-500' : 'bg-black'}`}
+            >
+              <div className={`w-5 h-5 rounded-full shadow-md transition-all duration-300 ${stealthMode ? 'bg-red-500 translate-x-7 shadow-[0_0_10px_rgba(239,68,68,0.8)]' : 'bg-slate-500'}`} />
+            </button>
+          </div>
+
           {/* Setting Item: Geofencing Alerts */}
           <div className="flex items-center justify-between border-b border-[#106011]/15 pb-4">
             <div className="flex items-start gap-3">
@@ -127,6 +156,35 @@ export function ControlSettingsView() {
             >
               <div className={`w-5 h-5 rounded-full shadow-md transition-all duration-300 ${geofencing ? 'bg-[#106011] translate-x-7 shadow-[0_0_10px_rgba(16,96,17,0.8)]' : 'bg-slate-500'}`} />
             </button>
+          </div>
+
+          {/* Setting Item: Proximity Sensitivity */}
+          <div className="flex items-center justify-between border-b border-[#106011]/15 pb-4">
+            <div className="flex items-start gap-3">
+              <Bell className="w-5 h-5 text-[#106011] shrink-0 mt-0.5 opacity-70" />
+              <div className="flex flex-col">
+                <span className="text-white font-bold text-xs font-display tracking-wider uppercase">Proximity Sensitivity</span>
+                <span className="text-[10px] font-mono text-slate-400 font-semibold">Configure alert distance to reduce false-positives</span>
+              </div>
+            </div>
+            
+            <select
+              value={proximitySensitivity}
+              onChange={(e) => {
+                const val = e.target.value;
+                setProximitySensitivity(val);
+                localStorage.setItem('setting_proximity_sensitivity', val);
+                setLogs(prev => [
+                  `[${new Date().toLocaleTimeString()}] CONFIG: Proximity Sensitivity set to ${val.toUpperCase()}.`, 
+                  ...prev
+                ]);
+              }}
+              className="bg-black border border-[#106011]/60 text-white text-[10px] font-mono p-1 rounded outline-none focus:border-[#0ad111] uppercase"
+            >
+              <option value="low">Low (Closer)</option>
+              <option value="medium">Medium (Standard)</option>
+              <option value="high">High (Further)</option>
+            </select>
           </div>
 
           {/* Setting Item: Auto-Expiring Pins */}

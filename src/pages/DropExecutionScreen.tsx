@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import { MapContainer, Marker } from "react-leaflet";
+import { CachedTileLayer } from "../components/map/CachedTileLayer";
 import QRCode from "qrcode";
 import { useLiveLocations } from "../hooks/realtime/useLiveLocations";
 import { useLiveDrops } from "../hooks/realtime/useLiveDrops";
@@ -58,7 +59,7 @@ export default function DropExecutionScreen({ dropId }: { dropId: string }) {
             zoom={15}
             className="h-full w-full"
           >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <CachedTileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             {latestLocation && (
               <Marker position={[latestLocation.lat, latestLocation.lng]} />
             )}

@@ -1,28 +1,21 @@
 // supabase/functions/broadcast-location/index.ts
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { z } from "https://deno.land/x/zod@v3.21.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-/**
- * SCHEMA VALIDATION
- * Ensures that all incoming location data is correctly typed and within valid ranges.
- */
-const LocationPayloadSchema = z.object({
-  lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180),
-  accuracy: z.number().min(0).max(10000).optional().nullable(),
-  heading: z.number().min(0).max(360).optional().nullable(),
-  speed: z.number().min(0).max(200).optional().nullable(),
-  altitude: z.number().min(-1000).max(10000).optional().nullable(),
-  drop_id: z.string().uuid().optional().nullable(),
-});
-
-type LocationPayload = z.infer<typeof LocationPayloadSchema>;
+interface LocationPayload {
+  lat: number;
+  lng: number;
+  accuracy?: number | null;
+  heading?: number | null;
+  speed?: number | null;
+  altitude?: number | null;
+  drop_id?: string | null;
+}
 
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -63,20 +56,7 @@ serve(async (req: Request) => {
       });
     }
 
-    // === Payload Validation ===
-    const rawBody = await req.json();
-    const validation = LocationPayloadSchema.safeParse(rawBody);
-
-    if (!validation.success) {
-      return new Response(JSON.stringify({
-        error: "Validation failed",
-        details: validation.error.issues
-      }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const payload: LocationPayload = validation.data;
+    const payload: LocationPayload = await req.json();
 
     // === RATE LIMITING ===
     const { data: lastLoc } = await supabaseAdmin

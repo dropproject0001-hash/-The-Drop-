@@ -6,7 +6,7 @@ interface DropStatusBadgeProps {
   size?: 'sm' | 'md';
 }
 
-function DropStatusBadgeComponent({ status, size = 'md' }: DropStatusBadgeProps) {
+export function DropStatusBadge({ status, size = 'md' }: DropStatusBadgeProps) {
   const getStatusConfig = () => {
     switch (status) {
       case 'active':
@@ -29,10 +29,3 @@ function DropStatusBadgeComponent({ status, size = 'md' }: DropStatusBadgeProps)
     </span>
   );
 }
-
-/**
- * ⚡ PERFORMANCE OPTIMIZATION: React.memo
- * Leaf component used frequently in lists and map popups.
- * Prevents re-renders unless the status or size actually changes.
- */
-export const DropStatusBadge = React.memo(DropStatusBadgeComponent);

@@ -28,6 +28,7 @@ improved-the-drop.zip
 Thumbs.db
 
 # Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
@@ -35,3 +36,6 @@ pnpm-debug.log*
 # Misc
 coverage/
 *.tsbuildinfo
+
+# Temporary Git export folder
+github_tmp/

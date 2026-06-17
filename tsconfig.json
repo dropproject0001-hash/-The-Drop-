@@ -28,6 +28,8 @@
     "supabase/**/*",
     "authfix_out/**/*",
     "node_modules",
+    "github_tmp",
+    "github_tmp/**/*",
     "dist"
   ]
 }

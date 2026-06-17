@@ -51,9 +51,36 @@ export default function CreateDropper() {
   };
 
   const handleCreate = async () => {
-    if (!form.username || !form.password) {
+    const trimmedUsername = form.username.trim().toLowerCase().replace(/\s/g, '_');
+    const checkedPassword = form.password;
+    let checkedPhone = form.phone.trim();
+
+    if (!trimmedUsername || !checkedPassword) {
       showToast('Username and Password are required', { type: 'error' });
       return;
+    }
+
+    if (checkedPassword.length < 6) {
+      showToast('Password must be at least 6 characters long', { type: 'error' });
+      return;
+    }
+
+    if (checkedPhone) {
+      // Basic E.164 sanitization & validation
+      checkedPhone = checkedPhone.replace(/[\s\-\(\)]/g, '');
+      if (!checkedPhone.startsWith('+')) {
+        if (/^\d{10,15}$/.test(checkedPhone)) {
+          checkedPhone = '+' + checkedPhone;
+        } else {
+          showToast('Phone number must start with + followed by country code (e.g., +15551234567)', { type: 'error' });
+          return;
+        }
+      } else {
+        if (!/^\+\d{7,15}$/.test(checkedPhone)) {
+          showToast('Invalid phone format: Use + followed by 7-15 digits only.', { type: 'error' });
+          return;
+        }
+      }
     }
 
     setLoading(true);
@@ -63,34 +90,45 @@ export default function CreateDropper() {
 
       const { data, error } = await supabase.functions.invoke('create-dropper', {
         body: {
-          username: form.username,
-          password: form.password,
-          phone: form.phone,
+          username: trimmedUsername,
+          password: checkedPassword,
+          phone: checkedPhone || undefined,
           role: form.role,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Enforce detailed messages if available inside library's error
+        const details = (error as any)?.context?.message || error.message;
+        throw new Error(details || error.message);
+      }
       if (data?.error) throw new Error(data.error);
 
-      showToast(`Account created successfully for @${form.username}`, { type: 'success' });
+      showToast(`Account created successfully for @${trimmedUsername}`, { type: 'success' });
       setForm({ username: '', password: '', phone: '', role: 'dropper' });
     } catch (err: any) {
       console.error('[CreateUser] Detailed Error:', err);
       
       const errMsg = err?.message || String(err);
-      const isFetchOrDeployError = 
-        errMsg.includes('Failed to send a request to the Edge Function') || 
-        errMsg.includes('Edge Function') || 
-        errMsg.includes('fetch');
-
-      if (isFetchOrDeployError) {
-        setDeploymentError(
-          "EDGE_FUNCTION_NOT_DEPLOYED: The core 'create-dropper' Edge Function is missing or un-deployed on your current remote/sandbox Supabase instance."
-        );
-        showToast('Configuration missing: Edge Function not deployed', { type: 'error' });
+      
+      // Check if it's a known Supabase Auth constraint exception
+      if (errMsg.includes('already exists') || errMsg.includes('already registered')) {
+        showToast(`Error: Operation rejected - Username or phone number already in use.`, { type: 'error' });
       } else {
-        showToast(`Error: ${errMsg}`, { type: 'error' });
+        const isFetchOrDeployError = 
+          errMsg.includes('Failed to send a request to the Edge Function') || 
+          errMsg.includes('Edge Function') || 
+          errMsg.includes('fetch') ||
+          errMsg.includes('404');
+
+        if (isFetchOrDeployError) {
+          setDeploymentError(
+            "EDGE_FUNCTION_NOT_DEPLOYED: The core 'create-dropper' Edge Function is missing or un-deployed on your current remote/sandbox Supabase instance."
+          );
+          showToast('Configuration missing: Edge Function not deployed', { type: 'error' });
+        } else {
+          showToast(`Registration Failed: ${errMsg}`, { type: 'error' });
+        }
       }
     } finally {
       setLoading(false);
